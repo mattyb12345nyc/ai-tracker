@@ -80,24 +80,29 @@ const generateQuestionsWithClaude = async (brandName, competitors, keyMessages, 
   }
 };
 
-// Fallback template questions
+// Fallback template questions (category-focused, no brand names)
 const generateTemplateQuestions = (brandName, competitors, count) => {
-  const comp1 = competitors[0] || 'competitors';
-  const comp2 = competitors[1] || '';
-  
   const allQuestions = [
-    { text: `What is ${brandName} and is it worth it?`, category: 'Awareness' },
-    { text: `What are the best alternatives to ${comp1}?`, category: 'Discovery' },
-    { text: `How does ${brandName} compare to ${comp1}?`, category: 'Comparison' },
-    { text: `Should I use ${brandName} or ${comp1}?`, category: 'Decision' },
-    { text: `What do people say about ${brandName}?`, category: 'Reputation' },
-    { text: `Is ${brandName} good for enterprise companies?`, category: 'Consideration' },
-    { text: `What are the pros and cons of ${brandName}?`, category: 'Reputation' },
-    { text: `What is the best solution in the ${brandName} space?`, category: 'Discovery' },
-    { text: comp2 ? `How does ${brandName} compare to ${comp2}?` : `Why should I choose ${brandName}?`, category: 'Comparison' },
-    { text: `What makes ${brandName} different from other options?`, category: 'Discovery' },
-    { text: `Is ${brandName} better than ${comp1} for small businesses?`, category: 'Decision' },
-    { text: `What are the top-rated options like ${brandName}?`, category: 'Discovery' },
+    { text: 'What are the best consumer research platforms for enterprises?', category: 'Research' },
+    { text: 'How do companies gather real-time customer insights?', category: 'Awareness' },
+    { text: 'What tools help with agile market research?', category: 'Awareness' },
+    { text: 'Best platforms for online surveys and consumer feedback', category: 'Research' },
+    { text: 'How to evaluate market research software vendors?', category: 'Evaluation' },
+    { text: 'What features matter most in a consumer insights platform?', category: 'Evaluation' },
+    { text: 'Leading AI-powered market research tools', category: 'Research' },
+    { text: 'How do enterprises run fast consumer research studies?', category: 'Awareness' },
+    { text: 'What market research platform is best for CPG brands?', category: 'Consideration' },
+    { text: 'How to choose a consumer insights vendor?', category: 'Decision' },
+    { text: 'Best alternatives to traditional market research agencies', category: 'Research' },
+    { text: 'What is the fastest way to get consumer feedback?', category: 'Awareness' },
+    { text: 'Top survey platforms for brand tracking', category: 'Research' },
+    { text: 'How to run concept testing with consumers?', category: 'Consideration' },
+    { text: 'What should I look for in a DIY research platform?', category: 'Decision' },
+    { text: 'Best tools for ad testing and creative research', category: 'Research' },
+    { text: 'How do marketing teams validate ideas with consumers?', category: 'Awareness' },
+    { text: 'Enterprise solutions for consumer panel research', category: 'Consideration' },
+    { text: 'What platforms offer real-time consumer insights?', category: 'Research' },
+    { text: 'How to select the right market research technology?', category: 'Decision' },
   ];
   
   return allQuestions.slice(0, count).map((q, i) => ({
@@ -115,7 +120,7 @@ export default function App() {
     email: '',
     keyMessages: ['', '', '', '', ''],
     competitors: ['', '', ''],
-    questionCount: 4,
+    questionCount: 15,
     otherConsiderations: ''
   });
   const [generatedQuestions, setGeneratedQuestions] = useState([]);
@@ -661,10 +666,10 @@ export default function App() {
                 </div>
 
                 <div className="bg-gradient-to-b from-white/[0.04] to-white/[0.02] rounded-3xl p-8 border border-white/[0.06]">
-                  <h3 className="text-lg font-semibold mb-2"># of Questions to Track</h3>
-                  <p className="text-sm text-white/40 mb-6">More questions = deeper analysis</p>
+                  <h3 className="text-lg font-semibold mb-2"># of Category Queries</h3>
+                  <p className="text-sm text-white/40 mb-6">More queries = deeper organic visibility analysis</p>
                   <div className="grid grid-cols-3 gap-3">
-                    {[4, 8, 12].map(num => (
+                    {[10, 15, 20].map(num => (
                       <button
                         key={num}
                         onClick={() => setConfig({ ...config, questionCount: num })}
@@ -724,12 +729,12 @@ export default function App() {
             <div className="flex items-end justify-between">
               <div>
                 <p className="text-sm text-white/40 mb-2">Step 2 of 3</p>
-                <h2 className="text-4xl font-bold">Review & Customize</h2>
-                <p className="text-white/40 mt-2">Edit questions before we query the AI models</p>
+                <h2 className="text-4xl font-bold">Review Category Queries</h2>
+                <p className="text-white/40 mt-2">These buyer-journey questions measure organic visibility (no brand names)</p>
               </div>
               <div className="text-right">
                 <div className="text-5xl font-bold bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">{activeQuestionCount}</div>
-                <div className="text-sm text-white/40 mt-1">questions selected</div>
+                <div className="text-sm text-white/40 mt-1">category queries</div>
               </div>
             </div>
 

@@ -21,23 +21,29 @@ exports.handler = async (event) => {
   try {
     const { brandName, competitors, keyMessages, questionCount } = JSON.parse(event.body);
     
-    const competitorList = competitors.filter(c => c.trim()).join(', ');
     const messagesList = keyMessages.filter(m => m.trim()).join(', ');
     
-    const prompt = `You are an AI Visibility strategist. Generate exactly ${questionCount} search questions that consumers would ask AI assistants (ChatGPT, Claude, Gemini, Perplexity) that are relevant to evaluating "${brandName}" and its market position.
+    const prompt = `You are an AI Visibility strategist helping measure organic brand visibility. Generate exactly ${questionCount} search questions that a potential buyer would ask AI assistants (ChatGPT, Claude, Gemini, Perplexity) when researching vendors in the same category as "${brandName}".
 
-The brand's key messages are: ${messagesList || 'not specified'}
-Main competitors are: ${competitorList || 'not specified'}
+CRITICAL RULES:
+- NEVER include "${brandName}" in any question
+- NEVER include any competitor names in questions
+- Questions must be generic category/industry searches that a buyer would naturally ask
+- Focus on the buyer journey: awareness, research, evaluation, decision
 
-Generate questions across these categories (distribute evenly):
-1. AWARENESS - Direct brand questions ("What is [brand]?", "Is [brand] good?")
-2. DISCOVERY - Category searches where brand should appear ("Best [category] tools", "Top [category] companies")
-3. COMPARISON - Head-to-head with competitors ("How does [brand] compare to [competitor]?")
-4. DECISION - Purchase/choice intent ("Should I use [brand] or [competitor]?", "Is [brand] worth it?")
-5. REPUTATION - Trust and perception ("What do people think of [brand]?", "Is [brand] reliable?")
+The brand operates in a space with these key value propositions: ${messagesList || 'not specified'}
+
+Generate questions across these buyer journey stages (distribute evenly):
+1. AWARENESS - General category questions ("What tools help with X?", "How do companies solve Y?")
+2. RESEARCH - Exploring options ("Best platforms for X", "Top solutions for Y", "Leading vendors in Z")
+3. EVALUATION - Comparing features ("What features matter most in X?", "How to evaluate Y tools?")
+4. CONSIDERATION - Use case fit ("What X solution is best for enterprise?", "Which Y platform works for Z use case?")
+5. DECISION - Final selection ("How to choose between X solutions?", "What should I look for in a Y vendor?")
+
+The questions should mimic what a real buyer would type when searching for a new vendor - generic industry terms only, NO brand names.
 
 Return ONLY a JSON array with objects containing "text" and "category" fields. No other text.
-Example: [{"text": "What is Acme Corp?", "category": "Awareness"}, {"text": "Best CRM software 2024", "category": "Discovery"}]`;
+Example: [{"text": "What are the best consumer research platforms?", "category": "Research"}, {"text": "How do enterprises gather real-time customer insights?", "category": "Awareness"}]`;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -48,7 +54,7 @@ Example: [{"text": "What is Acme Corp?", "category": "Awareness"}, {"text": "Bes
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 1024,
+        max_tokens: 2048,
         messages: [{ role: 'user', content: prompt }]
       })
     });

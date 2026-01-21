@@ -37,69 +37,54 @@ const PROGRESS_STAGES = [
 // ============================================================
 // BRAND MATCHING UTILITIES
 // ============================================================
-const BRAND_ALIASES = {
-  'xbox game pass': ['xbox gamepass', 'box gamepass', 'box game pass', 'gamepass'],
-  'playstation plus': ['ps plus', 'psplus', 'ps+'],
-  'geforce now': ['geforcenow', 'nvidia geforce now'],
-};
 
 const findTrackedBrandInRankings = (brandName, rankings) => {
   if (!brandName || !rankings?.length) return null;
-  const brandLower = brandName.toLowerCase().trim();
-  
-  // Direct match
-  let match = rankings.find(r => r.brand.toLowerCase() === brandLower);
-  if (match) return match;
-  
-  // Alias match
-  for (const [canonical, aliases] of Object.entries(BRAND_ALIASES)) {
-    const allForms = [canonical, ...aliases];
-    if (allForms.some(a => brandLower.includes(a) || a.includes(brandLower))) {
-      match = rankings.find(r => allForms.some(a => r.brand.toLowerCase().includes(a) || a.includes(r.brand.toLowerCase())));
-      if (match) return match;
-    }
-  }
-  
-  // Word match
-  const brandWords = brandLower.split(/\s+/).filter(w => w.length > 3);
-  for (const word of brandWords) {
-    match = rankings.find(r => r.brand.toLowerCase().includes(word));
-    if (match) return match;
-  }
-  return null;
+  const normalizedInput = cleanBrandName(brandName);
+  return rankings.find(r => r.brand === normalizedInput);
 };
 
 const getProperBrandName = (storedName, rankings) => {
-  const match = findTrackedBrandInRankings(storedName, rankings);
-  if (match) return match.brand;
-  const known = { 'box gamepass': 'Xbox Game Pass', 'box game pass': 'Xbox Game Pass', 'xbox gamepass': 'Xbox Game Pass' };
-  return known[storedName.toLowerCase()] || storedName;
+  return cleanBrandName(storedName);
 };
 
 const cleanBrandName = (name) => {
   if (!name) return '';
-  // Remove parenthetical content like "(implied in...)" or "(via...)"
+  // Remove parenthetical content
   let cleaned = name.replace(/\s*\([^)]*\)\s*/g, '').trim();
-  // Capitalize properly
-  const known = { 
-    'geforce now': 'GeForce Now', 'playstation plus': 'PlayStation Plus', 
-    'xbox game pass': 'Xbox Game Pass', 'amazon luna': 'Amazon Luna', 
-    'ea play': 'EA Play', 'apple arcade': 'Apple Arcade',
-    'xbox cloud gaming': 'Xbox Cloud Gaming', 'nintendo switch online': 'Nintendo Switch Online'
+  // Normalize known brands
+  const lower = cleaned.toLowerCase();
+  const normalizations = {
+    'nvidia geforce now': 'GeForce Now', 'geforce now': 'GeForce Now',
+    'playstation plus premium': 'PlayStation Plus', 'playstation plus': 'PlayStation Plus', 'ps plus': 'PlayStation Plus',
+    'xbox game pass ultimate': 'Xbox Game Pass', 'xbox game pass': 'Xbox Game Pass', 'xbox gamepass': 'Xbox Game Pass', 'box gamepass': 'Xbox Game Pass',
+    'xbox cloud gaming': 'Xbox Cloud Gaming', 'xcloud': 'Xbox Cloud Gaming',
+    'amazon luna': 'Amazon Luna', 'luna': 'Amazon Luna',
+    'ea play': 'EA Play', 'nintendo switch online': 'Nintendo Switch Online',
+    'apple arcade': 'Apple Arcade', 'ubisoft+': 'Ubisoft+'
   };
-  return known[cleaned.toLowerCase()] || cleaned.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+  for (const [key, val] of Object.entries(normalizations)) {
+    if (lower.includes(key) || lower === key) return val;
+  }
+  return cleaned.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
 };
 
 const capitalizeBrand = (name) => cleanBrandName(name);
 
 const deduplicateBrands = (rankings) => {
-  const seen = new Map();
-  return rankings.filter(b => {
-    const key = cleanBrandName(b.brand).toLowerCase();
-    if (seen.has(key)) return false;
-    seen.set(key, true);
-    return true;
-  }).map(b => ({ ...b, brand: cleanBrandName(b.brand) }));
+  const merged = new Map();
+  for (const b of rankings) {
+    const key = cleanBrandName(b.brand);
+    if (merged.has(key)) {
+      const existing = merged.get(key);
+      existing.mentions = (existing.mentions || 0) + (b.mentions || 0);
+      existing.share_of_voice = (existing.share_of_voice || 0) + (b.share_of_voice || 0);
+      if (b.sentiment > (existing.sentiment || 0)) existing.sentiment = b.sentiment;
+    } else {
+      merged.set(key, { ...b, brand: key });
+    }
+  }
+  return Array.from(merged.values()).sort((a, b) => (b.share_of_voice || 0) - (a.share_of_voice || 0));
 };
 
 const isValidBrand = (name) => {

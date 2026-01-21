@@ -76,10 +76,30 @@ const getProperBrandName = (storedName, rankings) => {
   return known[storedName.toLowerCase()] || storedName;
 };
 
-const capitalizeBrand = (name) => {
+const cleanBrandName = (name) => {
   if (!name) return '';
-  const known = { 'geforce now': 'GeForce Now', 'playstation plus': 'PlayStation Plus', 'xbox game pass': 'Xbox Game Pass', 'amazon luna': 'Amazon Luna', 'ea play': 'EA Play' };
-  return known[name.toLowerCase()] || name;
+  // Remove parenthetical content like "(implied in...)" or "(via...)"
+  let cleaned = name.replace(/\s*\([^)]*\)\s*/g, '').trim();
+  // Capitalize properly
+  const known = { 
+    'geforce now': 'GeForce Now', 'playstation plus': 'PlayStation Plus', 
+    'xbox game pass': 'Xbox Game Pass', 'amazon luna': 'Amazon Luna', 
+    'ea play': 'EA Play', 'apple arcade': 'Apple Arcade',
+    'xbox cloud gaming': 'Xbox Cloud Gaming', 'nintendo switch online': 'Nintendo Switch Online'
+  };
+  return known[cleaned.toLowerCase()] || cleaned.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+};
+
+const capitalizeBrand = (name) => cleanBrandName(name);
+
+const deduplicateBrands = (rankings) => {
+  const seen = new Map();
+  return rankings.filter(b => {
+    const key = cleanBrandName(b.brand).toLowerCase();
+    if (seen.has(key)) return false;
+    seen.set(key, true);
+    return true;
+  }).map(b => ({ ...b, brand: cleanBrandName(b.brand) }));
 };
 
 const isValidBrand = (name) => {
@@ -182,8 +202,8 @@ export default function App() {
     const storedBrandName = r.brand_name || 'Unknown';
     
     // Parse Zapier pre-calculated data
-    let brandRankings = JSON.parse(r.brand_rankings_json || '[]').filter(b => isValidBrand(b.brand)).map(b => ({ ...b, brand: capitalizeBrand(b.brand) }));
-    let sentimentRankings = JSON.parse(r.sentiment_rankings_json || '[]').filter(b => isValidBrand(b.brand)).slice(0, 5).map(b => ({ ...b, brand: capitalizeBrand(b.brand) }));
+    let brandRankings = deduplicateBrands(JSON.parse(r.brand_rankings_json || '[]').filter(b => isValidBrand(b.brand)));
+    let sentimentRankings = deduplicateBrands(JSON.parse(r.sentiment_rankings_json || '[]').filter(b => isValidBrand(b.brand))).slice(0, 5);
     const platformConsistency = JSON.parse(r.platform_consistency_json || '{}');
     const platformDeepDives = JSON.parse(r.platform_deep_dives_json || '{}');
     const platforms = JSON.parse(r.platforms_json || '{}');
@@ -419,6 +439,14 @@ export default function App() {
               <div className="flex items-start gap-4 mb-6"><div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center"><Award className="w-6 h-6" /></div><div className="flex-1"><h2 className="text-xl font-bold">Brand Rankings</h2><p className="text-sm text-white/40">Share of voice</p></div>{dashboardData.brand_sov > 0 && <div className="text-right"><div className="text-3xl font-bold text-amber-400">{dashboardData.brand_sov}%</div><div className="text-sm text-white/40">SOV</div></div>}</div>
               <div className="space-y-3">{(dashboardData.brand_rankings || []).slice(0, 10).map((b, i) => (<div key={i} className={`flex items-center gap-4 p-3 rounded-xl ${b.is_tracked_brand ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-white/[0.02]'}`}><span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${b.is_tracked_brand ? 'bg-amber-500 text-white' : 'bg-white/10 text-white/50'}`}>{i + 1}</span><span className={`flex-1 font-medium ${b.is_tracked_brand ? 'text-amber-400' : 'text-white/70'}`}>{b.brand}</span><span className="text-white/40 text-sm">{b.mentions} mentions</span><span className={b.is_tracked_brand ? 'text-amber-400 font-semibold' : 'text-white/70'}>{b.share_of_voice}%</span></div>))}</div>
             </div>
+
+            {/* Sentiment Rankings */}
+            {dashboardData.sentiment_rankings?.length > 0 && (
+            <div className="bg-white/[0.02] rounded-3xl p-8 border border-white/[0.06]">
+              <div className="flex items-start gap-4 mb-6"><div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center"><TrendingUp className="w-6 h-6" /></div><div><h2 className="text-xl font-bold">Sentiment Rankings</h2><p className="text-sm text-white/40">Top 5 brands by sentiment</p></div></div>
+              <div className="space-y-3">{dashboardData.sentiment_rankings.map((b, i) => (<div key={i} className={`flex items-center gap-4 p-3 rounded-xl ${b.is_tracked_brand ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-white/[0.02]'}`}><span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${b.is_tracked_brand ? 'bg-emerald-500 text-white' : 'bg-white/10 text-white/50'}`}>{i + 1}</span><span className={`flex-1 font-medium ${b.is_tracked_brand ? 'text-emerald-400' : 'text-white/70'}`}>{b.brand}</span><span className={`font-semibold ${b.is_tracked_brand ? 'text-emerald-400' : 'text-white/70'}`}>{b.sentiment}%</span></div>))}</div>
+            </div>
+            )}
 
             {/* Platform Consistency */}
             <div className="bg-white/[0.02] rounded-3xl p-8 border border-white/[0.06]">

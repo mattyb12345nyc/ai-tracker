@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Zap, Loader2, CheckCircle, ArrowRight, RefreshCw, TrendingUp, TrendingDown, AlertCircle, X, Pencil, Check, Plus, ChevronRight, Eye, FileText, BarChart3, Download, Calendar, ChevronDown, Sparkles, Target, Activity, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
+import { Zap, Loader2, CheckCircle, ArrowRight, RefreshCw, TrendingUp, TrendingDown, AlertCircle, X, Pencil, Check, Plus, ChevronRight, Eye, FileText, BarChart3, Download, Calendar, ChevronDown, Sparkles, Target, Activity, ArrowUpRight, ArrowDownRight, Minus, Mail, ExternalLink, Award, Users, MessageSquare, Search, Lightbulb } from 'lucide-react';
 
 // ============================================================
 // CONFIGURATION
@@ -10,7 +10,7 @@ const AIRTABLE_BASE_ID = 'appgSZR92pGCMlUOc';
 const AIRTABLE_TABLE_ID = 'tblheMjYJzu1f88Ft';
 // ============================================================
 
-const STORAGE_KEY = 'ai-tracker-customer-v6';
+const STORAGE_KEY = 'ai-tracker-customer-v8';
 
 const platformLogos = {
   chatgpt: 'http://cdn.mcauto-images-production.sendgrid.net/d157e984273caff5/6e515ad0-76a8-4c99-9c31-4a9ddb82fcb4/301x167.png',
@@ -31,14 +31,16 @@ const gradeColors = {
 };
 
 const PROGRESS_STAGES = [
-  { id: 1, label: 'Querying ChatGPT', icon: 'chatgpt', duration: 12 },
-  { id: 2, label: 'Querying Claude', icon: 'claude', duration: 12 },
-  { id: 3, label: 'Querying Gemini', icon: 'gemini', duration: 12 },
-  { id: 4, label: 'Querying Perplexity', icon: 'perplexity', duration: 12 },
-  { id: 5, label: 'Analyzing brand positioning', icon: null, duration: 15 },
-  { id: 6, label: 'Calculating visibility scores', icon: null, duration: 12 },
-  { id: 7, label: 'Generating strategic insights', icon: null, duration: 10 },
-  { id: 8, label: 'Building your report', icon: null, duration: 8 }
+  { id: 1, label: 'Querying ChatGPT', icon: 'chatgpt', duration: 35 },
+  { id: 2, label: 'Querying Claude', icon: 'claude', duration: 35 },
+  { id: 3, label: 'Querying Gemini', icon: 'gemini', duration: 35 },
+  { id: 4, label: 'Querying Perplexity', icon: 'perplexity', duration: 35 },
+  { id: 5, label: 'Extracting brand mentions & rankings', icon: null, duration: 30 },
+  { id: 6, label: 'Analyzing sentiment across platforms', icon: null, duration: 30 },
+  { id: 7, label: 'Calculating share of voice', icon: null, duration: 25 },
+  { id: 8, label: 'Identifying brand keywords', icon: null, duration: 25 },
+  { id: 9, label: 'Generating executive insights', icon: null, duration: 30 },
+  { id: 10, label: 'Building your report', icon: null, duration: 20 }
 ];
 
 const MOCK_HISTORY = [
@@ -209,146 +211,68 @@ export default function App() {
   };
 
   const parseReportData = (r) => {
+    // Parse all JSON fields from Zapier Step 38
     const platforms = JSON.parse(r.platforms_json || '{}');
     const questionBreakdown = JSON.parse(r.question_breakdown_json || '[]');
-    const insights = JSON.parse(r.insights_json || '[]');
-    const alerts = JSON.parse(r.alerts_json || '[]');
+    const brandRankings = JSON.parse(r.brand_rankings_json || '[]');
+    const sentimentRankings = JSON.parse(r.sentiment_rankings_json || '[]');
+    const platformConsistency = JSON.parse(r.platform_consistency_json || '{}');
+    const platformDeepDives = JSON.parse(r.platform_deep_dives_json || '{}');
+    const brandKeywords = JSON.parse(r.brand_keywords_json || '[]');
+    const sourceAttribution = JSON.parse(r.source_attribution_json || '[]');
+    const recommendations = JSON.parse(r.recommendations_json || '[]');
+    const accuracyFlags = JSON.parse(r.accuracy_flags_json || '[]');
     
-    // Calculate optimization metrics
-    const platformValues = Object.values(platforms);
-    const avgMention = platformValues.length ? platformValues.reduce((sum, p) => sum + (p.mention || 0), 0) / platformValues.length : 0;
-    const avgRecommendation = platformValues.length ? platformValues.reduce((sum, p) => sum + (p.recommendation || 0), 0) / platformValues.length : 0;
-    const avgSentiment = platformValues.length ? platformValues.reduce((sum, p) => sum + (p.sentiment || 0), 0) / platformValues.length : 0;
-    
-    // Optimization gaps
-    const mentionRecommendationGap = avgMention - avgRecommendation;
-    const platformConsistency = platformValues.length ? 100 - (Math.max(...platformValues.map(p => p.score || 0)) - Math.min(...platformValues.map(p => p.score || 0))) : 0;
-    
-    // Count critical issues
-    const criticalAlerts = alerts.filter(a => a.type === 'critical').length;
-    const zeroRecommendPlatforms = platformValues.filter(p => p.recommendation === 0).length;
-    
-    // Calculate Optimization Score (different from visibility score)
-    // Factors: recommendation rate (40%), consistency (20%), sentiment (20%), mention-rec gap penalty (20%)
-    const recommendationScore = avgRecommendation;
-    const consistencyScore = platformConsistency;
-    const sentimentScore = avgSentiment;
-    const gapPenalty = Math.max(0, 100 - mentionRecommendationGap);
-    
-    const optimizationScore = Math.round(
-      (recommendationScore * 0.4) + 
-      (consistencyScore * 0.2) + 
-      (sentimentScore * 0.2) + 
-      (gapPenalty * 0.2)
-    );
-    
-    // Optimization Grade (A-F based on optimization potential, not raw visibility)
-    let optimizationGrade;
-    if (optimizationScore >= 80 && zeroRecommendPlatforms === 0) optimizationGrade = 'A';
-    else if (optimizationScore >= 65 && zeroRecommendPlatforms <= 1) optimizationGrade = 'B';
-    else if (optimizationScore >= 50 && zeroRecommendPlatforms <= 2) optimizationGrade = 'C';
-    else if (optimizationScore >= 35) optimizationGrade = 'D';
-    else optimizationGrade = 'F';
-    
-    // Extract topic associations from responses
-    const topicCounts = {};
-    questionBreakdown.forEach(q => {
-      Object.values(q.platforms || {}).forEach(p => {
-        const text = (p.commentary || '') + ' ' + (p.response_summary || '');
-        const topics = ['value', 'quality', 'price', 'innovation', 'reliability', 'speed', 'support', 'ease of use', 'features', 'integration', 'enterprise', 'small business'];
-        topics.forEach(topic => {
-          if (text.toLowerCase().includes(topic)) {
-            topicCounts[topic] = (topicCounts[topic] || 0) + 1;
-          }
-        });
-      });
-    });
-    const topicAssociations = Object.entries(topicCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
-      .map(([topic, count]) => ({ topic, count, strength: Math.min(100, count * 20) }));
-    
-    // Generate executive summary
-    const executiveSummary = {
-      headline: avgRecommendation < 30 
-        ? `${r.brand_name || 'Brand'} is recognized but rarely recommended by AI platforms`
-        : avgRecommendation >= 70
-        ? `${r.brand_name || 'Brand'} has strong AI visibility with consistent recommendations`
-        : `${r.brand_name || 'Brand'} has moderate AI presence with optimization opportunities`,
-      keyFindings: [
-        {
-          metric: 'Query Coverage',
-          value: `${Math.round(avgMention)}%`,
-          status: avgMention >= 80 ? 'strong' : avgMention >= 50 ? 'moderate' : 'weak',
-          insight: avgMention >= 80 
-            ? 'Brand is consistently mentioned across AI platforms'
-            : `Brand is missing from ${Math.round(100 - avgMention)}% of relevant AI responses`
-        },
-        {
-          metric: 'Recommendation Rate',
-          value: `${Math.round(avgRecommendation)}%`,
-          status: avgRecommendation >= 60 ? 'strong' : avgRecommendation >= 30 ? 'moderate' : 'weak',
-          insight: avgRecommendation >= 60
-            ? 'AI platforms actively recommend this brand'
-            : `${Math.round(mentionRecommendationGap)}% gap between awareness and recommendation - major optimization opportunity`
-        },
-        {
-          metric: 'Platform Consistency',
-          value: `${Math.round(platformConsistency)}%`,
-          status: platformConsistency >= 80 ? 'strong' : platformConsistency >= 60 ? 'moderate' : 'weak',
-          insight: platformConsistency >= 80
-            ? 'Consistent performance across all AI platforms'
-            : 'Significant variance between platforms suggests targeting gaps'
-        },
-        {
-          metric: 'Sentiment Score',
-          value: `${Math.round(avgSentiment)}%`,
-          status: avgSentiment >= 70 ? 'strong' : avgSentiment >= 50 ? 'moderate' : 'weak',
-          insight: avgSentiment >= 70
-            ? 'Positive brand perception in AI responses'
-            : 'Mixed or neutral sentiment indicates messaging opportunities'
-        }
-      ],
-      criticalGaps: zeroRecommendPlatforms > 0 
-        ? `${zeroRecommendPlatforms} platform(s) never recommend the brand despite mentioning it`
-        : null,
-      topOpportunity: mentionRecommendationGap > 30
-        ? 'Close the awareness-to-recommendation gap through optimized content'
-        : platformConsistency < 70
-        ? 'Improve consistency across platforms with unified content strategy'
-        : 'Maintain and protect current strong positioning'
-    };
+    // Executive summary will come from Gemini - use placeholder structure
+    const execSummary = JSON.parse(r.executive_summary_json || '{}');
     
     return {
       session_id: r.session_id || '',
       brand_name: r.brand_name || 'Unknown',
-      brand_logo: r.brand_logo || '',
       report_date: r.report_date || new Date().toLocaleDateString(),
-      deck_url: r.deck_url || '',
-      visibility_score: r.visibility_score || 0,
-      grade: r.grade || 'F',
-      optimization_score: optimizationScore,
-      optimization_grade: optimizationGrade,
-      previous_score: r.previous_score || 0,
+      
+      // Section 1: Executive Summary
+      executive_summary: {
+        headline: execSummary.headline || `${r.brand_name || 'Brand'} AI Visibility Analysis Complete`,
+        paragraphs: execSummary.paragraphs || [],
+        bullets: execSummary.bullets || []
+      },
+      
+      // Section 2: Brand Rankings
+      brand_rankings: brandRankings,
+      brand_rank: r.brand_rank || null,
+      brand_sov: r.brand_sov || 0,
+      
+      // Section 3: Sentiment Rankings
+      sentiment_rankings: sentimentRankings,
+      
+      // Section 4: Platform Consistency
+      platform_consistency: platformConsistency,
+      
+      // Section 5: Platform Deep Dives
+      platform_deep_dives: platformDeepDives,
+      platforms: platforms,
       best_model: r.best_model || '',
       worst_model: r.worst_model || '',
-      platforms,
-      share_of_voice: JSON.parse(r.share_of_voice_json || '{"brand":0,"competitors":[]}'),
-      message_alignment: JSON.parse(r.message_alignment_json || '[]'),
-      alerts,
-      competitor_context: JSON.parse(r.competitor_context_json || '[]'),
-      actions: JSON.parse(r.actions_json || '[]'),
-      history: JSON.parse(r.history_json || '[]'),
+      
+      // Section 6: Brand Keywords
+      brand_keywords: brandKeywords,
+      
+      // Section 7: Response Accuracy
+      accuracy_flags: accuracyFlags,
+      
+      // Section 8: Source Attribution
+      source_attribution: sourceAttribution,
+      
+      // Section 9: Question Breakdown
       question_breakdown: questionBreakdown,
-      insights,
-      // New metrics
-      avg_mention: avgMention,
-      avg_recommendation: avgRecommendation,
-      avg_sentiment: avgSentiment,
-      mention_recommendation_gap: mentionRecommendationGap,
-      platform_consistency: platformConsistency,
-      topic_associations: topicAssociations,
-      executive_summary: executiveSummary
+      brand_coverage: r.brand_coverage || 0,
+      
+      // Section 10: Recommendations
+      recommendations: recommendations,
+      
+      // Legacy fields for compatibility
+      visibility_score: r.visibility_score || 0
     };
   };
 
@@ -869,7 +793,16 @@ export default function App() {
               ))}
             </div>
 
-            <p className="text-center text-white/30 text-sm">This typically takes 2-3 minutes</p>
+            <div className="text-center space-y-3 mt-8">
+              <p className="text-white/40 text-sm">This typically takes ~5 minutes</p>
+              <div className="bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/20 rounded-2xl p-6 mt-6">
+                <div className="flex items-center justify-center gap-3 mb-2">
+                  <Mail className="w-5 h-5 text-orange-400" />
+                  <span className="font-semibold text-white">You'll receive an email when ready</span>
+                </div>
+                <p className="text-white/50 text-sm">Feel free to close this page. Your detailed report will be delivered to your inbox.</p>
+              </div>
+            </div>
           </div>
         )}
 
@@ -926,480 +859,445 @@ export default function App() {
         {/* DASHBOARD STEP */}
         {step === 'dashboard' && dashboardData && (
           <div className="space-y-8 animate-fadeIn">
+            {/* Header */}
             <div className="flex items-start justify-between">
               <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-4xl font-bold">{dashboardData.brand_name}</h1>
-                  <span className={`px-3 py-1 rounded-lg text-sm font-bold ${gradeColors[dashboardData.optimization_grade || dashboardData.grade]?.bg} ${gradeColors[dashboardData.optimization_grade || dashboardData.grade]?.text}`}>
-                    Optimization Grade {dashboardData.optimization_grade || dashboardData.grade}
-                  </span>
+                <h1 className="text-4xl font-bold">{dashboardData.brand_name}</h1>
+                <p className="text-white/40 mt-1">AI Visibility Report • {dashboardData.report_date}</p>
+              </div>
+              <button
+                onClick={() => { setStep('setup'); setGeneratedQuestions([]); setDashboardData(null); setSessionId(null); }}
+                className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] transition-all text-sm"
+              >
+                <RefreshCw className="w-4 h-4" /> New Analysis
+              </button>
+            </div>
+
+            {/* SECTION 1: EXECUTIVE SUMMARY */}
+            <div className="bg-gradient-to-br from-orange-500/10 via-transparent to-pink-500/10 rounded-3xl p-8 border border-orange-500/20">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center shrink-0">
+                  <FileText className="w-6 h-6 text-white" />
                 </div>
-                <p className="text-white/40">AI Visibility Report • {dashboardData.report_date}</p>
+                <div>
+                  <h2 className="text-xl font-bold">Executive Summary</h2>
+                  <p className="text-sm text-white/40">TL;DR of the most important findings</p>
+                </div>
               </div>
               
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <button 
-                    onClick={() => { fetchAllReports(); setShowReportDropdown(!showReportDropdown); }}
-                    className="flex items-center gap-2 px-5 py-3 bg-white/[0.05] border border-white/[0.08] rounded-xl text-sm hover:bg-white/[0.08] transition-all"
-                  >
-                    <Calendar className="w-4 h-4 text-white/50" />
-                    <span>View Past Reports</span>
-                    <ChevronDown className={`w-4 h-4 text-white/50 transition-transform ${showReportDropdown ? 'rotate-180' : ''}`} />
-                  </button>
-                  
-                  {showReportDropdown && (
-                    <div className="absolute right-0 mt-2 w-80 bg-[#12121a] border border-white/[0.08] rounded-2xl shadow-2xl shadow-black/50 overflow-hidden z-50">
-                      <div className="p-3 border-b border-white/[0.06]">
-                        <div className="text-xs text-white/40 uppercase tracking-wider">Recent Reports</div>
-                      </div>
-                      <div className="max-h-80 overflow-y-auto">
-                        {allReports.map(report => (
-                          <button
-                            key={report.id}
-                            onClick={() => loadReport(report.id)}
-                            className={`w-full px-4 py-3 flex items-center justify-between hover:bg-white/[0.05] transition-all ${selectedReportId === report.id ? 'bg-orange-500/10' : ''}`}
-                          >
-                            <div className="text-left">
-                              <div className="font-medium text-sm">{report.brand_name}</div>
-                              <div className="text-xs text-white/40">{report.report_date}</div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-lg font-bold">{report.visibility_score}</span>
-                              <span className={`text-xs px-2 py-0.5 rounded ${gradeColors[report.grade]?.bg} ${gradeColors[report.grade]?.text}`}>{report.grade}</span>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+              {/* Headline */}
+              <h3 className="text-2xl font-bold text-white/90 leading-relaxed mb-6">
+                {dashboardData.executive_summary?.headline || `${dashboardData.brand_name} AI Visibility Analysis Complete`}
+              </h3>
+              
+              {/* Paragraphs */}
+              {dashboardData.executive_summary?.paragraphs?.length > 0 ? (
+                <div className="space-y-4 mb-6">
+                  {dashboardData.executive_summary.paragraphs.map((p, i) => (
+                    <p key={i} className="text-white/70 leading-relaxed">{p}</p>
+                  ))}
                 </div>
+              ) : (
+                <p className="text-white/50 italic mb-6">Executive summary will be generated by AI analysis...</p>
+              )}
+              
+              {/* Bullet Points */}
+              {dashboardData.executive_summary?.bullets?.length > 0 && (
+                <div className="space-y-2">
+                  {dashboardData.executive_summary.bullets.map((bullet, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <div className="w-1.5 h-1.5 rounded-full bg-orange-400 mt-2 shrink-0" />
+                      <span className="text-white/70">{bullet}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
-                <button 
-                  onClick={() => dashboardData.deck_url && window.open(dashboardData.deck_url, '_blank')}
-                  disabled={!dashboardData.deck_url}
-                  className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-medium transition-all ${
-                    dashboardData.deck_url 
-                      ? 'bg-gradient-to-r from-orange-500 to-pink-500 text-white hover:shadow-lg hover:shadow-orange-500/25' 
-                      : 'bg-white/[0.05] text-white/30 cursor-not-allowed'
-                  }`}
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Download Deck</span>
-                </button>
+            {/* SECTION 2: BRAND RANKINGS (TOP 10 SOV) */}
+            <div className="bg-gradient-to-b from-white/[0.04] to-white/[0.02] rounded-3xl p-8 border border-white/[0.06]">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center shrink-0">
+                  <Award className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">Brand Rankings</h2>
+                  <p className="text-sm text-white/40">Top 10 brands by share of voice across all AI responses</p>
+                </div>
+              </div>
+              
+              {/* SOV Box */}
+              <div className="bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/20 rounded-2xl p-6 mb-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm text-white/50 uppercase tracking-wider mb-1">Share of Voice</div>
+                    <div className="text-5xl font-bold bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">
+                      {dashboardData.brand_sov || 0}%
+                    </div>
+                  </div>
+                  <div className="text-right max-w-md">
+                    <p className="text-white/70 leading-relaxed">
+                      {dashboardData.brand_rank 
+                        ? `${dashboardData.brand_name} ranks #${dashboardData.brand_rank} in overall AI visibility. ${dashboardData.brand_rank <= 3 ? 'Strong competitive position with room for continued growth.' : 'Opportunity exists to increase presence through targeted optimization.'}`
+                        : 'Ranking data will populate after analysis.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Top 10 List */}
+              <div className="space-y-3">
+                {(dashboardData.brand_rankings || []).map((brand, i) => (
+                  <div key={i} className={`flex items-center gap-4 p-4 rounded-xl ${brand.is_tracked_brand ? 'bg-orange-500/10 border border-orange-500/20' : 'bg-white/[0.02]'}`}>
+                    <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${i < 3 ? 'bg-gradient-to-br from-orange-500 to-pink-500 text-white' : 'bg-white/10 text-white/50'}`}>
+                      {i + 1}
+                    </span>
+                    <div className="flex-1">
+                      <span className={`font-medium ${brand.is_tracked_brand ? 'text-orange-400 font-bold' : 'text-white/80'}`}>
+                        {brand.brand}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className={`text-lg font-bold ${brand.is_tracked_brand ? 'text-orange-400' : 'text-white/60'}`}>{brand.share_of_voice}%</span>
+                      <span className="text-xs text-white/40 ml-2">({brand.mentions} mentions)</span>
+                    </div>
+                  </div>
+                ))}
+                {(!dashboardData.brand_rankings || dashboardData.brand_rankings.length === 0) && (
+                  <div className="text-center py-8 text-white/40">Brand rankings will populate after analysis</div>
+                )}
               </div>
             </div>
 
-            {/* EXECUTIVE SUMMARY */}
-            {dashboardData.executive_summary && (
-              <div className="bg-gradient-to-br from-orange-500/5 via-transparent to-pink-500/5 rounded-3xl p-8 border border-orange-500/20">
-                <div className="flex items-start gap-6">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center shrink-0">
-                    <FileText className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <h2 className="text-xl font-bold mb-2">Executive Summary</h2>
-                    <p className="text-lg text-white/70 leading-relaxed mb-6">{dashboardData.executive_summary.headline}</p>
-                    
-                    <div className="grid grid-cols-4 gap-4 mb-6">
-                      {dashboardData.executive_summary.keyFindings.map((finding, i) => (
-                        <div key={i} className={`p-4 rounded-xl border ${
-                          finding.status === 'strong' ? 'bg-emerald-500/10 border-emerald-500/20' :
-                          finding.status === 'moderate' ? 'bg-amber-500/10 border-amber-500/20' :
-                          'bg-red-500/10 border-red-500/20'
-                        }`}>
-                          <div className="text-xs text-white/40 uppercase tracking-wider mb-1">{finding.metric}</div>
-                          <div className={`text-2xl font-bold mb-2 ${
-                            finding.status === 'strong' ? 'text-emerald-400' :
-                            finding.status === 'moderate' ? 'text-amber-400' :
-                            'text-red-400'
-                          }`}>{finding.value}</div>
-                          <p className="text-xs text-white/50 leading-relaxed">{finding.insight}</p>
-                        </div>
-                      ))}
+            {/* SECTION 3: SENTIMENT RANKINGS */}
+            <div className="bg-gradient-to-b from-white/[0.04] to-white/[0.02] rounded-3xl p-8 border border-white/[0.06]">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center shrink-0">
+                  <Activity className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">Sentiment Rankings</h2>
+                  <p className="text-sm text-white/40">Brands ranked by how positively AI platforms perceive them</p>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                {(dashboardData.sentiment_rankings || []).map((brand, i) => (
+                  <div key={i} className={`flex items-center gap-4 p-4 rounded-xl ${brand.is_tracked_brand ? 'bg-orange-500/10 border border-orange-500/20' : 'bg-white/[0.02]'}`}>
+                    <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${i < 3 ? 'bg-gradient-to-br from-emerald-500 to-cyan-500 text-white' : 'bg-white/10 text-white/50'}`}>
+                      {i + 1}
+                    </span>
+                    <div className="flex-1">
+                      <span className={`font-medium ${brand.is_tracked_brand ? 'text-orange-400 font-bold' : 'text-white/80'}`}>
+                        {brand.brand}
+                      </span>
                     </div>
+                    <div className={`text-lg font-bold ${brand.sentiment >= 70 ? 'text-emerald-400' : brand.sentiment >= 50 ? 'text-amber-400' : 'text-red-400'}`}>
+                      {brand.sentiment}%
+                    </div>
+                  </div>
+                ))}
+                {(!dashboardData.sentiment_rankings || dashboardData.sentiment_rankings.length === 0) && (
+                  <div className="text-center py-8 text-white/40">Sentiment rankings will populate after analysis</div>
+                )}
+              </div>
+            </div>
 
-                    {dashboardData.executive_summary.criticalGaps && (
-                      <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl mb-4">
-                        <div className="flex items-center gap-2 mb-1">
-                          <AlertCircle className="w-4 h-4 text-red-400" />
-                          <span className="text-xs font-bold text-red-400 uppercase">Critical Gap</span>
+            {/* SECTION 4: PLATFORM CONSISTENCY */}
+            <div className="bg-gradient-to-b from-white/[0.04] to-white/[0.02] rounded-3xl p-8 border border-white/[0.06]">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center shrink-0">
+                  <BarChart3 className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">Platform Consistency</h2>
+                  <p className="text-sm text-white/40">How consistently {dashboardData.brand_name} appears across AI platforms</p>
+                </div>
+              </div>
+              
+              {dashboardData.platform_consistency?.rates && (
+                <>
+                  <div className="grid grid-cols-4 gap-4 mb-6">
+                    {Object.entries(dashboardData.platform_consistency.rates).map(([platform, rate]) => (
+                      <div key={platform} className={`p-4 rounded-xl text-center ${platform === dashboardData.platform_consistency.strongest ? 'bg-emerald-500/10 border border-emerald-500/20' : platform === dashboardData.platform_consistency.weakest ? 'bg-red-500/10 border border-red-500/20' : 'bg-white/[0.03]'}`}>
+                        <img src={platformLogos[platform]} alt={platform} className="w-8 h-8 mx-auto mb-2 object-contain" />
+                        <div className={`text-2xl font-bold ${platform === dashboardData.platform_consistency.strongest ? 'text-emerald-400' : platform === dashboardData.platform_consistency.weakest ? 'text-red-400' : ''}`}>
+                          {rate}%
                         </div>
-                        <p className="text-sm text-white/70">{dashboardData.executive_summary.criticalGaps}</p>
+                        <div className="text-xs text-white/40 mt-1">{platformNames[platform]}</div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className={`p-4 rounded-xl ${dashboardData.platform_consistency.is_consistent ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-amber-500/10 border border-amber-500/20'}`}>
+                    <p className="text-white/70">
+                      {dashboardData.platform_consistency.is_consistent 
+                        ? `${dashboardData.brand_name} shows consistent visibility across platforms with only ${dashboardData.platform_consistency.variance}% variance.`
+                        : `${dashboardData.brand_name} has ${dashboardData.platform_consistency.variance}% variance between platforms. Strong on ${platformNames[dashboardData.platform_consistency.strongest]}, weaker on ${platformNames[dashboardData.platform_consistency.weakest]}.`}
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* SECTION 5: PLATFORM DEEP DIVES */}
+            <div className="bg-gradient-to-b from-white/[0.04] to-white/[0.02] rounded-3xl p-8 border border-white/[0.06]">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center shrink-0">
+                  <Search className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">Platform Deep Dives</h2>
+                  <p className="text-sm text-white/40">Detailed analysis of how each AI platform perceives {dashboardData.brand_name}</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-6">
+                {Object.entries(dashboardData.platform_deep_dives || {}).map(([platform, data]) => (
+                  <div key={platform} className="bg-white/[0.03] rounded-2xl p-6 border border-white/[0.06] hover:border-white/[0.12] transition-all">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-12 h-12 rounded-xl bg-white/[0.05] flex items-center justify-center">
+                        <img src={platformLogos[platform]} alt={platform} className="w-7 h-7 object-contain" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">{platformNames[platform]}</h3>
+                        <span className={`text-xs px-2 py-0.5 rounded ${data.perception === 'positive' ? 'bg-emerald-500/20 text-emerald-400' : data.perception === 'neutral' ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400'}`}>
+                          {data.perception} perception
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-3 mb-4">
+                      <div className="text-center p-2 bg-white/[0.02] rounded-lg">
+                        <div className="text-lg font-bold">{data.mention_rate}%</div>
+                        <div className="text-xs text-white/40">Mention</div>
+                      </div>
+                      <div className="text-center p-2 bg-white/[0.02] rounded-lg">
+                        <div className={`text-lg font-bold ${data.sentiment >= 70 ? 'text-emerald-400' : ''}`}>{data.sentiment}%</div>
+                        <div className="text-xs text-white/40">Sentiment</div>
+                      </div>
+                      <div className="text-center p-2 bg-white/[0.02] rounded-lg">
+                        <div className={`text-lg font-bold ${data.recommendation_rate >= 50 ? 'text-emerald-400' : data.recommendation_rate === 0 ? 'text-red-400' : ''}`}>{data.recommendation_rate}%</div>
+                        <div className="text-xs text-white/40">Recommend</div>
+                      </div>
+                    </div>
+                    
+                    {data.top_competitors_mentioned?.length > 0 && (
+                      <div className="mb-4">
+                        <span className="text-xs text-white/40">Competitors frequently mentioned:</span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {data.top_competitors_mentioned.map((c, i) => (
+                            <span key={i} className="text-xs px-2 py-0.5 bg-white/[0.05] rounded text-white/60">{c.name}</span>
+                          ))}
+                        </div>
                       </div>
                     )}
-
-                    <div className="p-4 bg-white/[0.03] border border-white/[0.06] rounded-xl">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Target className="w-4 h-4 text-orange-400" />
-                        <span className="text-xs font-bold text-orange-400 uppercase">Top Optimization Opportunity</span>
-                      </div>
-                      <p className="text-sm text-white/70">{dashboardData.executive_summary.topOpportunity}</p>
-                    </div>
+                    
+                    <button className="w-full py-2 rounded-xl bg-gradient-to-r from-orange-500/20 to-pink-500/20 border border-orange-500/30 text-sm font-medium text-orange-400 hover:from-orange-500/30 hover:to-pink-500/30 transition-all flex items-center justify-center gap-2">
+                      <Lightbulb className="w-4 h-4" />
+                      Dig Deeper
+                    </button>
                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* Score Cards */}
-            <div className="grid grid-cols-4 gap-4">
-              <div className="bg-gradient-to-br from-orange-500/10 via-transparent to-pink-500/10 rounded-2xl p-6 border border-orange-500/20">
-                <div className="text-xs text-white/50 uppercase tracking-wider mb-2">Visibility Score</div>
-                <div className="text-4xl font-bold bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">{dashboardData.visibility_score}</div>
-                <div className="text-xs text-white/40 mt-2">Raw AI presence</div>
-              </div>
-              <div className="bg-gradient-to-b from-white/[0.04] to-white/[0.02] rounded-2xl p-6 border border-white/[0.06]">
-                <div className="text-xs text-white/50 uppercase tracking-wider mb-2">Query Coverage</div>
-                <div className="text-4xl font-bold">{Math.round(dashboardData.avg_mention || 0)}%</div>
-                <div className="text-xs text-white/40 mt-2">Mentioned in AI responses</div>
-              </div>
-              <div className="bg-gradient-to-b from-white/[0.04] to-white/[0.02] rounded-2xl p-6 border border-white/[0.06]">
-                <div className="text-xs text-white/50 uppercase tracking-wider mb-2">Recommendation Rate</div>
-                <div className={`text-4xl font-bold ${(dashboardData.avg_recommendation || 0) < 30 ? 'text-red-400' : (dashboardData.avg_recommendation || 0) >= 60 ? 'text-emerald-400' : 'text-amber-400'}`}>
-                  {Math.round(dashboardData.avg_recommendation || 0)}%
-                </div>
-                <div className="text-xs text-white/40 mt-2">Actively recommended</div>
-              </div>
-              <div className="bg-gradient-to-b from-white/[0.04] to-white/[0.02] rounded-2xl p-6 border border-white/[0.06]">
-                <div className="text-xs text-white/50 uppercase tracking-wider mb-2">Awareness→Rec Gap</div>
-                <div className={`text-4xl font-bold ${(dashboardData.mention_recommendation_gap || 0) > 30 ? 'text-red-400' : 'text-emerald-400'}`}>
-                  {Math.round(dashboardData.mention_recommendation_gap || 0)}%
-                </div>
-                <div className="text-xs text-white/40 mt-2">Optimization potential</div>
+                ))}
               </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-4">
-              {Object.entries(dashboardData.platforms).map(([platform, data]) => (
-                <div key={platform} className="bg-gradient-to-b from-white/[0.04] to-white/[0.02] rounded-2xl p-6 border border-white/[0.06] hover:border-white/[0.12] transition-all">
-                  <div className="flex items-center justify-between mb-5">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-white/[0.05] flex items-center justify-center">
-                        <img src={platformLogos[platform]} alt={platform} className="w-6 h-6 object-contain" />
-                      </div>
-                      <span className="font-semibold">{platformNames[platform]}</span>
-                    </div>
-                    {getTrendIcon(data.trend)}
-                  </div>
-                  <div className="text-4xl font-bold mb-5">{data.score}</div>
-                  <div className="space-y-3 text-sm">
-                    <div className="flex justify-between items-center">
-                      <span className="text-white/40">Mention Rate</span>
-                      <span className="font-medium">{data.mention}%</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-white/40">Sentiment</span>
-                      <span className="font-medium">{data.sentiment}%</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-white/40">Recommend</span>
-                      <span className={`font-medium ${data.recommendation === 0 ? 'text-red-400' : data.recommendation >= 70 ? 'text-emerald-400' : ''}`}>{data.recommendation}%</span>
-                    </div>
-                  </div>
+            {/* SECTION 6: BRAND KEYWORDS */}
+            <div className="bg-gradient-to-b from-white/[0.04] to-white/[0.02] rounded-3xl p-8 border border-white/[0.06]">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center shrink-0">
+                  <MessageSquare className="w-6 h-6 text-white" />
                 </div>
-              ))}
+                <div>
+                  <h2 className="text-xl font-bold">Brand Keywords</h2>
+                  <p className="text-sm text-white/40">Terms AI platforms most frequently associate with {dashboardData.brand_name}</p>
+                </div>
+              </div>
+              
+              <div className="flex flex-wrap gap-3">
+                {(dashboardData.brand_keywords || []).map((kw, i) => (
+                  <div key={i} className="px-4 py-2 bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/20 rounded-xl">
+                    <span className="font-medium capitalize">{kw.keyword}</span>
+                    <span className="text-xs text-white/40 ml-2">({kw.frequency})</span>
+                  </div>
+                ))}
+                {(!dashboardData.brand_keywords || dashboardData.brand_keywords.length === 0) && (
+                  <div className="text-center py-8 text-white/40 w-full">Keywords will populate after analysis</div>
+                )}
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
-              <div className="bg-gradient-to-b from-white/[0.04] to-white/[0.02] rounded-3xl p-8 border border-white/[0.06]">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center">
-                    <AlertCircle className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">Priority Alerts</h3>
-                    <p className="text-sm text-white/40">{dashboardData.alerts.length} items need attention</p>
-                  </div>
+            {/* SECTION 7: RESPONSE ACCURACY */}
+            <div className="bg-gradient-to-b from-white/[0.04] to-white/[0.02] rounded-3xl p-8 border border-white/[0.06]">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center shrink-0">
+                  <CheckCircle className="w-6 h-6 text-white" />
                 </div>
+                <div>
+                  <h2 className="text-xl font-bold">Response Accuracy</h2>
+                  <p className="text-sm text-white/40">Flagged inaccuracies or outdated information about {dashboardData.brand_name}</p>
+                </div>
+              </div>
+              
+              {(dashboardData.accuracy_flags || []).length > 0 ? (
                 <div className="space-y-3">
-                  {dashboardData.alerts.map((alert, i) => (
-                    <div key={i} className={`p-4 rounded-xl border ${
-                      alert.type === 'critical' ? 'bg-red-500/10 border-red-500/20' :
-                      alert.type === 'warning' ? 'bg-amber-500/10 border-amber-500/20' :
-                      'bg-emerald-500/10 border-emerald-500/20'
-                    }`}>
+                  {dashboardData.accuracy_flags.map((flag, i) => (
+                    <div key={i} className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
                       <div className="flex items-start gap-3">
-                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
-                          alert.type === 'critical' ? 'bg-red-500/20 text-red-400' :
-                          alert.type === 'warning' ? 'bg-amber-500/20 text-amber-400' :
-                          'bg-emerald-500/20 text-emerald-400'
-                        }`}>{alert.type}</span>
-                        <span className="text-sm text-white/80 leading-relaxed">{alert.message}</span>
+                        <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-medium text-red-400">Inaccuracy Detected</span>
+                          <p className="text-sm text-white/70 mt-1">{flag.issue}</p>
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
-
-              <div className="bg-gradient-to-b from-white/[0.04] to-white/[0.02] rounded-3xl p-8 border border-white/[0.06]">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center">
-                    <Zap className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">Recommended Actions</h3>
-                    <p className="text-sm text-white/40">Prioritized by impact</p>
-                  </div>
+              ) : (
+                <div className="p-6 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center">
+                  <CheckCircle className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
+                  <p className="text-emerald-400 font-medium">No accuracy issues detected</p>
+                  <p className="text-sm text-white/50 mt-1">AI platforms appear to have accurate information about {dashboardData.brand_name}</p>
                 </div>
-                <div className="space-y-4">
-                  {dashboardData.actions.map((action, i) => (
-                    <div key={i} className="flex items-start gap-4">
-                      <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
-                        action.priority === 'high' ? 'bg-red-500/20 text-red-400' :
-                        action.priority === 'medium' ? 'bg-amber-500/20 text-amber-400' :
-                        'bg-white/10 text-white/50'
-                      }`}>{i + 1}</span>
-                      <div>
-                        <div className="font-medium text-white/90">{action.action}</div>
-                        <div className="text-sm text-white/40 mt-1">{action.impact}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              )}
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
-              <div className="bg-gradient-to-b from-white/[0.04] to-white/[0.02] rounded-3xl p-8 border border-white/[0.06]">
-                <h3 className="text-lg font-semibold mb-6">Share of Voice in AI Responses</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium">{dashboardData.brand_name}</span>
-                        <span className="text-orange-400 font-bold">{dashboardData.share_of_voice.brand}%</span>
-                      </div>
-                      <div className="h-3 bg-white/10 rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-orange-500 to-pink-500 rounded-full" style={{ width: `${dashboardData.share_of_voice.brand}%` }} />
-                      </div>
-                    </div>
-                  </div>
-                  {dashboardData.share_of_voice.competitors.map((c, i) => (
-                    <div key={i} className="flex items-center gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-white/60">{c.name}</span>
-                          <span className="text-white/40">{c.share}%</span>
-                        </div>
-                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                          <div className="h-full bg-white/30 rounded-full" style={{ width: `${c.share}%` }} />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+            {/* SECTION 8: SOURCE ATTRIBUTION */}
+            <div className="bg-gradient-to-b from-white/[0.04] to-white/[0.02] rounded-3xl p-8 border border-white/[0.06]">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center shrink-0">
+                  <ExternalLink className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">Source Attribution</h2>
+                  <p className="text-sm text-white/40">Sources AI platforms cite when discussing {dashboardData.brand_name}</p>
                 </div>
               </div>
-
-              <div className="bg-gradient-to-b from-white/[0.04] to-white/[0.02] rounded-3xl p-8 border border-white/[0.06]">
-                <h3 className="text-lg font-semibold mb-6">Competitor Intelligence</h3>
-                <div className="space-y-4">
-                  {dashboardData.competitor_context.length > 0 ? dashboardData.competitor_context.map((c, i) => (
+              
+              {(dashboardData.source_attribution || []).length > 0 ? (
+                <div className="space-y-3">
+                  {dashboardData.source_attribution.map((source, i) => (
                     <div key={i} className="flex items-center justify-between p-4 bg-white/[0.03] rounded-xl">
-                      <div>
-                        <div className="font-medium">{c.competitor}</div>
-                        <div className="text-sm text-white/40 mt-1">{c.context}</div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                          <ExternalLink className="w-4 h-4 text-white/50" />
+                        </div>
+                        <span className="font-medium">{source.source}</span>
                       </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold">{c.mentions}</div>
-                        <div className="text-xs text-white/40">mentions</div>
+                      <span className="text-white/40">{source.citations} citations</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-white/40">Source data primarily available from Perplexity responses</div>
+              )}
+            </div>
+
+            {/* SECTION 9: QUESTION-BY-QUESTION ANALYSIS */}
+            <div className="bg-gradient-to-b from-white/[0.04] to-white/[0.02] rounded-3xl p-8 border border-white/[0.06]">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center shrink-0">
+                  <FileText className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">Question-by-Question Analysis</h2>
+                  <p className="text-sm text-white/40">{dashboardData.brand_name} appeared in {dashboardData.brand_coverage || 0}% of queries</p>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                {(dashboardData.question_breakdown || []).map((q, qIndex) => (
+                  <div key={qIndex} className="border border-white/[0.06] rounded-2xl overflow-hidden">
+                    {/* Question Header */}
+                    <div className={`px-6 py-4 flex items-start justify-between ${q.brand_mentioned ? 'bg-emerald-500/5' : 'bg-white/[0.02]'}`}>
+                      <div className="flex items-start gap-4">
+                        <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ${q.brand_mentioned ? 'bg-emerald-500 text-white' : 'bg-white/10 text-white/50'}`}>
+                          {q.question_number}
+                        </span>
+                        <div>
+                          <p className="font-medium text-white/90">{q.question_text}</p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <span className="px-2 py-0.5 rounded text-xs bg-white/10 text-white/50">{q.category}</span>
+                            {q.brand_mentioned ? (
+                              <span className="px-2 py-0.5 rounded text-xs bg-emerald-500/20 text-emerald-400">Brand Mentioned</span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded text-xs bg-red-500/20 text-red-400">Not Mentioned</span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  )) : (
-                    <div className="text-center py-8 text-white/40">No competitor data available</div>
-                  )}
-                </div>
+                    
+                    {/* Expandable Platform Responses */}
+                    <div className="divide-y divide-white/[0.04]">
+                      {Object.entries(q.platforms).map(([platform, data]) => {
+                        const isExpanded = expandedResponses[`${qIndex}-${platform}`];
+                        return (
+                          <div key={platform} className="px-6 py-4">
+                            <button
+                              onClick={() => toggleResponseExpand(qIndex, platform)}
+                              className="w-full text-left"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <img src={platformLogos[platform]} alt={platform} className="w-6 h-6 object-contain" />
+                                  <span className="font-medium text-sm">{platformNames[platform]}</span>
+                                </div>
+                                <ChevronDown className={`w-4 h-4 text-white/40 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                              </div>
+                            </button>
+                            
+                            {isExpanded && data.full_response && (
+                              <div className="mt-4 p-4 bg-white/[0.03] rounded-xl">
+                                <p className="text-sm text-white/70 leading-relaxed whitespace-pre-wrap">{data.full_response}</p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Key Insights */}
-            {dashboardData.insights && dashboardData.insights.length > 0 && (
-              <div className="bg-gradient-to-b from-white/[0.04] to-white/[0.02] rounded-3xl p-8 border border-white/[0.06]">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">Key Insights</h3>
-                    <p className="text-sm text-white/40">Patterns detected across AI platforms</p>
-                  </div>
+            {/* SECTION 10: RECOMMENDATIONS */}
+            <div className="bg-gradient-to-br from-orange-500/10 via-transparent to-pink-500/10 rounded-3xl p-8 border border-orange-500/20">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center shrink-0">
+                  <Lightbulb className="w-6 h-6 text-white" />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  {dashboardData.insights.map((insight, i) => (
-                    <div key={i} className={`p-5 rounded-xl border ${
-                      insight.type === 'gap' ? 'bg-amber-500/10 border-amber-500/20' :
-                      insight.type === 'strength' ? 'bg-emerald-500/10 border-emerald-500/20' :
-                      'bg-white/[0.03] border-white/[0.06]'
-                    }`}>
-                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
-                        insight.type === 'gap' ? 'bg-amber-500/20 text-amber-400' :
-                        insight.type === 'strength' ? 'bg-emerald-500/20 text-emerald-400' :
-                        'bg-white/10 text-white/50'
-                      }`}>{insight.type}</span>
-                      <p className="text-sm text-white/80 mt-3 leading-relaxed">{insight.insight}</p>
-                    </div>
-                  ))}
+                <div>
+                  <h2 className="text-xl font-bold">Recommendations & Next Steps</h2>
+                  <p className="text-sm text-white/40">Priority actions to improve AI visibility</p>
                 </div>
               </div>
-            )}
-
-            {/* Topic Associations */}
-            {dashboardData.topic_associations && dashboardData.topic_associations.length > 0 && (
-              <div className="bg-gradient-to-b from-white/[0.04] to-white/[0.02] rounded-3xl p-8 border border-white/[0.06]">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center">
-                    <Target className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">Topic & Context Associations</h3>
-                    <p className="text-sm text-white/40">Themes AI most frequently associates with your brand</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  {dashboardData.topic_associations.map((topic, i) => (
-                    <div key={i} className="p-4 bg-white/[0.03] rounded-xl border border-white/[0.06]">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium capitalize">{topic.topic}</span>
-                        <span className="text-xs text-white/40">{topic.count} mentions</span>
-                      </div>
-                      <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-gradient-to-r from-orange-500 to-pink-500 rounded-full transition-all"
-                          style={{ width: `${topic.strength}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Question-by-Question Breakdown */}
-            {dashboardData.question_breakdown && dashboardData.question_breakdown.length > 0 && (
-              <div className="bg-gradient-to-b from-white/[0.04] to-white/[0.02] rounded-3xl p-8 border border-white/[0.06]">
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">Question-by-Question Analysis</h3>
-                    <p className="text-sm text-white/40">How each AI platform responded to your tracked questions</p>
-                  </div>
-                </div>
-                
-                <div className="space-y-6">
-                  {dashboardData.question_breakdown.map((q, qIndex) => (
-                    <div key={qIndex} className="border border-white/[0.06] rounded-2xl overflow-hidden">
-                      {/* Question Header */}
-                      <div className="bg-white/[0.03] px-6 py-4 flex items-start justify-between">
-                        <div className="flex items-start gap-4">
-                          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center text-sm font-bold shrink-0">{q.question_number}</span>
-                          <div>
-                            <p className="font-medium text-white/90">{q.question_text}</p>
-                            <span className="inline-block mt-2 px-2 py-0.5 rounded text-xs bg-white/10 text-white/50">{q.category}</span>
-                          </div>
+              
+              <div className="space-y-4">
+                {(dashboardData.recommendations || []).map((rec, i) => (
+                  <div key={i} className={`p-5 rounded-xl border ${rec.priority === 'high' ? 'bg-red-500/10 border-red-500/20' : rec.priority === 'medium' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-white/[0.03] border-white/[0.06]'}`}>
+                    <div className="flex items-start gap-4">
+                      <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ${rec.priority === 'high' ? 'bg-red-500/20 text-red-400' : rec.priority === 'medium' ? 'bg-amber-500/20 text-amber-400' : 'bg-white/10 text-white/50'}`}>
+                        {i + 1}
+                      </span>
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`text-xs font-bold uppercase ${rec.priority === 'high' ? 'text-red-400' : rec.priority === 'medium' ? 'text-amber-400' : 'text-white/50'}`}>
+                            {rec.priority} priority
+                          </span>
+                          {rec.category && <span className="text-xs text-white/30">• {rec.category}</span>}
                         </div>
-                        <div className="flex items-center gap-4 text-xs">
-                          <div className="flex items-center gap-2">
-                            <span className="text-white/40">Best:</span>
-                            <span className="px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 font-medium">{q.best_platform}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-white/40">Worst:</span>
-                            <span className="px-2 py-1 rounded bg-red-500/20 text-red-400 font-medium">{q.worst_platform}</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Platform Responses */}
-                      <div className="divide-y divide-white/[0.04]">
-                        {Object.entries(q.platforms).map(([platform, data]) => {
-                          const isExpanded = expandedResponses[`${qIndex}-${platform}`];
-                          return (
-                            <div key={platform} className={`px-6 py-5 ${platform === q.best_platform ? 'bg-emerald-500/5' : platform === q.worst_platform ? 'bg-red-500/5' : ''}`}>
-                              <div className="flex items-start gap-4">
-                                <div className="w-10 h-10 rounded-xl bg-white/[0.05] flex items-center justify-center shrink-0">
-                                  <img src={platformLogos[platform]} alt={platform} className="w-6 h-6 object-contain" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center justify-between mb-3">
-                                    <span className="font-medium">{platformNames[platform]}</span>
-                                    <div className="flex items-center gap-4">
-                                      <div className="flex items-center gap-3">
-                                        <div className="flex items-center gap-1.5 text-xs">
-                                          <span className="text-white/40">Score</span>
-                                          <span className={`font-bold ${data.overall >= 80 ? 'text-emerald-400' : data.overall >= 60 ? 'text-amber-400' : 'text-red-400'}`}>{data.overall}</span>
-                                        </div>
-                                        <div className="flex items-center gap-1.5 text-xs">
-                                          <span className="text-white/40">Mention</span>
-                                          <span className="font-medium">{data.mention}%</span>
-                                        </div>
-                                        <div className="flex items-center gap-1.5 text-xs">
-                                          <span className="text-white/40">Sentiment</span>
-                                          <span className="font-medium">{data.sentiment}%</span>
-                                        </div>
-                                        <div className="flex items-center gap-1.5 text-xs">
-                                          <span className="text-white/40">Rec</span>
-                                          <span className={`font-medium ${data.recommendation >= 70 ? 'text-emerald-400' : data.recommendation === 0 ? 'text-red-400' : ''}`}>{data.recommendation}%</span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  
-                                  {/* Expandable Response */}
-                                  {data.full_response && (
-                                    <div className="mb-3">
-                                      <button
-                                        onClick={() => toggleResponseExpand(qIndex, platform)}
-                                        className="w-full text-left"
-                                      >
-                                        <div className={`bg-white/[0.03] rounded-xl p-4 border border-white/[0.06] hover:border-white/[0.12] transition-all ${isExpanded ? 'border-orange-500/30' : ''}`}>
-                                          <div className="flex items-start justify-between gap-4">
-                                            <p className={`text-sm text-white/60 leading-relaxed ${isExpanded ? '' : 'line-clamp-3'}`}>
-                                              {isExpanded ? data.full_response : data.response_summary}
-                                            </p>
-                                            <ChevronDown className={`w-4 h-4 text-white/40 shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                                          </div>
-                                          {!isExpanded && data.full_response && data.full_response.length > 200 && (
-                                            <span className="text-xs text-orange-400 mt-2 inline-block">Click to expand full response</span>
-                                          )}
-                                        </div>
-                                      </button>
-                                    </div>
-                                  )}
-                                  
-                                  {/* Commentary */}
-                                  {data.commentary && (
-                                    <div className="flex items-start gap-2 p-3 bg-orange-500/5 rounded-lg border border-orange-500/10">
-                                      <Sparkles className="w-3 h-3 text-orange-400 shrink-0 mt-0.5" />
-                                      <div>
-                                        <span className="text-xs text-orange-400 font-medium">AI Analysis:</span>
-                                        <p className="text-xs text-white/60 leading-relaxed mt-1">{data.commentary}</p>
-                                      </div>
-                                    </div>
-                                  )}
-                                  
-                                  {/* Competitors Mentioned */}
-                                  {data.competitors_mentioned && (
-                                    <div className="flex items-center gap-2 mt-3">
-                                      <span className="text-xs text-white/30">Competitors mentioned:</span>
-                                      <div className="flex gap-1">
-                                        {data.competitors_mentioned.split(',').map((comp, i) => (
-                                          <span key={i} className="text-xs px-2 py-0.5 bg-white/[0.05] rounded text-white/50">{comp.trim()}</span>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
+                        <div className="font-medium text-white/90">{rec.action}</div>
+                        {rec.detail && <p className="text-sm text-white/50 mt-1">{rec.detail}</p>}
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
+                {(!dashboardData.recommendations || dashboardData.recommendations.length === 0) && (
+                  <div className="text-center py-8 text-white/40">Recommendations will be generated by AI analysis</div>
+                )}
               </div>
-            )}
+            </div>
 
             <div className="text-center pt-8">
               <button

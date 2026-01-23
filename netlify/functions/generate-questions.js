@@ -1,7 +1,6 @@
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || '';
 
 exports.handler = async (event) => {
-  // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
@@ -19,31 +18,46 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { brandName, competitors, keyMessages, questionCount } = JSON.parse(event.body);
+    const { brandData, questionCount } = JSON.parse(event.body);
     
-    const messagesList = keyMessages.filter(m => m.trim()).join(', ');
-    
-    const prompt = `You are an AI Visibility strategist helping measure organic brand visibility. Generate exactly ${questionCount} search questions that a potential buyer would ask AI assistants (ChatGPT, Claude, Gemini, Perplexity) when researching vendors in the same category as "${brandName}".
+    const prompt = `Generate ${questionCount} questions that real consumers would ask AI assistants when looking to purchase a product/service in this category.
+
+Brand Category: ${brandData.category}
+Industry: ${brandData.industry}
+Target Audience: ${brandData.target_audience.join(', ')}
+Key Features: ${brandData.key_features.join(', ')}
+Key Benefits: ${brandData.key_benefits.join(', ')}
+Price Tier: ${brandData.price_tier}
+Use Cases: ${brandData.use_cases.join(', ')}
 
 CRITICAL RULES:
-- NEVER include "${brandName}" in any question
-- NEVER include any competitor names in questions
-- Questions must be generic category/industry searches that a buyer would naturally ask
-- Focus on the buyer journey: awareness, research, evaluation, decision
+1. Every question MUST ask for recommendations, suggestions, rankings, or "best" options
+2. Questions should be what real buyers ask when ready to purchase
+3. Do NOT mention the brand name "${brandData.brand_name}" in any question
+4. Do NOT mention any competitor names
+5. Questions should trigger AI to list/recommend specific products or services
 
-The brand operates in a space with these key value propositions: ${messagesList || 'not specified'}
+REQUIRED QUESTION FORMATS (use variety):
+- "What are the best [category] for [use case]?"
+- "Which [category] do you recommend for [audience]?"
+- "Top [number] [category] for [specific need]?"
+- "Best [category] under $[price] / for [budget]?"
+- "Best [category] with [specific feature]?"
+- "What [category] should I use for [benefit/outcome]?"
+- "Recommend a [category] that [specific requirement]"
+- "What's the most [adjective] [category] for [use case]?"
+- "What [category] do experts recommend for [scenario]?"
+- "List the leading [category] for [industry/segment]"
 
-Generate questions across these buyer journey stages (distribute evenly):
-1. AWARENESS - General category questions ("What tools help with X?", "How do companies solve Y?")
-2. RESEARCH - Exploring options ("Best platforms for X", "Top solutions for Y", "Leading vendors in Z")
-3. EVALUATION - Comparing features ("What features matter most in X?", "How to evaluate Y tools?")
-4. CONSIDERATION - Use case fit ("What X solution is best for enterprise?", "Which Y platform works for Z use case?")
-5. DECISION - Final selection ("How to choose between X solutions?", "What should I look for in a Y vendor?")
+Distribute across buyer journey stages:
+- AWARENESS (30%): "What tools exist for X?", "Best ways to solve Y"
+- CONSIDERATION (40%): "Top X for Y", "Best X with feature Z", "Recommend X for use case"
+- DECISION (30%): "Which X should I choose for Y?", "Best X for my specific needs"
 
-The questions should mimic what a real buyer would type when searching for a new vendor - generic industry terms only, NO brand names.
+Return ONLY a JSON array:
+[{"text": "question text", "category": "Awareness|Consideration|Decision"}]
 
-Return ONLY a JSON array with objects containing "text" and "category" fields. No other text.
-Example: [{"text": "What are the best consumer research platforms?", "category": "Research"}, {"text": "How do enterprises gather real-time customer insights?", "category": "Awareness"}]`;
+No explanation. JSON only.`;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -54,7 +68,7 @@ Example: [{"text": "What are the best consumer research platforms?", "category":
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 2048,
+        max_tokens: 2500,
         messages: [{ role: 'user', content: prompt }]
       })
     });
@@ -72,7 +86,6 @@ Example: [{"text": "What are the best consumer research platforms?", "category":
     const data = await response.json();
     const content = data.content[0].text;
     
-    // Parse JSON from response
     const jsonMatch = content.match(/\[[\s\S]*\]/);
     if (!jsonMatch) {
       return {

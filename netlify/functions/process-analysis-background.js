@@ -249,7 +249,9 @@ async function saveToAirtable(results, sessionId) {
         const data = await response.json();
         createdRecords.push(...(data.records || []));
       } else {
-        console.error(`Airtable error: ${response.status}`);
+        const errorBody = await response.text();
+        console.error(`Airtable error: ${response.status} - ${errorBody}`);
+        console.error(`Token prefix: ${AIRTABLE_API_KEY?.substring(0, 10)}...`);
       }
     } catch (error) {
       console.error("Airtable save error:", error);
@@ -545,7 +547,9 @@ async function saveDashboardOutput(analysis, runId, sessionId, brandLogo) {
       const data = await response.json();
       return data.records?.[0] || {};
     }
-    console.error(`Dashboard Output error: ${response.status}`);
+    const errorBody = await response.text();
+    console.error(`Dashboard Output error: ${response.status} - ${errorBody}`);
+    console.error(`Token prefix: ${AIRTABLE_API_KEY?.substring(0, 10)}...`);
     return {};
   } catch (error) {
     console.error("Dashboard save error:", error);
@@ -697,9 +701,9 @@ async function processAnalysis(data) {
   return aggregatedAnalysis;
 }
 
-// Netlify Background Function handler (CommonJS format for compatibility)
+// Netlify Background Function handler
 // The "-background" suffix in the filename enables background execution (up to 15 min)
-exports.handler = async (event, context) => {
+export const handler = async (event, context) => {
   // Handle CORS preflight
   if (event.httpMethod === "OPTIONS") {
     return {

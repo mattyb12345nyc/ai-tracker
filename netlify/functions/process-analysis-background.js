@@ -4,7 +4,9 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY;
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 const AIRTABLE_BASE_ID = "appgSZR92pGCMlUOc";
+const SITE_URL = process.env.URL || "https://ai-tracker.netlify.app";
 
 // Query ChatGPT
 async function queryChatGPT(question) {
@@ -551,12 +553,73 @@ async function saveDashboardOutput(analysis, runId, sessionId, brandLogo) {
   }
 }
 
+// Send dashboard link via SendGrid
+async function sendDashboardEmail(email, brandName, sessionId, visibilityScore, grade) {
+  if (!SENDGRID_API_KEY || !email) {
+    console.log("Skipping email: missing API key or email address");
+    return;
+  }
+
+  const dashboardUrl = `${SITE_URL}?report=${sessionId}`;
+
+  const emailContent = {
+    personalizations: [{ to: [{ email }] }],
+    from: { email: "ai-ready@futureproof.work", name: "FutureProof AI" },
+    subject: `Your AI Visibility Report for ${brandName} is Ready`,
+    content: [
+      {
+        type: "text/html",
+        value: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #0891b2;">Your AI Visibility Report is Ready</h1>
+            <p>Great news! We've finished analyzing <strong>${brandName}</strong> across ChatGPT, Claude, Gemini, and Perplexity.</p>
+
+            <div style="background: #f0f9ff; border-radius: 12px; padding: 24px; margin: 24px 0;">
+              <h2 style="margin: 0 0 8px 0; color: #0e7490;">Visibility Score: ${visibilityScore}</h2>
+              <p style="margin: 0; font-size: 24px; font-weight: bold; color: ${grade === 'A' ? '#10b981' : grade === 'B' ? '#22c55e' : grade === 'C' ? '#f59e0b' : grade === 'D' ? '#f97316' : '#ef4444'};">Grade: ${grade}</p>
+            </div>
+
+            <a href="${dashboardUrl}" style="display: inline-block; background: linear-gradient(to right, #06b6d4, #3b82f6); color: white; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-weight: bold;">View Full Report</a>
+
+            <p style="margin-top: 32px; color: #6b7280; font-size: 14px;">
+              This report shows how AI assistants mention, recommend, and position your brand when users ask buying-intent questions.
+            </p>
+
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;" />
+            <p style="color: #9ca3af; font-size: 12px;">FutureProof AI Visibility Tracker</p>
+          </div>
+        `,
+      },
+    ],
+  };
+
+  try {
+    const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${SENDGRID_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(emailContent),
+    });
+
+    if (response.ok) {
+      console.log(`Dashboard email sent to ${email}`);
+    } else {
+      console.error(`SendGrid error: ${response.status}`);
+    }
+  } catch (error) {
+    console.error("Email send error:", error);
+  }
+}
+
 // Main processing function
 async function processAnalysis(data) {
   const {
     session_id: sessionId,
     run_id: runId,
     brand_name: brandName,
+    email,
     industry,
     category,
     key_messages: keyMessages,
@@ -622,6 +685,13 @@ async function processAnalysis(data) {
 
   // Save dashboard output
   await saveDashboardOutput(aggregatedAnalysis, runId, sessionId, "");
+
+  // Calculate grade for email
+  const score = aggregatedAnalysis.visibility_score || 0;
+  const grade = score >= 90 ? "A" : score >= 80 ? "B" : score >= 70 ? "C" : score >= 60 ? "D" : "F";
+
+  // Send dashboard link via email
+  await sendDashboardEmail(email, brandName, sessionId, score, grade);
 
   console.log(`Analysis complete for ${brandName}`);
   return aggregatedAnalysis;

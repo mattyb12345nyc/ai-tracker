@@ -159,17 +159,27 @@ export default function App() {
   // ============================================================
   // URL ANALYSIS
   // ============================================================
-  
+
+  const normalizeUrl = (input) => {
+    let normalized = input.trim().toLowerCase();
+    if (!normalized.startsWith('http://') && !normalized.startsWith('https://')) {
+      normalized = 'https://' + normalized;
+    }
+    return normalized;
+  };
+
   const analyzeUrl = async () => {
     if (!url.trim()) return;
     setIsAnalyzing(true);
     setError('');
-    
+
+    const normalizedUrl = normalizeUrl(url);
+
     try {
       const response = await fetch('/.netlify/functions/analyze-brand', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: url.trim() })
+        body: JSON.stringify({ url: normalizedUrl })
       });
       
       if (!response.ok) throw new Error(`API error: ${response.status}`);
@@ -522,6 +532,30 @@ export default function App() {
     } catch (e) { console.error('Error loading report:', e); }
   };
 
+  const loadReportBySessionId = async (targetSessionId) => {
+    try {
+      const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_DASHBOARD_TABLE_ID}?filterByFormula={session_id}="${targetSessionId}"`;
+      const res = await fetch(url, { headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}` } });
+      const json = await res.json();
+      if (json.records && json.records.length > 0) {
+        const record = json.records[0];
+        const data = await parseReportData(record.fields);
+        setDashboardData(data);
+        setSelectedReportId(record.id);
+        setStep('complete');
+      }
+    } catch (e) { console.error('Error loading report by session:', e); }
+  };
+
+  // Check for report parameter in URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const reportSessionId = params.get('report');
+    if (reportSessionId) {
+      loadReportBySessionId(reportSessionId);
+    }
+  }, []);
+
   const pollForResults = async (targetSessionId) => {
     try {
       const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_DASHBOARD_TABLE_ID}?filterByFormula={session_id}="${targetSessionId}"`;
@@ -593,7 +627,7 @@ export default function App() {
           session_id: sid,
           run_id: runId,
           brand_name: brandData.brand_name,
-          brand_url: url,
+          brand_url: normalizeUrl(url),
           email: email,
           industry: brandData.industry,
           category: brandData.category,
@@ -658,11 +692,11 @@ export default function App() {
               <div className="relative">
                 <Link className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" />
                 <input
-                  type="url"
+                  type="text"
                   value={url}
                   onChange={e => setUrl(e.target.value)}
                   className="w-full pl-12 pr-4 py-4 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-cyan-500/50 focus:bg-white/[0.06] outline-none transition-all text-lg"
-                  placeholder="https://yourbrand.com"
+                  placeholder="yourbrand.com"
                 />
               </div>
 
@@ -972,25 +1006,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* SECTION 3: SENTIMENT RANKINGS */}
-            <div className="bg-white/[0.02] rounded-3xl p-8 border border-white/[0.06]">
-              <div className="flex items-start gap-4 mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0"><TrendingUp className="w-6 h-6 text-white" /></div>
-                <div><h2 className="text-xl font-bold">Sentiment Rankings</h2><p className="text-sm text-white/40">Top 5 brands by sentiment score</p></div>
-              </div>
-              <div className="space-y-3">
-                {(dashboardData.sentiment_rankings || []).map((brand, i) => (
-                  <div key={i} className={`flex items-center gap-4 p-3 rounded-xl ${brand.is_tracked_brand ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-white/[0.02]'}`}>
-                    <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${brand.is_tracked_brand ? 'bg-emerald-500 text-white' : 'bg-white/10 text-white/50'}`}>{i + 1}</span>
-                    <span className={`flex-1 font-medium ${brand.is_tracked_brand ? 'text-emerald-400' : 'text-white/70'}`}>{brand.brand}</span>
-                    <div className="w-32 h-2 bg-white/10 rounded-full overflow-hidden"><div className={`h-full rounded-full ${brand.sentiment >= 65 ? 'bg-emerald-500' : brand.sentiment >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${brand.sentiment}%` }} /></div>
-                    <span className={`font-semibold w-12 text-right ${brand.is_tracked_brand ? 'text-emerald-400' : 'text-white/70'}`}>{brand.sentiment}%</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* SECTION 4: PLATFORM CARDS */}
+            {/* SECTION 3: PLATFORM CARDS */}
             <div className="grid grid-cols-4 gap-4">
               {['chatgpt', 'claude', 'gemini', 'perplexity'].map(p => {
                 const data = dashboardData.platforms?.[p] || {};

@@ -21,7 +21,8 @@ AI Visibility Tracker analyzes how brands are mentioned and recommended across f
 1. **URL Analysis** → User enters brand URL → `analyze-brand.js` calls Claude to extract brand data
 2. **Question Generation** → `generate-questions.js` generates 15 buyer-intent questions using Claude
 3. **Background Processing** → `process-analysis-background.js` queries all 4 AI platforms in parallel, analyzes responses, saves to Airtable
-4. **Polling & Display** → Frontend polls Airtable every 30 seconds until results appear, then displays dashboard
+4. **Email Notification** → SendGrid sends dashboard link to user's email with score/grade preview
+5. **Polling & Display** → Frontend polls Airtable every 30 seconds until results appear, or user clicks email link (`?report=SESSION_ID`)
 
 ### Key Components
 
@@ -61,6 +62,20 @@ Netlify Functions:
 - `GEMINI_API_KEY` - Google AI API key
 - `PERPLEXITY_API_KEY` - Perplexity API key
 - `AIRTABLE_API_KEY` - Airtable read/write access
+- `SENDGRID_API_KEY` - SendGrid for dashboard email notifications
+
+## Brand.dev Integration (Future)
+
+When integrating Brand.dev for brand assets (logos, colors, etc.), use the **domain** as the identifier, not the brand name. The domain is extracted from the user-entered URL:
+
+```javascript
+// Extract domain: "https://www.example.com/page" → "example.com"
+domain = url.replace(/https?:\/\//, '').replace('www.', '').split('/')[0]
+```
+
+API endpoint: `https://api.brand.dev/v1/brand/retrieve?domain={domain}`
+
+See `main.py:get_brand_assets()` for reference implementation.
 
 ## Scoring System
 

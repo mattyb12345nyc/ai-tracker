@@ -4,7 +4,7 @@ import { Zap, Loader2, CheckCircle, ArrowRight, RefreshCw, TrendingUp, TrendingD
 // ============================================================
 // CONFIGURATION
 // ============================================================
-const ZAPIER_WEBHOOK_URL = 'https://hooks.zapier.com/hooks/catch/2024200/ugpfuqt/';
+const PROCESS_ANALYSIS_URL = '/.netlify/functions/process-analysis-background';
 const AIRTABLE_TOKEN = import.meta.env.VITE_AIRTABLE_TOKEN || '';
 const AIRTABLE_BASE_ID = 'appgSZR92pGCMlUOc';
 const AIRTABLE_DASHBOARD_TABLE_ID = 'tblheMjYJzu1f88Ft';
@@ -586,8 +586,9 @@ export default function App() {
     const activeQuestions = generatedQuestions.filter(q => q.included);
     
     try {
-      await fetch(ZAPIER_WEBHOOK_URL, {
+      await fetch(PROCESS_ANALYSIS_URL, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           session_id: sid,
           run_id: runId,
@@ -596,8 +597,8 @@ export default function App() {
           email: email,
           industry: brandData.industry,
           category: brandData.category,
-          key_messages: brandData.key_benefits.join(', '),
-          competitors: brandData.competitors.join(', '),
+          key_messages: brandData.key_benefits,
+          competitors: brandData.competitors,
           questions: activeQuestions.map(q => ({ text: q.text, category: q.category })),
           question_count: activeQuestions.length,
           timestamp: new Date().toISOString()

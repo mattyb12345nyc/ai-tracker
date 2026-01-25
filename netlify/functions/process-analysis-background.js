@@ -8,6 +8,92 @@ const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 const AIRTABLE_BASE_ID = "appgSZR92pGCMlUOc";
 const SITE_URL = process.env.URL || "https://ai-tracker.netlify.app";
 
+// Normalize brand name to consolidate similar variations
+function normalizeBrandName(name) {
+  if (!name || typeof name !== 'string') return '';
+
+  // Clean up the name
+  let normalized = name.trim();
+
+  // Remove common suffixes/prefixes that don't change the brand
+  normalized = normalized.replace(/\s*(Inc\.?|LLC|Ltd\.?|Corp\.?|Co\.?)$/i, '').trim();
+
+  // Create a lowercase version for comparison
+  const lower = normalized.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  // Known brand name variations to consolidate
+  const brandAliases = {
+    'surveymonkey': 'SurveyMonkey',
+    'survey monkey': 'SurveyMonkey',
+    'typeform': 'Typeform',
+    'type form': 'Typeform',
+    'qualtrics': 'Qualtrics',
+    'qualtricsxm': 'Qualtrics',
+    'google forms': 'Google Forms',
+    'googleforms': 'Google Forms',
+    'microsoft forms': 'Microsoft Forms',
+    'msforms': 'Microsoft Forms',
+    'jotform': 'Jotform',
+    'jot form': 'Jotform',
+    'airtable': 'Airtable',
+    'air table': 'Airtable',
+    'hubspot': 'HubSpot',
+    'hub spot': 'HubSpot',
+    'salesforce': 'Salesforce',
+    'sales force': 'Salesforce',
+    'mailchimp': 'Mailchimp',
+    'mail chimp': 'Mailchimp',
+    'constantcontact': 'Constant Contact',
+    'zoho': 'Zoho',
+    'zendesk': 'Zendesk',
+    'intercom': 'Intercom',
+    'freshdesk': 'Freshdesk',
+    'medallia': 'Medallia',
+    'zappi': 'Zappi',
+    'toluna': 'Toluna',
+    'quantilope': 'Quantilope',
+    'forsta': 'Forsta',
+    'alchemer': 'Alchemer',
+    'suzy': 'Suzy',
+    'attest': 'Attest',
+    'pollfish': 'Pollfish',
+    'momentive': 'Momentive',
+    'usertesting': 'UserTesting',
+    'user testing': 'UserTesting',
+    'hotjar': 'Hotjar',
+    'hot jar': 'Hotjar',
+    'fullstory': 'FullStory',
+    'full story': 'FullStory',
+    'amplitude': 'Amplitude',
+    'mixpanel': 'Mixpanel',
+    'heap': 'Heap',
+    'pendo': 'Pendo',
+    'gainsight': 'Gainsight',
+    'clickup': 'ClickUp',
+    'click up': 'ClickUp',
+    'asana': 'Asana',
+    'monday': 'Monday.com',
+    'mondaycom': 'Monday.com',
+    'notion': 'Notion',
+    'trello': 'Trello',
+    'slack': 'Slack',
+    'discord': 'Discord',
+    'zoom': 'Zoom',
+    'teams': 'Microsoft Teams',
+    'microsoftteams': 'Microsoft Teams',
+  };
+
+  // Check if we have a known alias
+  if (brandAliases[lower]) {
+    return brandAliases[lower];
+  }
+
+  // Capitalize first letter of each word for consistency
+  return normalized.split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 // Query ChatGPT
 async function queryChatGPT(question) {
   try {
@@ -126,13 +212,14 @@ Score each response (0-100) on:
 - recommendation: Was it recommended? (0=no, 100=explicitly recommended)
 - message_alignment: Did it reflect key messages? (0-100)
 - overall: Weighted average
+- notes: Write a brief 2-3 sentence summary explaining how this AI answered the question and what it prioritized (e.g., which brands it featured, what criteria it emphasized, whether it gave a direct recommendation)
 
 Return ONLY valid JSON:
 {
-  "chatgpt": {"mention":0,"position":0,"sentiment":0,"recommendation":0,"message_alignment":0,"overall":0,"competitors_mentioned":"","notes":""},
-  "claude": {"mention":0,"position":0,"sentiment":0,"recommendation":0,"message_alignment":0,"overall":0,"competitors_mentioned":"","notes":""},
-  "gemini": {"mention":0,"position":0,"sentiment":0,"recommendation":0,"message_alignment":0,"overall":0,"competitors_mentioned":"","notes":""},
-  "perplexity": {"mention":0,"position":0,"sentiment":0,"recommendation":0,"message_alignment":0,"overall":0,"competitors_mentioned":"","notes":""}
+  "chatgpt": {"mention":0,"position":0,"sentiment":0,"recommendation":0,"message_alignment":0,"overall":0,"competitors_mentioned":"","notes":"Brief summary of how ChatGPT answered..."},
+  "claude": {"mention":0,"position":0,"sentiment":0,"recommendation":0,"message_alignment":0,"overall":0,"competitors_mentioned":"","notes":"Brief summary of how Claude answered..."},
+  "gemini": {"mention":0,"position":0,"sentiment":0,"recommendation":0,"message_alignment":0,"overall":0,"competitors_mentioned":"","notes":"Brief summary of how Gemini answered..."},
+  "perplexity": {"mention":0,"position":0,"sentiment":0,"recommendation":0,"message_alignment":0,"overall":0,"competitors_mentioned":"","notes":"Brief summary of how Perplexity answered..."}
 }`;
 
   try {
@@ -171,6 +258,116 @@ Return ONLY valid JSON:
       gemini: { mention: 0, position: 0, sentiment: 0, recommendation: 0, message_alignment: 0, overall: 0, competitors_mentioned: "", notes: "" },
       perplexity: { mention: 0, position: 0, sentiment: 0, recommendation: 0, message_alignment: 0, overall: 0, competitors_mentioned: "", notes: "" },
     };
+  }
+}
+
+// Generate content strategy recommendations based on AI responses
+async function generateContentRecommendations(brandName, category, industry, results, brandRankings, brandCoverage, topCompetitors) {
+  // Collect sample responses and themes from results
+  const sampleResponses = results.slice(0, 5).map(r => ({
+    question: r.question_text,
+    chatgpt: (r.chatgpt_response || '').substring(0, 500),
+    claude: (r.claude_response || '').substring(0, 500),
+    gemini: (r.gemini_response || '').substring(0, 500),
+    perplexity: (r.perplexity_response || '').substring(0, 500)
+  }));
+
+  const topBrands = brandRankings.slice(0, 5).map(b => b.brand).join(', ');
+
+  const prompt = `You are an AI visibility and content strategy expert. Analyze these AI responses and generate 5 specific, actionable content recommendations.
+
+BRAND: ${brandName}
+CATEGORY: ${category}
+INDUSTRY: ${industry}
+CURRENT COVERAGE: ${brandCoverage}% of queries mention this brand
+TOP COMPETITORS IN AI RESPONSES: ${topCompetitors.join(', ')}
+TOP MENTIONED BRANDS: ${topBrands}
+
+SAMPLE AI RESPONSES TO CATEGORY QUESTIONS:
+${sampleResponses.map((s, i) => `
+Q${i+1}: ${s.question}
+- ChatGPT highlighted: ${s.chatgpt}
+- Claude highlighted: ${s.claude}
+- Gemini highlighted: ${s.gemini}
+- Perplexity highlighted: ${s.perplexity}
+`).join('\n')}
+
+Based on what the AI models value and recommend, generate exactly 5 content strategy recommendations. Each recommendation should:
+1. Be specific and actionable (not generic advice)
+2. Focus on creating content that will improve AI visibility
+3. Address specific topics, attributes, or themes the AI models seem to prioritize
+4. Help the brand get mentioned more and ranked higher in future AI responses
+5. Include specific content types (blog posts, comparison pages, case studies, etc.)
+
+Return ONLY valid JSON array with exactly 5 items:
+[
+  {
+    "priority": "high|medium|low",
+    "title": "Short action title (5-8 words)",
+    "description": "Detailed explanation of what content to create and why it will help (2-3 sentences)",
+    "content_type": "Type of content (e.g., Blog Post, Comparison Guide, Case Study, FAQ Page, etc.)"
+  }
+]`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": CLAUDE_API_KEY,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 2048,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Claude API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    let raw = data.content[0].text;
+    raw = raw.replace(/```json/g, "").replace(/```/g, "").trim();
+    const firstBracket = raw.indexOf("[");
+    const lastBracket = raw.lastIndexOf("]");
+    if (firstBracket !== -1 && lastBracket !== -1) {
+      raw = raw.substring(firstBracket, lastBracket + 1);
+    }
+
+    const recommendations = JSON.parse(raw);
+
+    // Ensure we have exactly 5 recommendations
+    if (recommendations.length >= 5) {
+      return recommendations.slice(0, 5);
+    }
+
+    // Pad with defaults if needed
+    const defaults = [
+      { priority: "high", title: "Create comparison content vs top competitors", description: "Develop detailed comparison guides showing your brand's advantages over competitors frequently mentioned by AI. Focus on the specific features and benefits AI models highlight.", content_type: "Comparison Guide" },
+      { priority: "high", title: "Publish expert thought leadership content", description: "Create authoritative content that positions your brand as an industry leader. AI models favor brands with strong expertise signals and comprehensive educational content.", content_type: "Blog Post Series" },
+      { priority: "medium", title: "Build detailed use case documentation", description: "Document specific use cases and success stories that align with how AI models categorize solutions in your space. Include concrete examples and outcomes.", content_type: "Case Studies" },
+      { priority: "medium", title: "Optimize for question-based queries", description: "Create FAQ and Q&A content that directly addresses the types of questions users ask AI assistants about your category. Mirror the question formats in your content.", content_type: "FAQ Page" },
+      { priority: "medium", title: "Strengthen technical documentation", description: "Enhance your technical docs and feature explanations to match the depth of information AI models cite when recommending solutions.", content_type: "Documentation" }
+    ];
+
+    while (recommendations.length < 5) {
+      recommendations.push(defaults[recommendations.length]);
+    }
+
+    return recommendations;
+  } catch (error) {
+    console.error("Content recommendations error:", error);
+    // Return default recommendations on error
+    return [
+      { priority: "high", title: "Create comparison content vs top competitors", description: `Develop detailed comparison guides showing ${brandName}'s advantages over ${topCompetitors[0] || 'competitors'}. AI models frequently cite comparative information when making recommendations.`, content_type: "Comparison Guide" },
+      { priority: "high", title: "Publish expert thought leadership content", description: `Create authoritative ${industry} content that positions ${brandName} as an industry leader. AI models favor brands with strong expertise signals.`, content_type: "Blog Post Series" },
+      { priority: "medium", title: "Build detailed use case documentation", description: `Document specific ${category} use cases with concrete examples and outcomes. AI models value solution-oriented content with measurable results.`, content_type: "Case Studies" },
+      { priority: "medium", title: "Optimize FAQ content for AI queries", description: `Create comprehensive Q&A content addressing common ${category} questions. Structure content to match how users query AI assistants.`, content_type: "FAQ Page" },
+      { priority: "medium", title: "Strengthen feature and benefit documentation", description: `Enhance documentation of ${brandName}'s key features and benefits. AI models cite detailed product information when recommending solutions.`, content_type: "Product Documentation" }
+    ];
   }
 }
 
@@ -258,7 +455,7 @@ async function saveToAirtable(results, sessionId) {
 }
 
 // Analyze aggregated run data
-function analyzeRunData(results, brandName, validCompetitors, industry) {
+async function analyzeRunData(results, brandName, validCompetitors, industry, category) {
   const avg = (nums) => {
     const valid = nums.filter((n) => typeof n === "number" && n <= 100);
     return valid.length ? Math.round((valid.reduce((a, b) => a + b, 0) / valid.length) * 10) / 10 : 0;
@@ -293,23 +490,29 @@ function analyzeRunData(results, brandName, validCompetitors, industry) {
     }
   }
 
-  // Count brand mentions and competitor mentions
+  // Count brand mentions and competitor mentions (with normalization)
   const brandMentionCounts = {};
   const brandMentionedPerQuestion = [];
+  const normalizedTrackedBrand = normalizeBrandName(brandName);
 
   for (let i = 0; i < numQuestions; i++) {
     let questionBrandMentioned = false;
     for (const p of platforms) {
       if (platformData[p].mention[i] > 0) {
         questionBrandMentioned = true;
-        brandMentionCounts[brandName] = (brandMentionCounts[brandName] || 0) + 1;
+        // Use normalized brand name for counting
+        brandMentionCounts[normalizedTrackedBrand] = (brandMentionCounts[normalizedTrackedBrand] || 0) + 1;
       }
       // Parse competitors mentioned from analysis
       const competitorsStr = platformData[p].competitors_mentioned[i] || "";
       if (competitorsStr) {
         const competitors = competitorsStr.split(",").map(c => c.trim()).filter(c => c);
         for (const comp of competitors) {
-          brandMentionCounts[comp] = (brandMentionCounts[comp] || 0) + 1;
+          // Normalize competitor names to consolidate variations
+          const normalizedComp = normalizeBrandName(comp);
+          if (normalizedComp && normalizedComp.length > 1) {
+            brandMentionCounts[normalizedComp] = (brandMentionCounts[normalizedComp] || 0) + 1;
+          }
         }
       }
     }
@@ -319,15 +522,26 @@ function analyzeRunData(results, brandName, validCompetitors, industry) {
   const brandAppearedCount = brandMentionedPerQuestion.filter((m) => m).length;
   const brandCoverage = numQuestions > 0 ? Math.round((brandAppearedCount / numQuestions) * 1000) / 10 : 0;
 
-  // Brand rankings
+  // Brand rankings - always show top 10
   const totalMentions = Object.values(brandMentionCounts).reduce((a, b) => a + b, 0);
   const brandRankings = [];
   for (const [brand, count] of Object.entries(brandMentionCounts)) {
     const sov = totalMentions > 0 ? Math.round((count / totalMentions) * 1000) / 10 : 0;
-    const isTracked = brand.toLowerCase() === brandName.toLowerCase();
+    // Check if this is the tracked brand (comparing normalized versions)
+    const isTracked = brand.toLowerCase() === normalizedTrackedBrand.toLowerCase();
     brandRankings.push({ brand, mentions: count, share_of_voice: sov, is_tracked_brand: isTracked });
   }
   brandRankings.sort((a, b) => b.mentions - a.mentions);
+
+  // Ensure we always have at least 10 entries (pad with tracked brand at 0 if needed)
+  if (brandRankings.length < 10 && !brandRankings.some(b => b.is_tracked_brand)) {
+    brandRankings.push({
+      brand: normalizedTrackedBrand,
+      mentions: 0,
+      share_of_voice: 0,
+      is_tracked_brand: true
+    });
+  }
 
   let brandRank = null;
   let brandSov = 0;
@@ -389,40 +603,21 @@ function analyzeRunData(results, brandName, validCompetitors, industry) {
     };
   });
 
-  // Recommendations
-  const recommendations = [];
+  // Generate content-focused recommendations using AI analysis
+  const topCompetitors = brandRankings.filter(b => !b.is_tracked_brand).slice(0, 5).map(b => b.brand);
+  const recommendations = await generateContentRecommendations(
+    brandName,
+    category || industry || "general",
+    industry || category || "general",
+    results,
+    brandRankings,
+    brandCoverage,
+    topCompetitors
+  );
+
+  // Calculate averages for executive summary
   const avgRec = avg(platforms.map((p) => platformsSummary[p].recommendation));
   const avgSent = avgNonzero(platforms.map((p) => platformsSummary[p].sentiment));
-
-  if (brandCoverage < 50) {
-    recommendations.push({ priority: "high", action: "Increase visibility", detail: `Current coverage: ${brandCoverage}%` });
-  } else if (brandCoverage < 80) {
-    recommendations.push({ priority: "medium", action: "Expand coverage to more query types", detail: `Current coverage: ${brandCoverage}%` });
-  } else {
-    recommendations.push({ priority: "low", action: "Maintain strong visibility presence", detail: `Excellent coverage: ${brandCoverage}%` });
-  }
-
-  if (avgRec < 30) {
-    recommendations.push({ priority: "high", action: "Improve recommendation rate", detail: `Current rate: ${avgRec}%` });
-  } else if (avgRec < 60) {
-    recommendations.push({ priority: "medium", action: "Boost recommendation frequency", detail: `Current rate: ${avgRec}%` });
-  } else {
-    recommendations.push({ priority: "low", action: "Sustain high recommendation rate", detail: `Strong rate: ${avgRec}%` });
-  }
-
-  if (avgSent > 0 && avgSent < 60) {
-    recommendations.push({ priority: "medium", action: "Enhance sentiment in AI responses", detail: `Current sentiment: ${avgSent}%` });
-  } else if (avgSent >= 60) {
-    recommendations.push({ priority: "low", action: "Continue positive brand positioning", detail: `Positive sentiment: ${avgSent}%` });
-  }
-
-  // Platform-specific recommendation
-  if (worstModel) {
-    const worstScore = sortedPlatforms[sortedPlatforms.length - 1]?.[1]?.score || 0;
-    if (worstScore < bestScore - 10) {
-      recommendations.push({ priority: "medium", action: `Improve performance on ${worstModel}`, detail: `Gap of ${Math.round(bestScore - worstScore)} points vs ${bestModel}` });
-    }
-  }
 
   // Executive summary
   const topCompetitorsList = brandRankings.filter((b) => !b.is_tracked_brand).slice(0, 3).map((b) => b.brand);
@@ -613,13 +808,50 @@ async function saveDashboardOutput(analysis, runId, sessionId, brandLogo) {
 }
 
 // Send dashboard link via SendGrid
-async function sendDashboardEmail(email, brandName, sessionId, visibilityScore, grade) {
+async function sendDashboardEmail(email, brandName, sessionId, analysisData) {
   if (!SENDGRID_API_KEY || !email) {
     console.log("Skipping email: missing API key or email address");
     return;
   }
 
-  const dashboardUrl = `${SITE_URL}?report=${sessionId}`;
+  const dashboardUrl = `https://ai.futureproof.work/?report=${sessionId}&utm_campaign=website&utm_medium=email&utm_source=sendgrid.com`;
+  const signupUrl = 'https://futureproof.work/ai-optimizer-sign-up';
+
+  // Extract platform scores
+  const platforms = analysisData.platforms_summary || {};
+  const chatgptScore = Math.round(platforms.chatgpt?.score || 0);
+  const claudeScore = Math.round(platforms.claude?.score || 0);
+  const geminiScore = Math.round(platforms.gemini?.score || 0);
+  const perplexityScore = Math.round(platforms.perplexity?.score || 0);
+
+  // Generate 2-sentence summary
+  const visibilityScore = analysisData.visibility_score || 0;
+  const brandCoverage = analysisData.brand_coverage || 0;
+  const bestModel = analysisData.best_model || 'ChatGPT';
+  const brandRank = analysisData.brand_rank;
+
+  let summary = '';
+  if (brandRank && brandRank <= 3) {
+    summary = `${brandName} shows strong AI visibility with a score of ${visibilityScore}, ranking #${brandRank} in your category. ${bestModel} demonstrates the highest affinity for your brand among the AI platforms analyzed.`;
+  } else if (brandCoverage >= 50) {
+    summary = `${brandName} appears in ${brandCoverage}% of AI responses with an overall visibility score of ${visibilityScore}. There are clear opportunities to improve positioning, particularly on platforms where competitors currently dominate.`;
+  } else {
+    summary = `${brandName} has a visibility score of ${visibilityScore}, appearing in ${brandCoverage}% of relevant AI queries. Your full report reveals specific strategies to significantly improve your AI presence and outrank competitors.`;
+  }
+
+  // LLM Logo URLs
+  const logoUrls = {
+    chatgpt: 'http://cdn.mcauto-images-production.sendgrid.net/d157e984273caff5/f7aa1278-3451-4421-8d3b-2de8511dd5ca/1500x469.png',
+    claude: 'http://cdn.mcauto-images-production.sendgrid.net/d157e984273caff5/05a8de1c-981d-45ad-bc39-9cdeb919a36d/1900x594.png',
+    gemini: 'http://cdn.mcauto-images-production.sendgrid.net/d157e984273caff5/1b084fb7-37b9-4763-a356-7e51ea261505/800x250.png',
+    perplexity: 'http://cdn.mcauto-images-production.sendgrid.net/d157e984273caff5/34211da5-8bf5-41bd-821a-62ee0bb0e811/1700x531.png'
+  };
+
+  const getScoreColor = (score) => {
+    if (score >= 70) return '#ff8a80';
+    if (score >= 50) return '#ff6b4a';
+    return '#a855f7';
+  };
 
   const emailContent = {
     personalizations: [{ to: [{ email }] }],
@@ -629,23 +861,52 @@ async function sendDashboardEmail(email, brandName, sessionId, visibilityScore, 
       {
         type: "text/html",
         value: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h1 style="color: #0891b2;">Your AI Visibility Report is Ready</h1>
-            <p>Great news! We've finished analyzing <strong>${brandName}</strong> across ChatGPT, Claude, Gemini, and Perplexity.</p>
-
-            <div style="background: #f0f9ff; border-radius: 12px; padding: 24px; margin: 24px 0;">
-              <h2 style="margin: 0 0 8px 0; color: #0e7490;">Visibility Score: ${visibilityScore}</h2>
-              <p style="margin: 0; font-size: 24px; font-weight: bold; color: ${grade === 'A' ? '#10b981' : grade === 'B' ? '#22c55e' : grade === 'C' ? '#f59e0b' : grade === 'D' ? '#f97316' : '#ef4444'};">Grade: ${grade}</p>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1a0a0f 0%, #2d0a20 50%, #1a0515 100%); color: #ffffff; padding: 32px; border-radius: 16px;">
+            <div style="text-align: center; margin-bottom: 32px;">
+              <img src="http://cdn.mcauto-images-production.sendgrid.net/d157e984273caff5/d19d829c-a9a9-4fad-b0e7-7938012be26c/800x200.png" alt="FutureProof" style="height: 32px; margin-bottom: 16px;" />
+              <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Your AI Visibility Report is Ready</h1>
             </div>
 
-            <a href="${dashboardUrl}" style="display: inline-block; background: linear-gradient(to right, #06b6d4, #3b82f6); color: white; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-weight: bold;">View Full Report</a>
+            <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,107,74,0.2); border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 0 30px rgba(255,107,74,0.1);">
+              <p style="color: #d4a5a5; font-size: 16px; line-height: 1.6; margin: 0;">${summary}</p>
+            </div>
 
-            <p style="margin-top: 32px; color: #6b7280; font-size: 14px;">
-              This report shows how AI assistants mention, recommend, and position your brand when users ask buying-intent questions.
-            </p>
+            <div style="margin-bottom: 32px;">
+              <h3 style="color: #d4a5a5; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px;">Platform Scores</h3>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,107,74,0.15); border-radius: 8px 0 0 8px; text-align: center; width: 25%;">
+                    <img src="${logoUrls.chatgpt}" alt="ChatGPT" style="height: 20px; margin-bottom: 8px;" /><br/>
+                    <span style="font-size: 24px; font-weight: bold; color: ${getScoreColor(chatgptScore)};">${chatgptScore}</span>
+                  </td>
+                  <td style="padding: 12px; background: rgba(255,255,255,0.05); border-top: 1px solid rgba(255,107,74,0.15); border-bottom: 1px solid rgba(255,107,74,0.15); text-align: center; width: 25%;">
+                    <img src="${logoUrls.claude}" alt="Claude" style="height: 20px; margin-bottom: 8px;" /><br/>
+                    <span style="font-size: 24px; font-weight: bold; color: ${getScoreColor(claudeScore)};">${claudeScore}</span>
+                  </td>
+                  <td style="padding: 12px; background: rgba(255,255,255,0.05); border-top: 1px solid rgba(255,107,74,0.15); border-bottom: 1px solid rgba(255,107,74,0.15); text-align: center; width: 25%;">
+                    <img src="${logoUrls.gemini}" alt="Gemini" style="height: 20px; margin-bottom: 8px;" /><br/>
+                    <span style="font-size: 24px; font-weight: bold; color: ${getScoreColor(geminiScore)};">${geminiScore}</span>
+                  </td>
+                  <td style="padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,107,74,0.15); border-radius: 0 8px 8px 0; text-align: center; width: 25%;">
+                    <img src="${logoUrls.perplexity}" alt="Perplexity" style="height: 20px; margin-bottom: 8px;" /><br/>
+                    <span style="font-size: 24px; font-weight: bold; color: ${getScoreColor(perplexityScore)};">${perplexityScore}</span>
+                  </td>
+                </tr>
+              </table>
+            </div>
 
-            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;" />
-            <p style="color: #9ca3af; font-size: 12px;">FutureProof AI Visibility Tracker</p>
+            <div style="text-align: center; margin-bottom: 24px;">
+              <a href="${dashboardUrl}" style="display: inline-block; background: linear-gradient(135deg, #ff6b4a 0%, #f97316 100%); color: white; padding: 16px 48px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 16px; box-shadow: 0 0 20px rgba(255,107,74,0.4);">See Full Report</a>
+            </div>
+
+            <div style="background: linear-gradient(135deg, rgba(255,107,74,0.1), rgba(168,85,247,0.1)); border: 1px solid rgba(255,107,74,0.3); border-radius: 12px; padding: 24px; text-align: center; box-shadow: 0 0 20px rgba(168,85,247,0.1);">
+              <h3 style="color: #ffffff; margin: 0 0 8px 0; font-size: 18px;">Ready to Optimize Your AI Visibility?</h3>
+              <p style="color: #d4a5a5; margin: 0 0 16px 0; font-size: 14px;">Sign up for FutureProof AEO – the ultimate Answer Engine Optimization platform</p>
+              <a href="${signupUrl}" style="display: inline-block; background: transparent; color: #ff6b4a; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; border: 2px solid #ff6b4a;">Sign Up Now</a>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid rgba(255,107,74,0.2); margin: 32px 0;" />
+            <p style="color: #d4a5a5; font-size: 12px; text-align: center; margin: 0;">FutureProof AI Visibility Tracker<br/>Helping brands win in the age of AI search</p>
           </div>
         `,
       },
@@ -740,17 +1001,13 @@ async function processAnalysis(data) {
   await saveToAirtable(results, sessionId);
 
   // Analyze aggregated data
-  const aggregatedAnalysis = analyzeRunData(results, brandName, competitorsList, industry || category || "");
+  const aggregatedAnalysis = await analyzeRunData(results, brandName, competitorsList, industry || "", category || "");
 
   // Save dashboard output
   await saveDashboardOutput(aggregatedAnalysis, runId, sessionId, "");
 
-  // Calculate grade for email
-  const score = aggregatedAnalysis.visibility_score || 0;
-  const grade = score >= 90 ? "A" : score >= 80 ? "B" : score >= 70 ? "C" : score >= 60 ? "D" : "F";
-
   // Send dashboard link via email
-  await sendDashboardEmail(email, brandName, sessionId, score, grade);
+  await sendDashboardEmail(email, brandName, sessionId, aggregatedAnalysis);
 
   console.log(`Analysis complete for ${brandName}`);
   return aggregatedAnalysis;

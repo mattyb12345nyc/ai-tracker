@@ -23,6 +23,22 @@ const platformLogos = {
 const platformNames = { chatgpt: 'ChatGPT', claude: 'Claude', gemini: 'Gemini', perplexity: 'Perplexity' };
 const FUTUREPROOF_LOGO = 'http://cdn.mcauto-images-production.sendgrid.net/d157e984273caff5/d19d829c-a9a9-4fad-b0e7-7938012be26c/800x200.png';
 
+// Creative loading messages for brand analysis
+const LOADING_MESSAGES = [
+  'Revving up the analysis engine...',
+  'Initiating Answer Engine Optimization...',
+  'Scanning the AI landscape...',
+  'Decoding brand visibility signals...',
+  'Interrogating the AI assistants...',
+  'Crunching the visibility numbers...',
+  'Mapping your brand footprint...',
+  'Analyzing AI recommendation patterns...',
+  'Calibrating sentiment sensors...',
+  'Extracting competitive insights...',
+  'Processing brand intelligence...',
+  'Surveying the AI ecosystem...'
+];
+
 // Format LLM response: remove asterisks and clean up text
 const formatLLMResponse = (text) => {
   if (!text) return '';
@@ -35,7 +51,7 @@ const formatLLMResponse = (text) => {
 
 // Component to render formatted response with basic structure
 const FormattedResponse = ({ text }) => {
-  if (!text) return <span className="text-white/40">No response</span>;
+  if (!text) return <span className="text-[#d4a5a5]">No response</span>;
 
   const cleanText = formatLLMResponse(text);
   const lines = cleanText.split('\n').filter(line => line.trim());
@@ -46,25 +62,25 @@ const FormattedResponse = ({ text }) => {
         const trimmed = line.trim();
         // Check if it's a numbered list item
         if (/^\d+[\.\)]\s/.test(trimmed)) {
-          return <p key={i} className="pl-4 text-white/70">{trimmed}</p>;
+          return <p key={i} className="pl-4 text-white/80">{trimmed}</p>;
         }
         // Check if it's a bullet point
         if (/^[-•]\s/.test(trimmed)) {
-          return <p key={i} className="pl-4 text-white/70">{trimmed.replace(/^[-•]\s/, '• ')}</p>;
+          return <p key={i} className="pl-4 text-white/80">{trimmed.replace(/^[-•]\s/, '• ')}</p>;
         }
         // Regular paragraph
-        return <p key={i} className="text-white/70">{trimmed}</p>;
+        return <p key={i} className="text-white/80">{trimmed}</p>;
       })}
     </div>
   );
 };
 
-const gradeColors = { 
-  'A': { text: 'text-emerald-400', bg: 'bg-emerald-500/20', border: 'border-emerald-500/30' }, 
-  'B': { text: 'text-green-400', bg: 'bg-green-500/20', border: 'border-green-500/30' }, 
-  'C': { text: 'text-amber-400', bg: 'bg-amber-500/20', border: 'border-amber-500/30' }, 
-  'D': { text: 'text-orange-400', bg: 'bg-orange-500/20', border: 'border-orange-500/30' }, 
-  'F': { text: 'text-red-400', bg: 'bg-red-500/20', border: 'border-red-500/30' } 
+const gradeColors = {
+  'A': { text: 'text-[#ff8a80]', bg: 'bg-[#ff8a80]/20', border: 'border-[#ff8a80]/30' },
+  'B': { text: 'text-[#ff6b4a]', bg: 'bg-[#ff6b4a]/20', border: 'border-[#ff6b4a]/30' },
+  'C': { text: 'text-[#f97316]', bg: 'bg-[#f97316]/20', border: 'border-[#f97316]/30' },
+  'D': { text: 'text-[#a855f7]', bg: 'bg-[#a855f7]/20', border: 'border-[#a855f7]/30' },
+  'F': { text: 'text-[#d4a5a5]', bg: 'bg-[#d4a5a5]/20', border: 'border-[#d4a5a5]/30' }
 };
 
 const PROGRESS_STAGES = [
@@ -174,18 +190,47 @@ export default function App() {
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
   const [currentStage, setCurrentStage] = useState(0);
   const [stageProgress, setStageProgress] = useState(0);
   const [sessionId, setSessionId] = useState(null);
   const [dashboardData, setDashboardData] = useState(null);
-  const [allReports, setAllReports] = useState([]);
-  const [selectedReportId, setSelectedReportId] = useState('');
-  const [showReportDropdown, setShowReportDropdown] = useState(false);
   const [expandedResponses, setExpandedResponses] = useState({});
   const [selectedPlatform, setSelectedPlatform] = useState(null);
+  const [viewedPlatforms, setViewedPlatforms] = useState(new Set());
   const pollingRef = useRef(null);
+
+  // Sign-up page URL for gated features
+  const SIGNUP_URL = 'https://futureproof.work/ai-optimizer-sign-up';
+
+  const handlePlatformDiveDeeper = (platform) => {
+    // If already viewed this platform, allow re-viewing
+    if (viewedPlatforms.has(platform)) {
+      setSelectedPlatform(platform);
+      return;
+    }
+
+    // If this is the first platform view, allow it
+    if (viewedPlatforms.size === 0) {
+      setViewedPlatforms(new Set([platform]));
+      setSelectedPlatform(platform);
+      return;
+    }
+
+    // Already viewed one platform, redirect to sign-up
+    window.location.href = SIGNUP_URL;
+  };
+
+  const isPlatformLocked = (platform) => {
+    // Not locked if: no platforms viewed yet, or this platform was already viewed
+    if (viewedPlatforms.size === 0 || viewedPlatforms.has(platform)) {
+      return false;
+    }
+    // Locked if: one platform viewed and this is a different one
+    return true;
+  };
 
   const toggleResponseExpand = (questionIndex, platform) => {
     const key = `${questionIndex}-${platform}`;
@@ -266,21 +311,6 @@ export default function App() {
   // ============================================================
   // AIRTABLE DATA FETCHING
   // ============================================================
-  
-  const fetchAllReports = async () => {
-    try {
-      const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_DASHBOARD_TABLE_ID}?sort%5B0%5D%5Bfield%5D=created_at&sort%5B0%5D%5Bdirection%5D=desc&maxRecords=20`;
-      const res = await fetch(url, { headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}` } });
-      const json = await res.json();
-      if (json.records) {
-        setAllReports(json.records.map(r => ({
-          id: r.id, run_id: r.fields.run_id, session_id: r.fields.session_id,
-          brand_name: r.fields.brand_name, report_date: r.fields.report_date,
-          visibility_score: r.fields.visibility_score, grade: r.fields.grade
-        })));
-      }
-    } catch (e) { console.error('Error fetching reports:', e); }
-  };
 
   const fetchRawQuestionData = async (runId) => {
     try {
@@ -325,7 +355,7 @@ export default function App() {
           recommendation: parseFloat(f.chatgpt_recommendation) || 0,
           overall: parseFloat(f.chatgpt_overall) || 0,
           competitors_mentioned: extractBrands(Array.isArray(f.chatgpt_competitors_mentioned) ? f.chatgpt_competitors_mentioned.join(', ') : (f.chatgpt_competitors_mentioned || '')),
-          commentary: f.chatgpt_notes || ''
+          notes: f.chatgpt_notes || ''
         },
         claude: {
           response_summary: (f.claude_response || '').substring(0, 200) + ((f.claude_response || '').length > 200 ? '...' : ''),
@@ -336,7 +366,7 @@ export default function App() {
           recommendation: parseFloat(f.claude_recommendation) || 0,
           overall: parseFloat(f.claude_overall) || 0,
           competitors_mentioned: extractBrands(Array.isArray(f.claude_competitors_mentioned) ? f.claude_competitors_mentioned.join(', ') : (f.claude_competitors_mentioned || '')),
-          commentary: f.claude_notes || ''
+          notes: f.claude_notes || ''
         },
         gemini: {
           response_summary: (f.gemini_response || '').substring(0, 200) + ((f.gemini_response || '').length > 200 ? '...' : ''),
@@ -347,7 +377,7 @@ export default function App() {
           recommendation: parseFloat(f.gemini_recommendation) || 0,
           overall: parseFloat(f.gemini_overall) || 0,
           competitors_mentioned: extractBrands(Array.isArray(f.gemini_competitors_mentioned) ? f.gemini_competitors_mentioned.join(', ') : (f.gemini_competitors_mentioned || '')),
-          commentary: f.gemini_notes || ''
+          notes: f.gemini_notes || ''
         },
         perplexity: {
           response_summary: (f.perplexity_response || '').substring(0, 200) + ((f.perplexity_response || '').length > 200 ? '...' : ''),
@@ -358,7 +388,7 @@ export default function App() {
           recommendation: parseFloat(f.perplexity_recommendation) || 0,
           overall: parseFloat(f.perplexity_overall) || 0,
           competitors_mentioned: extractBrands(Array.isArray(f.perplexity_competitors_mentioned) ? f.perplexity_competitors_mentioned.join(', ') : (f.perplexity_competitors_mentioned || '')),
-          commentary: f.perplexity_notes || ''
+          notes: f.perplexity_notes || ''
         }
       };
       
@@ -570,21 +600,6 @@ export default function App() {
     };
   };
 
-  const loadReport = async (reportId) => {
-    try {
-      const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_DASHBOARD_TABLE_ID}/${reportId}`;
-      const res = await fetch(url, { headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}` } });
-      const json = await res.json();
-      if (json.fields) {
-        const data = await parseReportData(json.fields);
-        setDashboardData(data);
-        setSelectedReportId(reportId);
-        setShowReportDropdown(false);
-        setStep('complete');
-      }
-    } catch (e) { console.error('Error loading report:', e); }
-  };
-
   const loadReportBySessionId = async (targetSessionId) => {
     try {
       const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_DASHBOARD_TABLE_ID}?filterByFormula={session_id}="${targetSessionId}"`;
@@ -594,7 +609,6 @@ export default function App() {
         const record = json.records[0];
         const data = await parseReportData(record.fields);
         setDashboardData(data);
-        setSelectedReportId(record.id);
         setStep('complete');
       }
     } catch (e) { console.error('Error loading report by session:', e); }
@@ -608,6 +622,18 @@ export default function App() {
       loadReportBySessionId(reportSessionId);
     }
   }, []);
+
+  // Rotate loading messages while analyzing
+  useEffect(() => {
+    if (!isAnalyzing) {
+      setLoadingMessageIndex(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setLoadingMessageIndex(prev => (prev + 1) % LOADING_MESSAGES.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [isAnalyzing]);
 
   const pollForResults = async (targetSessionId) => {
     try {
@@ -623,7 +649,6 @@ export default function App() {
         console.log('Parsed data:', data);
         setDashboardData(data);
         clearInterval(pollingRef.current);
-        await fetchAllReports();
         setStep('ready');
         console.log('Step set to ready');
         return true;
@@ -718,8 +743,8 @@ export default function App() {
   // ============================================================
   if (step === 'setup') {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] text-white">
-        <header className="border-b border-white/[0.04] sticky top-0 bg-[#0a0a0f]/90 backdrop-blur-xl z-50">
+      <div className="min-h-screen text-white" style={{ background: 'linear-gradient(135deg, #1a0a0f 0%, #2d0a20 50%, #1a0515 100%)' }}">
+        <header className="border-b border-[rgba(255,107,74,0.15)] sticky top-0 bg-[#1a0a0f]/95 backdrop-blur-xl z-50">
           <div className="max-w-6xl mx-auto px-8 py-4 flex items-center gap-4">
             <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
             <span className="text-white/20">|</span>
@@ -728,42 +753,42 @@ export default function App() {
         </header>
         <main className="max-w-2xl mx-auto px-8 py-16 animate-fadeIn">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm mb-6">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#ff6b4a]/10 border border-[rgba(168,85,247,0.3)] text-[#a855f7] text-sm mb-6">
               <Sparkles className="w-4 h-4" /> AI-Powered Brand Intelligence
             </div>
             <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent">
               Discover Your AI Visibility
             </h1>
-            <p className="text-white/50 text-lg">
+            <p className="text-[#d4a5a5]/80 text-lg">
               See how ChatGPT, Claude, Gemini, and Perplexity recommend your brand
             </p>
           </div>
 
-          <div className="bg-white/[0.02] rounded-3xl p-8 border border-white/[0.06]">
+          <div className="bg-white/[0.05] backdrop-blur-sm rounded-3xl p-8 border border-[rgba(255,107,74,0.2)] shadow-[0_0_30px_rgba(255,107,74,0.1)]">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#ff6b4a] to-[#a855f7] flex items-center justify-center">
                 <Globe className="w-5 h-5" />
               </div>
               <div>
                 <h2 className="font-semibold">Enter Your Brand URL</h2>
-                <p className="text-sm text-white/40">We'll analyze your brand and generate relevant questions</p>
+                <p className="text-sm text-[#d4a5a5]">We'll analyze your brand and generate relevant questions</p>
               </div>
             </div>
 
             <div className="space-y-4">
               <div className="relative">
-                <Link className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" />
+                <Link className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#d4a5a5]/60" />
                 <input
                   type="text"
                   value={url}
                   onChange={e => setUrl(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-cyan-500/50 focus:bg-white/[0.06] outline-none transition-all text-lg"
+                  className="w-full pl-12 pr-4 py-4 rounded-xl bg-white/[0.04] border border-[rgba(255,107,74,0.2)] focus:border-[#ff6b4a]/50 focus:bg-white/[0.06] outline-none transition-all text-lg"
                   placeholder="yourbrand.com"
                 />
               </div>
 
               {error && (
-                <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center gap-2">
+                <div className="p-4 rounded-xl bg-[#ff6b4a]/10 border border-[#ff6b4a]/20 text-[#ff6b4a] text-sm flex items-center gap-2">
                   <AlertCircle className="w-4 h-4" /> {error}
                 </div>
               )}
@@ -771,12 +796,12 @@ export default function App() {
               <button
                 onClick={analyzeUrl}
                 disabled={!url.trim() || isAnalyzing}
-                className="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-lg flex items-center justify-center gap-3 transition-all"
+                className="w-full py-4 rounded-xl bg-gradient-to-r from-[#ff6b4a] to-[#f97316] hover:from-[#ff7a5c] hover:to-[#fb923c] hover:shadow-[0_0_20px_rgba(255,107,74,0.5)] disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-lg flex items-center justify-center gap-3 transition-all"
               >
                 {isAnalyzing ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    Analyzing Brand...
+                    {LOADING_MESSAGES[loadingMessageIndex]}
                   </>
                 ) : (
                   <>
@@ -787,8 +812,8 @@ export default function App() {
               </button>
             </div>
 
-            <div className="mt-8 pt-6 border-t border-white/[0.06]">
-              <p className="text-xs text-white/30 text-center">
+            <div className="mt-8 pt-6 border-t border-[rgba(255,107,74,0.15)]">
+              <p className="text-xs text-[#d4a5a5]/60 text-center">
                 We'll extract your brand info, generate recommendation-focused questions,
                 and test how AI assistants respond to purchase intent queries.
               </p>
@@ -797,7 +822,7 @@ export default function App() {
 
           <div className="mt-8 grid grid-cols-4 gap-4">
             {Object.entries(platformLogos).map(([key, logo]) => (
-              <div key={key} className="bg-white/[0.02] rounded-xl p-4 flex items-center justify-center">
+              <div key={key} className="bg-white/[0.05] rounded-xl p-4 flex items-center justify-center">
                 <img src={logo} alt={platformNames[key]} className="h-8 object-contain opacity-50" />
               </div>
             ))}
@@ -813,8 +838,8 @@ export default function App() {
   // ============================================================
   if (step === 'questions') {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] text-white">
-        <header className="border-b border-white/[0.04] sticky top-0 bg-[#0a0a0f]/90 backdrop-blur-xl z-50">
+      <div className="min-h-screen text-white" style={{ background: 'linear-gradient(135deg, #1a0a0f 0%, #2d0a20 50%, #1a0515 100%)' }}">
+        <header className="border-b border-[rgba(255,107,74,0.15)] sticky top-0 bg-[#1a0a0f]/95 backdrop-blur-xl z-50">
           <div className="max-w-6xl mx-auto px-8 py-4 flex items-center gap-4">
             <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
             <span className="text-white/20">|</span>
@@ -825,41 +850,41 @@ export default function App() {
           
           {/* Brand Summary Card */}
           {brandData && (
-            <div className="bg-gradient-to-br from-cyan-500/10 via-transparent to-blue-500/10 rounded-2xl p-6 border border-cyan-500/20 mb-8">
+            <div className="bg-gradient-to-br from-[#ff6b4a]/10 via-transparent to-[#a855f7]/10 rounded-2xl p-6 border border-[rgba(255,107,74,0.2)] mb-8">
               <div className="flex items-start justify-between">
                 <div>
                   <h2 className="text-xl font-bold mb-1">{brandData.brand_name}</h2>
-                  <p className="text-white/50 text-sm">{brandData.category} • {brandData.industry}</p>
+                  <p className="text-[#d4a5a5]/80 text-sm">{brandData.category} • {brandData.industry}</p>
                 </div>
-                <button onClick={() => { setStep('setup'); setBrandData(null); setGeneratedQuestions([]); }} className="text-white/40 hover:text-white text-sm">
+                <button onClick={() => { setStep('setup'); setBrandData(null); setGeneratedQuestions([]); }} className="text-[#d4a5a5] hover:text-white text-sm">
                   ← Change URL
                 </button>
               </div>
               <div className="grid grid-cols-3 gap-4 mt-4 text-sm">
                 <div>
-                  <span className="text-white/40">Price Tier:</span>
-                  <span className="ml-2 text-white/70">{brandData.price_tier}</span>
+                  <span className="text-[#d4a5a5]">Price Tier:</span>
+                  <span className="ml-2 text-white/80">{brandData.price_tier}</span>
                 </div>
                 <div>
-                  <span className="text-white/40">Audience:</span>
-                  <span className="ml-2 text-white/70">{brandData.target_audience?.slice(0, 2).join(', ')}</span>
+                  <span className="text-[#d4a5a5]">Audience:</span>
+                  <span className="ml-2 text-white/80">{brandData.target_audience?.slice(0, 2).join(', ')}</span>
                 </div>
                 <div>
-                  <span className="text-white/40">Competitors:</span>
-                  <span className="ml-2 text-white/70">{brandData.competitors?.slice(0, 3).join(', ')}</span>
+                  <span className="text-[#d4a5a5]">Competitors:</span>
+                  <span className="ml-2 text-white/80">{brandData.competitors?.slice(0, 3).join(', ')}</span>
                 </div>
               </div>
             </div>
           )}
 
           {/* Email Input */}
-          <div className="bg-white/[0.02] rounded-2xl p-6 border border-white/[0.06] mb-6">
-            <label className="block text-sm font-medium text-white/70 mb-2">Email for Report Delivery *</label>
+          <div className="bg-white/[0.05] backdrop-blur-sm rounded-2xl p-6 border border-[rgba(255,107,74,0.15)] shadow-[0_0_20px_rgba(255,107,74,0.08)] mb-6">
+            <label className="block text-sm font-medium text-white/80 mb-2">Email for Report Delivery *</label>
             <input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] focus:border-cyan-500/50 focus:bg-white/[0.06] outline-none transition-all"
+              className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-[rgba(255,107,74,0.2)] focus:border-[#ff6b4a]/50 focus:bg-white/[0.06] outline-none transition-all"
               placeholder="you@company.com"
             />
           </div>
@@ -868,12 +893,12 @@ export default function App() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-2xl font-bold">Review Questions</h2>
-              <p className="text-white/50">
+              <p className="text-[#d4a5a5]/80">
                 {generatedQuestions.filter(q => q.included).length} of {generatedQuestions.length} questions selected
               </p>
             </div>
             {isGenerating && (
-              <div className="flex items-center gap-2 text-cyan-400">
+              <div className="flex items-center gap-2 text-[#a855f7]">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Generating...
               </div>
@@ -883,11 +908,11 @@ export default function App() {
           {/* Questions List */}
           <div className="space-y-3 mb-8">
             {generatedQuestions.map(q => (
-              <div key={q.id} className={`p-4 rounded-xl border transition-all ${q.included ? 'bg-white/[0.03] border-white/[0.08]' : 'bg-white/[0.01] border-white/[0.04] opacity-50'}`}>
+              <div key={q.id} className={`p-4 rounded-xl border transition-all ${q.included ? 'bg-white/[0.03] border-[rgba(255,107,74,0.2)]' : 'bg-white/[0.01] border-[rgba(255,107,74,0.1)] opacity-50'}`}>
                 <div className="flex items-start gap-4">
                   <button onClick={() => handleToggle(q.id)} className="mt-1">
                     {q.included ? (
-                      <div className="w-5 h-5 rounded bg-cyan-500 flex items-center justify-center"><Check className="w-3 h-3" /></div>
+                      <div className="w-5 h-5 rounded bg-[#ff6b4a] flex items-center justify-center"><Check className="w-3 h-3" /></div>
                     ) : (
                       <div className="w-5 h-5 rounded border border-white/20" />
                     )}
@@ -899,19 +924,19 @@ export default function App() {
                           type="text"
                           value={editText}
                           onChange={e => setEditText(e.target.value)}
-                          className="flex-1 px-3 py-2 rounded-lg bg-white/[0.06] border border-cyan-500/50 outline-none"
+                          className="flex-1 px-3 py-2 rounded-lg bg-white/[0.06] border border-[#ff6b4a]/50 outline-none"
                           autoFocus
                         />
-                        <button onClick={() => handleSaveEdit(q.id)} className="p-2 rounded-lg bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30"><Check className="w-4 h-4" /></button>
-                        <button onClick={() => setEditingId(null)} className="p-2 rounded-lg bg-white/[0.06] text-white/50 hover:text-white"><X className="w-4 h-4" /></button>
+                        <button onClick={() => handleSaveEdit(q.id)} className="p-2 rounded-lg bg-[#ff6b4a]/20 text-[#a855f7] hover:bg-[#ff6b4a]/30"><Check className="w-4 h-4" /></button>
+                        <button onClick={() => setEditingId(null)} className="p-2 rounded-lg bg-white/[0.06] text-[#d4a5a5]/80 hover:text-white"><X className="w-4 h-4" /></button>
                       </div>
                     ) : (
                       <div className="flex items-start justify-between">
                         <div>
                           <p className="text-white/90">{q.text}</p>
-                          <span className="text-xs text-white/40 mt-1 inline-block">{q.category}</span>
+                          <span className="text-xs text-[#d4a5a5] mt-1 inline-block">{q.category}</span>
                         </div>
-                        <button onClick={() => handleEdit(q)} className="p-2 rounded-lg hover:bg-white/[0.06] text-white/40 hover:text-white"><Pencil className="w-4 h-4" /></button>
+                        <button onClick={() => handleEdit(q)} className="p-2 rounded-lg hover:bg-white/[0.06] text-[#d4a5a5] hover:text-white"><Pencil className="w-4 h-4" /></button>
                       </div>
                     )}
                   </div>
@@ -922,20 +947,20 @@ export default function App() {
 
           {/* Action Buttons */}
           <div className="flex gap-4">
-            <button onClick={handleAdd} className="flex-1 py-3 rounded-xl border border-dashed border-white/20 hover:border-white/40 text-white/50 hover:text-white flex items-center justify-center gap-2">
+            <button onClick={handleAdd} className="flex-1 py-3 rounded-xl border border-dashed border-white/20 hover:border-white/40 text-[#d4a5a5]/80 hover:text-white flex items-center justify-center gap-2">
               <Plus className="w-4 h-4" /> Add Question
             </button>
             <button
               onClick={handleSubmit}
               disabled={generatedQuestions.filter(q => q.included).length === 0 || !email.includes('@')}
-              className="flex-1 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 disabled:opacity-50 font-semibold flex items-center justify-center gap-2"
+              className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#ff6b4a] to-[#f97316] hover:from-[#ff7a5c] hover:to-[#fb923c] hover:shadow-[0_0_20px_rgba(255,107,74,0.5)] disabled:opacity-50 font-semibold flex items-center justify-center gap-2"
             >
               Run Analysis <ArrowRight className="w-4 h-4" />
             </button>
           </div>
 
           {error && (
-            <div className="mt-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+            <div className="mt-4 p-4 rounded-xl bg-[#ff6b4a]/10 border border-[#ff6b4a]/20 text-[#ff6b4a] text-sm">
               {error}
             </div>
           )}
@@ -950,8 +975,8 @@ export default function App() {
   // ============================================================
   if (step === 'processing') {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] text-white">
-        <header className="border-b border-white/[0.04] sticky top-0 bg-[#0a0a0f]/90 backdrop-blur-xl z-50">
+      <div className="min-h-screen text-white" style={{ background: 'linear-gradient(135deg, #1a0a0f 0%, #2d0a20 50%, #1a0515 100%)' }}">
+        <header className="border-b border-[rgba(255,107,74,0.15)] sticky top-0 bg-[#1a0a0f]/95 backdrop-blur-xl z-50">
           <div className="max-w-6xl mx-auto px-8 py-4 flex items-center gap-4">
             <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
             <span className="text-white/20">|</span>
@@ -960,26 +985,56 @@ export default function App() {
         </header>
         <main className="max-w-xl mx-auto px-8 py-12 text-center animate-fadeIn">
           <div className="mb-8">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 flex items-center justify-center mx-auto mb-6"><Loader2 className="w-10 h-10 animate-spin" /></div>
+            {/* Creative animated loader in FutureProof colors */}
+            <div className="relative w-28 h-28 mx-auto mb-6">
+              {/* Outer pulsing ring */}
+              <div className="absolute inset-0 rounded-full animate-fp-pulse" style={{ background: 'linear-gradient(135deg, rgba(255,107,74,0.3), rgba(168,85,247,0.3))' }} />
+              {/* Middle spinning ring */}
+              <div className="absolute inset-2 rounded-full animate-fp-spin" style={{ background: 'conic-gradient(from 0deg, #ff6b4a, #a855f7, #ff6b4a)', mask: 'radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 4px))', WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 4px))' }} />
+              {/* Inner gradient circle */}
+              <div className="absolute inset-5 rounded-full bg-[#1a0a0f] flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full animate-fp-glow" style={{ background: 'linear-gradient(135deg, #ff6b4a, #a855f7)', boxShadow: '0 0 20px rgba(255,107,74,0.5)' }} />
+              </div>
+              {/* Orbiting dots */}
+              <div className="absolute inset-0 animate-fp-orbit">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full" style={{ background: '#ff6b4a', boxShadow: '0 0 10px rgba(255,107,74,0.8)' }} />
+              </div>
+              <div className="absolute inset-0 animate-fp-orbit-reverse">
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full" style={{ background: '#a855f7', boxShadow: '0 0 10px rgba(168,85,247,0.8)' }} />
+              </div>
+            </div>
             <h2 className="text-2xl font-bold mb-2">Analyzing AI Visibility</h2>
-            <p className="text-white/50">This takes about 5 minutes. You'll receive an email when ready.</p>
-            <p className="text-white/30 text-sm mt-2">Feel free to close this page.</p>
+            <p className="text-[#d4a5a5]/80">This takes about 5 minutes. You'll receive an email when ready.</p>
+            <p className="text-[#d4a5a5]/60 text-sm mt-2">Feel free to close this page.</p>
           </div>
           <div className="space-y-4">
             {PROGRESS_STAGES.map((stage, i) => (
-              <div key={stage.id} className={`p-4 rounded-xl border transition-all ${i < currentStage ? 'bg-emerald-500/10 border-emerald-500/20' : i === currentStage ? 'bg-cyan-500/10 border-cyan-500/30' : 'bg-white/[0.02] border-white/[0.06]'}`}>
+              <div key={stage.id} className={`p-4 rounded-xl border transition-all ${i < currentStage ? 'bg-[#ff6b4a]/10 border-[#ff6b4a]/20' : i === currentStage ? 'bg-[#ff6b4a]/10 border-[#ff6b4a]/30' : 'bg-white/[0.02] border-[rgba(255,107,74,0.15)]'}`}>
                 <div className="flex items-center gap-4">
-                  {stage.icon ? (<img src={platformLogos[stage.icon]} alt={stage.icon} className="w-8 h-8 object-contain" />) : (<div className={`w-8 h-8 rounded-lg flex items-center justify-center ${i < currentStage ? 'bg-emerald-500' : i === currentStage ? 'bg-cyan-500' : 'bg-white/10'}`}>{i < currentStage ? <Check className="w-4 h-4" /> : <span className="text-sm">{stage.id}</span>}</div>)}
+                  {stage.icon ? (<img src={platformLogos[stage.icon]} alt={stage.icon} className="w-8 h-8 object-contain" />) : (<div className={`w-8 h-8 rounded-lg flex items-center justify-center ${i < currentStage ? 'bg-[#ff6b4a]' : i === currentStage ? 'bg-[#ff6b4a]' : 'bg-white/10'}`}>{i < currentStage ? <Check className="w-4 h-4" /> : <span className="text-sm">{stage.id}</span>}</div>)}
                   <div className="flex-1 text-left">
-                    <p className={`font-medium ${i <= currentStage ? 'text-white' : 'text-white/40'}`}>{stage.label}</p>
-                    {i === currentStage && (<div className="h-1 bg-white/10 rounded-full mt-2 overflow-hidden"><div className="h-full bg-cyan-500 transition-all duration-500" style={{ width: `${stageProgress}%` }} /></div>)}
+                    <p className={`font-medium ${i <= currentStage ? 'text-white' : 'text-[#d4a5a5]'}`}>{stage.label}</p>
+                    {i === currentStage && (<div className="h-1 bg-white/10 rounded-full mt-2 overflow-hidden"><div className="h-full bg-[#ff6b4a] transition-all duration-500" style={{ width: `${stageProgress}%` }} /></div>)}
                   </div>
                 </div>
               </div>
             ))}
           </div>
         </main>
-        <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } } .animate-fadeIn { animation: fadeIn 0.6s ease-out; }`}</style>
+        <style>{`
+          @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+          .animate-fadeIn { animation: fadeIn 0.6s ease-out; }
+          @keyframes fp-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+          .animate-fp-spin { animation: fp-spin 1.5s linear infinite; }
+          @keyframes fp-pulse { 0%, 100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.1); opacity: 0.8; } }
+          .animate-fp-pulse { animation: fp-pulse 2s ease-in-out infinite; }
+          @keyframes fp-glow { 0%, 100% { transform: scale(0.9); opacity: 0.7; } 50% { transform: scale(1); opacity: 1; } }
+          .animate-fp-glow { animation: fp-glow 1.5s ease-in-out infinite; }
+          @keyframes fp-orbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+          .animate-fp-orbit { animation: fp-orbit 3s linear infinite; }
+          @keyframes fp-orbit-reverse { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+          .animate-fp-orbit-reverse { animation: fp-orbit-reverse 2s linear infinite; }
+        `}</style>
       </div>
     );
   }
@@ -988,10 +1043,10 @@ export default function App() {
   // RENDER - READY STEP (Report Complete, Show CTA)
   // ============================================================
   if (step === 'ready') {
-    const reportUrl = `${window.location.origin}?report=${sessionId}`;
+    const reportUrl = `https://ai.futureproof.work/?report=${sessionId}&utm_campaign=website&utm_medium=email&utm_source=sendgrid.com`;
     return (
-      <div className="min-h-screen bg-[#0a0a0f] text-white">
-        <header className="border-b border-white/[0.04] sticky top-0 bg-[#0a0a0f]/90 backdrop-blur-xl z-50">
+      <div className="min-h-screen text-white" style={{ background: 'linear-gradient(135deg, #1a0a0f 0%, #2d0a20 50%, #1a0515 100%)' }}">
+        <header className="border-b border-[rgba(255,107,74,0.15)] sticky top-0 bg-[#1a0a0f]/95 backdrop-blur-xl z-50">
           <div className="max-w-6xl mx-auto px-8 py-4 flex items-center gap-4">
             <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
             <span className="text-white/20">|</span>
@@ -1000,26 +1055,20 @@ export default function App() {
         </header>
         <main className="max-w-xl mx-auto px-8 py-24 text-center animate-fadeIn">
           <div className="mb-8">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 flex items-center justify-center mx-auto mb-8">
+            <div className="w-24 h-24 rounded-full bg-gradient-to-r from-[#ff6b4a] to-[#a855f7] flex items-center justify-center mx-auto mb-8">
               <CheckCircle className="w-12 h-12 text-white" />
             </div>
-            <h2 className="text-3xl font-bold mb-4">Your Report is Ready!</h2>
-            <p className="text-white/60 text-lg mb-2">We've finished analyzing your brand's AI visibility across ChatGPT, Claude, Gemini, and Perplexity.</p>
-            <p className="text-white/40">A copy has also been sent to your email.</p>
+            <h2 className="text-3xl font-bold mb-4">Your AI Optimization Report Is Ready</h2>
+            <p className="text-[#d4a5a5] text-lg mb-2">We've finished analyzing your brand's AI visibility across ChatGPT, Claude, Gemini, and Perplexity.</p>
+            <p className="text-[#d4a5a5]">A copy has also been sent to your email.</p>
           </div>
           <div className="space-y-4">
             <button
               onClick={() => { window.location.href = reportUrl; }}
               className="w-full py-4 px-8 rounded-2xl text-lg font-semibold text-white transition-all hover:opacity-90 hover:scale-[1.02]"
-              style={{ background: 'linear-gradient(to right, #F3764C, #E7488D)' }}
+              style={{ background: 'linear-gradient(135deg, #ff6b4a 0%, #f97316 100%)' }}
             >
               View Your Report
-            </button>
-            <button
-              onClick={() => { setStep('setup'); setGeneratedQuestions([]); setDashboardData(null); setSessionId(null); setBrandData(null); setUrl(''); setEmail(''); }}
-              className="w-full py-3 px-6 rounded-xl text-sm text-white/50 hover:text-white/80 transition-all"
-            >
-              Run Another Analysis
             </button>
           </div>
         </main>
@@ -1032,39 +1081,14 @@ export default function App() {
   // RENDER - COMPLETE/DASHBOARD STEP
   // ============================================================
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
-      <header className="border-b border-white/[0.04] sticky top-0 bg-[#0a0a0f]/90 backdrop-blur-xl z-50">
+    <div className="min-h-screen text-white" style={{ background: 'linear-gradient(135deg, #1a0a0f 0%, #2d0a20 50%, #1a0515 100%)' }}">
+      <header className="border-b border-[rgba(255,107,74,0.15)] sticky top-0 bg-[#1a0a0f]/95 backdrop-blur-xl z-50">
         <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
             <span className="text-white/20">|</span>
             <span className="font-semibold">AI Visibility Tracker</span>
           </div>
-          {dashboardData && (
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <button onClick={() => { setShowReportDropdown(!showReportDropdown); if (!showReportDropdown) fetchAllReports(); }} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] text-sm">
-                  <Calendar className="w-4 h-4" />Past Reports<ChevronDown className="w-4 h-4" />
-                </button>
-                {showReportDropdown && (
-                  <div className="absolute right-0 mt-2 w-80 bg-[#16161f] border border-white/[0.08] rounded-xl shadow-2xl overflow-hidden z-50">
-                    <div className="max-h-80 overflow-y-auto">
-                      {allReports.map(report => (
-                        <button key={report.id} onClick={() => loadReport(report.id)} className={`w-full px-4 py-3 text-left hover:bg-white/[0.05] border-b border-white/[0.04] last:border-0 ${selectedReportId === report.id ? 'bg-white/[0.08]' : ''}`}>
-                          <div className="font-medium">{report.brand_name}</div>
-                          <div className="text-sm text-white/40 flex items-center gap-2"><span>{report.report_date}</span>{report.visibility_score && <span>• Score: {report.visibility_score}</span>}</div>
-                        </button>
-                      ))}
-                      {allReports.length === 0 && <div className="px-4 py-8 text-center text-white/40">No past reports found</div>}
-                    </div>
-                  </div>
-                )}
-              </div>
-              <button onClick={() => { setStep('setup'); setGeneratedQuestions([]); setDashboardData(null); setSessionId(null); setSelectedPlatform(null); setBrandData(null); setUrl(''); setEmail(''); }} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-sm font-medium">
-                <RefreshCw className="w-4 h-4" /> New Analysis
-              </button>
-            </div>
-          )}
         </div>
       </header>
 
@@ -1073,40 +1097,64 @@ export default function App() {
           <div className="animate-fadeIn space-y-8">
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="text-3xl font-bold flex items-center gap-3">{dashboardData.brand_name}<span className="text-lg font-normal text-white/40">AI Visibility Report</span></h1>
-                <p className="text-white/40 mt-1">{dashboardData.report_date}</p>
+                <h1 className="text-3xl font-bold flex items-center gap-3">{dashboardData.brand_name}<span className="text-lg font-normal text-[#d4a5a5]">AI Visibility Report</span></h1>
+                <p className="text-[#d4a5a5] mt-1">{dashboardData.report_date}</p>
               </div>
             </div>
 
             {/* SECTION 1: EXECUTIVE SUMMARY */}
-            <div className="bg-gradient-to-br from-cyan-500/10 via-transparent to-blue-500/10 rounded-3xl p-8 border border-cyan-500/20">
+            <div className="bg-gradient-to-br from-[#ff6b4a]/10 via-transparent to-[#a855f7]/10 rounded-3xl p-8 border border-[rgba(255,107,74,0.2)] shadow-[0_0_30px_rgba(255,107,74,0.1)]">
               <div className="flex items-start gap-4 mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shrink-0"><Sparkles className="w-6 h-6 text-white" /></div>
-                <div><h2 className="text-xl font-bold">Executive Summary</h2><p className="text-sm text-white/40">TL;DR of the most important findings</p></div>
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#ff6b4a] to-[#a855f7] flex items-center justify-center shrink-0"><Sparkles className="w-6 h-6 text-white" /></div>
+                <div><h2 className="text-xl font-bold">Executive Summary</h2><p className="text-sm text-[#d4a5a5]">TL;DR of the most important findings</p></div>
               </div>
               <div className="space-y-4">
                 <h3 className="text-2xl font-semibold text-white/90">{dashboardData.executive_summary?.headline}</h3>
-                {(dashboardData.executive_summary?.paragraphs || []).map((p, i) => (<p key={i} className="text-white/70 leading-relaxed">{p}</p>))}
+                {(dashboardData.executive_summary?.paragraphs || []).map((p, i) => (<p key={i} className="text-white/80 leading-relaxed">{p}</p>))}
                 <ul className="grid grid-cols-2 gap-3 mt-6">
-                  {(dashboardData.executive_summary?.bullets || []).map((bullet, i) => (<li key={i} className="flex items-start gap-2 text-sm text-white/60"><ChevronRight className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" /><span>{bullet}</span></li>))}
+                  {(dashboardData.executive_summary?.bullets || []).map((bullet, i) => (<li key={i} className="flex items-start gap-2 text-sm text-[#d4a5a5]"><ChevronRight className="w-4 h-4 text-[#a855f7] shrink-0 mt-0.5" /><span>{bullet}</span></li>))}
                 </ul>
               </div>
             </div>
 
             {/* SECTION 2: BRAND RANKINGS */}
-            <div className="bg-white/[0.02] rounded-3xl p-8 border border-white/[0.06]">
-              <div className="flex items-start gap-4 mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shrink-0"><Award className="w-6 h-6 text-white" /></div>
-                <div className="flex-1"><h2 className="text-xl font-bold">Brand Rankings</h2><p className="text-sm text-white/40">Share of voice across all AI responses</p></div>
-                {dashboardData.brand_sov !== undefined && (<div className="text-right"><div className="text-3xl font-bold text-amber-400">{dashboardData.brand_sov}%</div><div className="text-sm text-white/40">Share of Voice</div></div>)}
+            <div className="bg-white/[0.05] backdrop-blur-sm rounded-3xl p-8 border border-[rgba(255,107,74,0.2)] shadow-[0_0_30px_rgba(255,107,74,0.1)]">
+              <div className="flex items-start gap-4 mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#ff6b4a] to-[#f97316] flex items-center justify-center shrink-0"><Award className="w-6 h-6 text-white" /></div>
+                <div className="flex-1"><h2 className="text-xl font-bold">Brand Rankings</h2><p className="text-sm text-[#d4a5a5]">Share of voice across all AI responses</p></div>
+                {dashboardData.brand_sov !== undefined && (<div className="text-right"><div className="text-3xl font-bold text-[#ff6b4a]">{dashboardData.brand_sov}%</div><div className="text-sm text-[#d4a5a5]">Share of Voice</div></div>)}
               </div>
+              {(() => {
+                const rankings = dashboardData.brand_rankings || [];
+                const trackedBrand = rankings.find(b => b.is_tracked_brand);
+                const trackedRank = rankings.findIndex(b => b.is_tracked_brand) + 1;
+                const topBrands = rankings.filter(b => !b.is_tracked_brand).slice(0, 3).map(b => b.brand);
+                const leader = rankings[0];
+
+                let summary = '';
+                if (trackedBrand && trackedRank === 1) {
+                  summary = `${dashboardData.brand_name} leads the category with ${trackedBrand.share_of_voice}% share of voice, appearing most frequently in AI responses. ${topBrands.length > 0 ? `Key competitors ${topBrands.slice(0, 2).join(' and ')} follow closely behind.` : ''} This dominant position indicates strong AI visibility and brand recognition.`;
+                } else if (trackedBrand && trackedRank <= 3) {
+                  summary = `${dashboardData.brand_name} ranks #${trackedRank} with ${trackedBrand.share_of_voice}% share of voice. ${leader ? `${leader.brand} currently leads the category at ${leader.share_of_voice}%.` : ''} With targeted content optimization, there's opportunity to capture the top position.`;
+                } else if (trackedBrand && trackedRank <= 5) {
+                  summary = `${dashboardData.brand_name} holds position #${trackedRank} with ${trackedBrand.share_of_voice}% share of voice. ${topBrands.length > 0 ? `${topBrands.slice(0, 2).join(', ')} dominate AI recommendations in this space.` : ''} Strategic content improvements could significantly boost visibility.`;
+                } else if (trackedBrand) {
+                  summary = `${dashboardData.brand_name} currently ranks #${trackedRank} with ${trackedBrand.share_of_voice}% share of voice, indicating room for significant improvement. ${topBrands.length > 0 ? `Leading brands like ${topBrands[0]} capture ${leader?.share_of_voice || 0}% of mentions.` : ''} Focused content strategy is essential to climb the rankings.`;
+                } else {
+                  summary = `${dashboardData.brand_name} was not mentioned in the analyzed AI responses. ${topBrands.length > 0 ? `${topBrands.slice(0, 3).join(', ')} currently dominate this category.` : ''} This presents a critical opportunity to build AI visibility through strategic content creation.`;
+                }
+
+                return summary ? (
+                  <p className="text-sm text-[#d4a5a5] leading-relaxed mb-6 px-1">{summary}</p>
+                ) : null;
+              })()}
               <div className="space-y-3">
                 {(dashboardData.brand_rankings || []).slice(0, 10).map((brand, i) => (
-                  <div key={i} className={`flex items-center gap-4 p-3 rounded-xl ${brand.is_tracked_brand ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-white/[0.02]'}`}>
-                    <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${brand.is_tracked_brand ? 'bg-amber-500 text-white' : 'bg-white/10 text-white/50'}`}>{i + 1}</span>
-                    <span className={`flex-1 font-medium ${brand.is_tracked_brand ? 'text-amber-400' : 'text-white/70'}`}>{brand.brand}</span>
-                    <span className="text-white/40 text-sm">{brand.mentions} mentions</span>
-                    <span className={`font-semibold ${brand.is_tracked_brand ? 'text-amber-400' : 'text-white/70'}`}>{brand.share_of_voice}%</span>
+                  <div key={i} className={`flex items-center gap-4 p-3 rounded-xl ${brand.is_tracked_brand ? 'bg-[#ff6b4a]/10 border border-[#ff6b4a]/20' : 'bg-white/[0.02]'}`}>
+                    <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${brand.is_tracked_brand ? 'bg-[#ff6b4a] text-white' : 'bg-white/10 text-[#d4a5a5]/80'}`}>{i + 1}</span>
+                    <span className={`flex-1 font-medium ${brand.is_tracked_brand ? 'text-[#ff6b4a]' : 'text-white/80'}`}>{brand.brand}</span>
+                    <span className="text-[#d4a5a5] text-sm">{brand.mentions} mentions</span>
+                    <span className={`font-semibold ${brand.is_tracked_brand ? 'text-[#ff6b4a]' : 'text-white/80'}`}>{brand.share_of_voice}%</span>
                   </div>
                 ))}
               </div>
@@ -1116,96 +1164,86 @@ export default function App() {
             <div className="grid grid-cols-4 gap-4">
               {['chatgpt', 'claude', 'gemini', 'perplexity'].map(p => {
                 const data = dashboardData.platforms?.[p] || {};
+                const locked = isPlatformLocked(p);
                 return (
-                  <div key={p} className="relative bg-white/[0.02] rounded-2xl p-6 border border-white/[0.06] hover:border-white/[0.12] transition-all">
+                  <div key={p} className="relative bg-white/[0.05] backdrop-blur-sm rounded-2xl p-6 border border-[rgba(255,107,74,0.15)] shadow-[0_0_20px_rgba(255,107,74,0.08)] hover:border-[rgba(255,107,74,0.4)] transition-all">
                     <button
-                      onClick={() => setSelectedPlatform(p)}
-                      className="absolute top-4 right-4 px-3 py-1.5 text-xs font-semibold rounded-lg text-white transition-all hover:opacity-90"
-                      style={{ background: 'linear-gradient(to right, #F3764C, #E7488D)' }}
+                      onClick={() => handlePlatformDiveDeeper(p)}
+                      className={`absolute top-4 right-4 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${locked ? 'bg-white/10 text-[#d4a5a5] cursor-pointer' : 'text-white hover:opacity-90'}`}
+                      style={locked ? {} : { background: 'linear-gradient(135deg, #ff6b4a 0%, #f97316 100%)' }}
                     >
-                      Dive Deeper
+                      {locked && <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" /></svg>}
+                      {locked ? 'Unlock' : 'Dive Deeper'}
                     </button>
                     <img src={platformLogos[p]} alt={platformNames[p]} className="h-8 object-contain mb-4" />
                     <div className="text-2xl font-bold">{data.score || 0}</div>
-                    <div className="text-sm text-white/40">Overall Score</div>
+                    <div className="text-sm text-[#d4a5a5]">Overall Score</div>
                     <div className="mt-4 space-y-1 text-sm">
-                      <div className="flex justify-between"><span className="text-white/40">Mention</span><span>{data.mention || 0}%</span></div>
-                      <div className="flex justify-between"><span className="text-white/40">Sentiment</span><span>{data.sentiment || 0}%</span></div>
-                      <div className="flex justify-between"><span className="text-white/40">Recommend</span><span>{data.recommendation || 0}%</span></div>
+                      <div className="flex justify-between"><span className="text-[#d4a5a5]">Mention</span><span>{data.mention || 0}%</span></div>
+                      <div className="flex justify-between"><span className="text-[#d4a5a5]">Sentiment</span><span>{data.sentiment || 0}%</span></div>
+                      <div className="flex justify-between"><span className="text-[#d4a5a5]">Recommend</span><span>{data.recommendation || 0}%</span></div>
                     </div>
                   </div>
                 );
               })}
             </div>
 
-            {/* SECTION 5: RECOMMENDATIONS - MOVED ABOVE QUESTIONS */}
-            <div className="bg-gradient-to-br from-orange-500/10 via-transparent to-pink-500/10 rounded-3xl p-8 border border-orange-500/20">
+            {/* SECTION 5: CONTENT STRATEGY RECOMMENDATIONS */}
+            <div className="bg-gradient-to-br from-[#ff6b4a]/10 via-transparent to-[#a855f7]/10 rounded-3xl p-8 border border-[rgba(255,107,74,0.2)] shadow-[0_0_30px_rgba(255,107,74,0.1)]">
               <div className="flex items-start gap-4 mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center shrink-0"><Lightbulb className="w-6 h-6 text-white" /></div>
-                <div><h2 className="text-xl font-bold">Recommended Next Steps</h2><p className="text-sm text-white/40">Strategic actions to enhance your AI visibility and brand presence</p></div>
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#ff6b4a] to-[#a855f7] flex items-center justify-center shrink-0"><Lightbulb className="w-6 h-6 text-white" /></div>
+                <div><h2 className="text-xl font-bold">Content Strategy Recommendations</h2><p className="text-sm text-[#d4a5a5]">AI-powered content strategies to improve your visibility rankings</p></div>
               </div>
               <div className="space-y-4">
                 {(dashboardData.recommendations || []).map((rec, i) => {
-                  const descriptions = {
-                    'Maintain strong visibility presence': 'Your brand is performing exceptionally well in AI responses. Continue monitoring to protect this competitive advantage and ensure consistent representation across all platforms.',
-                    'Expand coverage to more query types': 'There are untapped opportunities in certain query categories. Expanding your content strategy could capture additional visibility in related search contexts.',
-                    'Increase visibility': 'Your brand needs more presence in AI-generated responses. Focus on creating authoritative content that AI models can reference when answering user queries.',
-                    'Sustain high recommendation rate': 'AI models are actively recommending your brand. Maintain the quality signals that drive these positive recommendations.',
-                    'Boost recommendation frequency': 'While your brand appears in responses, it could be recommended more often. Strengthen differentiators and value propositions in your content.',
-                    'Improve recommendation rate': 'AI models mention your brand but rarely recommend it. Focus on building stronger trust signals and clearer competitive advantages.',
-                    'Continue positive brand positioning': 'Sentiment around your brand is strong. Keep delivering quality experiences that reinforce this positive perception.',
-                    'Enhance sentiment in AI responses': 'The way AI describes your brand could be more positive. Address any negative perceptions and amplify positive brand attributes.',
+                  const priorityColors = {
+                    high: { bg: 'bg-red-500/10', border: 'border-red-500/20', badge: 'bg-[#ff6b4a]/20 text-[#ff6b4a]' },
+                    medium: { bg: 'bg-[#ff6b4a]/10', border: 'border-[#f97316]/20', badge: 'bg-[#ff6b4a]/20 text-[#ff6b4a]' },
+                    low: { bg: 'bg-[#ff6b4a]/5', border: 'border-[#ff8a80]/20', badge: 'bg-[#ff6b4a]/20 text-[#ff8a80]' }
                   };
-                  const ctaLabels = {
-                    'high': 'Take Action Now',
-                    'medium': 'Learn More',
-                    'low': 'View Details'
-                  };
-                  const description = descriptions[rec.action] || `${rec.detail || 'Take steps to improve this metric and strengthen your overall AI visibility score.'}`;
+                  const colors = priorityColors[rec.priority] || priorityColors.medium;
                   return (
-                    <div key={i} className={`relative p-6 rounded-xl border ${rec.priority === 'high' ? 'bg-red-500/10 border-red-500/20' : rec.priority === 'medium' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-emerald-500/5 border-emerald-500/20'}`}>
-                      <button
-                        className="absolute top-4 right-4 px-3 py-1.5 text-xs font-semibold rounded-lg text-white transition-all hover:opacity-90"
-                        style={{ background: 'linear-gradient(to right, #F3764C, #E7488D)' }}
-                      >
-                        {ctaLabels[rec.priority] || 'Learn More'}
-                      </button>
-                      <div className="flex items-start gap-4 pr-28">
-                        <span className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold shrink-0 ${rec.priority === 'high' ? 'bg-red-500/20 text-red-400' : rec.priority === 'medium' ? 'bg-amber-500/20 text-amber-400' : 'bg-emerald-500/20 text-emerald-400'}`}>{i + 1}</span>
+                    <div key={i} className={`relative p-6 rounded-xl border ${colors.bg} ${colors.border}`}>
+                      <div className="flex items-start gap-4">
+                        <span className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold shrink-0 ${colors.badge}`}>{i + 1}</span>
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className={`text-xs font-bold uppercase tracking-wide ${rec.priority === 'high' ? 'text-red-400' : rec.priority === 'medium' ? 'text-amber-400' : 'text-emerald-400'}`}>{rec.priority} priority</span>
+                          <div className="flex items-center gap-3 mb-2 flex-wrap">
+                            <span className={`text-xs font-bold uppercase tracking-wide ${colors.badge.split(' ')[1]}`}>{rec.priority} priority</span>
+                            {rec.content_type && (
+                              <span className="px-2 py-0.5 rounded text-xs bg-white/10 text-[#d4a5a5]">{rec.content_type}</span>
+                            )}
                           </div>
-                          <h3 className="font-semibold text-lg text-white/90 mb-2">{rec.action}</h3>
-                          <p className="text-sm text-white/60 leading-relaxed">{description}</p>
-                          {rec.detail && <p className="text-sm text-white/40 mt-2 italic">{rec.detail}</p>}
+                          <h3 className="font-semibold text-lg text-white/90 mb-2">{rec.title || rec.action}</h3>
+                          <p className="text-sm text-[#d4a5a5] leading-relaxed">{rec.description || rec.detail || 'Implement this strategy to improve your AI visibility.'}</p>
                         </div>
                       </div>
                     </div>
                   );
                 })}
-                {(!dashboardData.recommendations || dashboardData.recommendations.length === 0) && (<div className="text-center py-8 text-white/40">Recommendations will be generated by AI analysis</div>)}
+                {(!dashboardData.recommendations || dashboardData.recommendations.length === 0) && (
+                  <div className="text-center py-8 text-[#d4a5a5]">Content recommendations will be generated based on AI analysis</div>
+                )}
               </div>
             </div>
 
             {/* SECTION 6: QUESTION BREAKDOWN */}
-            <div className="bg-white/[0.02] rounded-3xl p-8 border border-white/[0.06]">
+            <div className="bg-white/[0.05] backdrop-blur-sm rounded-3xl p-8 border border-[rgba(255,107,74,0.2)] shadow-[0_0_30px_rgba(255,107,74,0.1)]">
               <div className="flex items-start gap-4 mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shrink-0"><MessageSquare className="w-6 h-6 text-white" /></div>
-                <div><h2 className="text-xl font-bold">Question-by-Question Analysis</h2><p className="text-sm text-white/40">How each AI responded to test queries</p></div>
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#a855f7] to-[#ff8a80] flex items-center justify-center shrink-0"><MessageSquare className="w-6 h-6 text-white" /></div>
+                <div><h2 className="text-xl font-bold">Question-by-Question Analysis</h2><p className="text-sm text-[#d4a5a5]">How each AI responded to test queries</p></div>
               </div>
               <div className="space-y-6">
                 {(dashboardData.question_breakdown || []).map((q, qIndex) => (
-                  <div key={qIndex} className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+                  <div key={qIndex} className="p-6 rounded-2xl bg-white/[0.02] border border-[rgba(255,107,74,0.15)]">
                     <div className="flex items-start gap-4 mb-4">
-                      <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ${q.brand_mentioned ? 'bg-emerald-500 text-white' : 'bg-white/10 text-white/50'}`}>{q.question_number}</span>
+                      <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ${q.brand_mentioned ? 'bg-[#ff6b4a] text-white' : 'bg-white/10 text-[#d4a5a5]/80'}`}>{q.question_number}</span>
                       <div className="flex-1">
                         <p className="font-medium text-white/90">{q.question_text}</p>
                         <div className="flex items-center gap-2 mt-2">
-                          <span className="px-2 py-0.5 rounded text-xs bg-white/10 text-white/50">{q.category}</span>
-                          {q.brand_mentioned ? (<span className="px-2 py-0.5 rounded text-xs bg-emerald-500/20 text-emerald-400">Brand Mentioned</span>) : (<span className="px-2 py-0.5 rounded text-xs bg-white/10 text-white/40">Not Mentioned</span>)}
+                          <span className="px-2 py-0.5 rounded text-xs bg-white/10 text-[#d4a5a5]/80">{q.category}</span>
+                          {q.brand_mentioned ? (<span className="px-2 py-0.5 rounded text-xs bg-[#ff6b4a]/20 text-[#ff8a80]">Brand Mentioned</span>) : (<span className="px-2 py-0.5 rounded text-xs bg-white/10 text-[#d4a5a5]">Not Mentioned</span>)}
                         </div>
-                        <p className="text-sm text-white/50 mt-3">{q.executive_summary}</p>
+                        <p className="text-sm text-[#d4a5a5]/80 mt-3">{q.executive_summary}</p>
                       </div>
                     </div>
                     <div className="grid grid-cols-4 gap-3">
@@ -1213,22 +1251,27 @@ export default function App() {
                         const data = q.platforms?.[p] || {};
                         const isExpanded = expandedResponses[`${qIndex}-${p}`];
                         return (
-                          <div key={p} className="bg-white/[0.02] rounded-xl overflow-hidden">
+                          <div key={p} className="bg-white/[0.05] rounded-xl overflow-hidden">
                             <button onClick={() => toggleResponseExpand(qIndex, p)} className="w-full p-3 text-left hover:bg-white/[0.02]">
                               <div className="flex items-center gap-2 mb-2">
                                 <img src={platformLogos[p]} alt={p} className="h-4 object-contain" />
-                                <span className={`ml-auto text-xs px-1.5 py-0.5 rounded ${data.mention > 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/10 text-white/40'}`}>{data.mention > 0 ? 'Yes' : 'No'}</span>
+                                <span className={`ml-auto text-xs px-1.5 py-0.5 rounded ${data.mention > 0 ? 'bg-[#ff6b4a]/20 text-[#ff8a80]' : 'bg-white/10 text-[#d4a5a5]'}`}>{data.mention > 0 ? 'Yes' : 'No'}</span>
                               </div>
                               <div className="text-lg font-bold">{data.overall || 0}</div>
-                              <div className="text-xs text-white/40">Score</div>
+                              <div className="text-xs text-[#d4a5a5]">Score</div>
                             </button>
                             {isExpanded && (
-                              <div className="p-3 border-t border-white/[0.06]">
+                              <div className="p-3 border-t border-[rgba(255,107,74,0.15)]">
+                                {data.notes && (
+                                  <div className="mb-3 p-2 rounded-lg bg-gradient-to-r from-[#a855f7]/10 to-[#ff6b4a]/10 border border-[rgba(168,85,247,0.3)]">
+                                    <p className="text-xs text-[#ff8a80] leading-relaxed">{data.notes}</p>
+                                  </div>
+                                )}
                                 <div className="max-h-64 overflow-y-auto">
                                   <div className="text-xs leading-relaxed"><FormattedResponse text={data.full_response || data.response_summary} /></div>
                                 </div>
                                 {data.competitors_mentioned?.length > 0 && (
-                                  <div className="mt-2 text-xs text-white/40">Competitors: {data.competitors_mentioned.join(', ')}</div>
+                                  <div className="mt-2 text-xs text-[#d4a5a5]">Competitors: {data.competitors_mentioned.join(', ')}</div>
                                 )}
                               </div>
                             )}
@@ -1241,56 +1284,58 @@ export default function App() {
               </div>
             </div>
 
-            <div className="text-center pt-8">
-              <button onClick={() => { setStep('setup'); setGeneratedQuestions([]); setDashboardData(null); setSessionId(null); setBrandData(null); setUrl(''); setEmail(''); }} className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] transition-all"><RefreshCw className="w-5 h-5" /> Run New Analysis</button>
-            </div>
-          </div>
+                      </div>
         )}
 
         {/* PLATFORM DEEP DIVE PAGE */}
         {dashboardData && selectedPlatform && (
           <div className="animate-fadeIn space-y-8">
-            <button onClick={() => setSelectedPlatform(null)} className="flex items-center gap-2 text-white/50 hover:text-white">← Back to Dashboard</button>
+            <button onClick={() => setSelectedPlatform(null)} className="flex items-center gap-2 text-[#d4a5a5]/80 hover:text-white">← Back to Dashboard</button>
             <div className="flex items-center gap-6">
               <img src={platformLogos[selectedPlatform]} alt={selectedPlatform} className="w-16 h-16 object-contain" />
-              <div><h1 className="text-3xl font-bold">{platformNames[selectedPlatform]} Deep Dive</h1><p className="text-white/50">Detailed analysis for {dashboardData.brand_name}</p></div>
+              <div><h1 className="text-3xl font-bold">{platformNames[selectedPlatform]} Deep Dive</h1><p className="text-[#d4a5a5]/80">Detailed analysis for {dashboardData.brand_name}</p></div>
             </div>
-            <div className="bg-gradient-to-br from-blue-500/10 via-transparent to-indigo-500/10 rounded-3xl p-8 border border-blue-500/20">
+            <div className="bg-gradient-to-br from-[#a855f7]/10 via-transparent to-[#ff6b4a]/10 rounded-3xl p-8 border border-[rgba(168,85,247,0.2)] shadow-[0_0_30px_rgba(168,85,247,0.1)]">
               <h2 className="text-xl font-bold mb-4">Executive Summary</h2>
-              <p className="text-white/70 leading-relaxed text-lg">{dashboardData.platform_deep_dives?.[selectedPlatform]?.executive_summary}</p>
+              <p className="text-white/80 leading-relaxed text-lg">{dashboardData.platform_deep_dives?.[selectedPlatform]?.executive_summary}</p>
               <div className="grid grid-cols-4 gap-6 mt-8">
-                <div className="text-center"><div className="text-3xl font-bold text-blue-400">{dashboardData.platform_deep_dives?.[selectedPlatform]?.mention_rate}%</div><div className="text-sm text-white/40">Mention Rate</div></div>
-                <div className="text-center"><div className="text-3xl font-bold text-emerald-400">{dashboardData.platform_deep_dives?.[selectedPlatform]?.sentiment}%</div><div className="text-sm text-white/40">Sentiment</div></div>
-                <div className="text-center"><div className="text-3xl font-bold text-amber-400">{dashboardData.platform_deep_dives?.[selectedPlatform]?.recommendation_rate}%</div><div className="text-sm text-white/40">Recommendation</div></div>
-                <div className="text-center"><div className="text-3xl font-bold text-purple-400">{dashboardData.platform_deep_dives?.[selectedPlatform]?.overall_score}</div><div className="text-sm text-white/40">Overall Score</div></div>
+                <div className="text-center"><div className="text-3xl font-bold text-[#ff6b4a]">{dashboardData.platform_deep_dives?.[selectedPlatform]?.mention_rate}%</div><div className="text-sm text-[#d4a5a5]">Mention Rate</div></div>
+                <div className="text-center"><div className="text-3xl font-bold text-[#ff8a80]">{dashboardData.platform_deep_dives?.[selectedPlatform]?.sentiment}%</div><div className="text-sm text-[#d4a5a5]">Sentiment</div></div>
+                <div className="text-center"><div className="text-3xl font-bold text-[#ff6b4a]">{dashboardData.platform_deep_dives?.[selectedPlatform]?.recommendation_rate}%</div><div className="text-sm text-[#d4a5a5]">Recommendation</div></div>
+                <div className="text-center"><div className="text-3xl font-bold text-[#a855f7]">{dashboardData.platform_deep_dives?.[selectedPlatform]?.overall_score}</div><div className="text-sm text-[#d4a5a5]">Overall Score</div></div>
               </div>
             </div>
-            <div className="bg-white/[0.02] rounded-3xl p-8 border border-white/[0.06]">
+            <div className="bg-white/[0.05] backdrop-blur-sm rounded-3xl p-8 border border-[rgba(255,107,74,0.2)] shadow-[0_0_30px_rgba(255,107,74,0.1)]">
               <h2 className="text-xl font-bold mb-6">{platformNames[selectedPlatform]} Responses</h2>
               <div className="space-y-6">
                 {(dashboardData.question_breakdown || []).map((q, qIndex) => {
                   const platformData = q.platforms[selectedPlatform];
                   if (!platformData) return null;
                   return (
-                    <div key={qIndex} className="p-6 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                    <div key={qIndex} className="p-6 rounded-xl bg-white/[0.03] border border-[rgba(255,107,74,0.15)]">
                       <div className="flex items-start gap-4 mb-4">
-                        <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ${platformData.mention > 0 ? 'bg-emerald-500 text-white' : 'bg-white/10 text-white/50'}`}>{q.question_number}</span>
+                        <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ${platformData.mention > 0 ? 'bg-[#ff6b4a] text-white' : 'bg-white/10 text-[#d4a5a5]/80'}`}>{q.question_number}</span>
                         <div><p className="font-medium text-white/90">{q.question_text}</p>
                           <div className="flex items-center gap-2 mt-2">
-                            <span className="px-2 py-0.5 rounded text-xs bg-white/10 text-white/50">{q.category}</span>
-                            {platformData.mention > 0 ? (<span className="px-2 py-0.5 rounded text-xs bg-emerald-500/20 text-emerald-400">Mentioned</span>) : (<span className="px-2 py-0.5 rounded text-xs bg-red-500/20 text-red-400">Not Mentioned</span>)}
-                            <span className="text-xs text-white/40">Score: {platformData.overall}</span>
+                            <span className="px-2 py-0.5 rounded text-xs bg-white/10 text-[#d4a5a5]/80">{q.category}</span>
+                            {platformData.mention > 0 ? (<span className="px-2 py-0.5 rounded text-xs bg-[#ff6b4a]/20 text-[#ff8a80]">Mentioned</span>) : (<span className="px-2 py-0.5 rounded text-xs bg-[#ff6b4a]/20 text-[#ff6b4a]">Not Mentioned</span>)}
+                            <span className="text-xs text-[#d4a5a5]">Score: {platformData.overall}</span>
                           </div>
                         </div>
                       </div>
-                      <div className="p-4 bg-white/[0.02] rounded-xl max-h-96 overflow-y-auto text-sm leading-relaxed"><FormattedResponse text={platformData.full_response || platformData.response_summary} /></div>
+                      {platformData.notes && (
+                        <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-[#a855f7]/10 to-[#ff6b4a]/10 border border-[rgba(168,85,247,0.3)]">
+                          <p className="text-sm text-[#ff8a80] leading-relaxed">{platformData.notes}</p>
+                        </div>
+                      )}
+                      <div className="p-4 bg-white/[0.05] rounded-xl max-h-96 overflow-y-auto text-sm leading-relaxed"><FormattedResponse text={platformData.full_response || platformData.response_summary} /></div>
                       <div className="grid grid-cols-4 gap-4 mt-4 text-sm">
-                        <div><span className="text-white/40">Mention:</span> <span className="font-medium">{platformData.mention}%</span></div>
-                        <div><span className="text-white/40">Sentiment:</span> <span className="font-medium">{platformData.sentiment}%</span></div>
-                        <div><span className="text-white/40">Recommendation:</span> <span className="font-medium">{platformData.recommendation}%</span></div>
-                        <div><span className="text-white/40">Position:</span> <span className="font-medium">{platformData.position}</span></div>
+                        <div><span className="text-[#d4a5a5]">Mention:</span> <span className="font-medium">{platformData.mention}%</span></div>
+                        <div><span className="text-[#d4a5a5]">Sentiment:</span> <span className="font-medium">{platformData.sentiment}%</span></div>
+                        <div><span className="text-[#d4a5a5]">Recommendation:</span> <span className="font-medium">{platformData.recommendation}%</span></div>
+                        <div><span className="text-[#d4a5a5]">Position:</span> <span className="font-medium">{platformData.position}</span></div>
                       </div>
-                      {platformData.competitors_mentioned?.length > 0 && (<div className="mt-3 pt-3 border-t border-white/[0.06] text-sm"><span className="text-white/40">Competitors: </span><span className="text-white/60">{platformData.competitors_mentioned.join(', ')}</span></div>)}
+                      {platformData.competitors_mentioned?.length > 0 && (<div className="mt-3 pt-3 border-t border-[rgba(255,107,74,0.15)] text-sm"><span className="text-[#d4a5a5]">Competitors: </span><span className="text-[#d4a5a5]">{platformData.competitors_mentioned.join(', ')}</span></div>)}
                     </div>
                   );
                 })}
@@ -1300,10 +1345,10 @@ export default function App() {
         )}
       </main>
 
-      <footer className="relative border-t border-white/[0.04] mt-16">
+      <footer className="relative border-t border-[rgba(255,107,74,0.15)] mt-16">
         <div className="max-w-6xl mx-auto px-8 py-8 flex items-center justify-between">
           <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-6 opacity-40" />
-          <div className="text-sm text-white/30">AI Visibility Intelligence Platform</div>
+          <div className="text-sm text-[#d4a5a5]/60">AI Visibility Intelligence Platform</div>
         </div>
       </footer>
 

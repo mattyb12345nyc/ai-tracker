@@ -55,10 +55,98 @@
             text-align: center;
             color: rgba(247, 233, 240, 0.6);
             font-size: 1.2rem;
-            margin-bottom: 50px;
+            margin-bottom: 40px;
             max-width: 700px;
             margin-left: auto;
             margin-right: auto;
+        }
+        
+        .free-trial-section {
+            background: linear-gradient(135deg, rgba(255, 122, 61, 0.15), rgba(255, 61, 138, 0.12), rgba(139, 92, 246, 0.15));
+            border: 2px solid rgba(255, 122, 61, 0.3);
+            border-radius: 24px;
+            padding: 50px 40px;
+            margin-bottom: 50px;
+            text-align: center;
+            backdrop-filter: blur(14px);
+            box-shadow: 0 0 60px rgba(255, 122, 61, 0.25), 0 8px 32px rgba(20, 1, 15, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .free-trial-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 122, 61, 0.1) 0%, transparent 70%);
+            animation: pulse-glow 4s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.1); }
+        }
+        
+        .free-trial-content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .free-trial-section h2 {
+            font-size: 2.2rem;
+            margin-bottom: 12px;
+            background: linear-gradient(to right, #fff, rgba(255, 255, 255, 0.8));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .free-trial-subtitle {
+            color: rgba(247, 233, 240, 0.7);
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .free-trial-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, var(--fp-accent-1) 0%, var(--fp-accent-2) 60%, var(--fp-accent-3) 100%);
+            color: #fff;
+            padding: 18px 48px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 12px 30px rgba(255, 61, 138, 0.28), 0 0 40px rgba(255, 122, 61, 0.2);
+            margin-bottom: 16px;
+        }
+        
+        .free-trial-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 40px rgba(255, 61, 138, 0.35), 0 0 60px rgba(255, 122, 61, 0.3);
+            filter: saturate(1.1);
+        }
+        
+        .free-trial-button svg {
+            transition: transform 0.3s ease;
+        }
+        
+        .free-trial-button:hover svg {
+            transform: translateX(4px);
+        }
+        
+        .free-trial-note {
+            color: rgba(247, 233, 240, 0.5);
+            font-size: 0.9rem;
+            margin-top: 8px;
         }
         
         .features {
@@ -277,6 +365,21 @@
         
         <h1>Answer Engine Optimization Platform</h1>
         <p class="subtitle">Track how AI platforms represent your brand across ChatGPT, Claude, Gemini & Perplexity — and FutureProof your brand through automated content optimization</p>
+        
+        <!-- Free Trial CTA -->
+        <div class="free-trial-section">
+            <div class="free-trial-content">
+                <h2>Start Your Free Analysis</h2>
+                <p class="free-trial-subtitle">See how AI platforms represent your brand right now — no credit card required</p>
+                <a href="https://ai.futureproof.work/" class="free-trial-button">
+                    <span>Analyze Your Brand Free</span>
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </a>
+                <p class="free-trial-note">Get instant insights across ChatGPT, Claude, Gemini & Perplexity</p>
+            </div>
+        </div>
         
         <div class="features">
             <h2>What's Included</h2>

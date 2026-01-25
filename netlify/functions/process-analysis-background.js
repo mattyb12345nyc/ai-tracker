@@ -523,10 +523,10 @@ async function saveDashboardOutput(analysis, runId, sessionId, brandLogo) {
     history_json: JSON.stringify([{ date: "Current", score }]),
   };
 
-  // These fields are multilineText in Airtable, send as strings
-  fields.brand_coverage = String(analysis.brand_coverage || 0);
-  fields.brand_rank = String(analysis.brand_rank || 0);
-  fields.brand_sov = String(analysis.brand_sov || 0);
+  // Send as rounded integers (Airtable may reject decimals)
+  fields.brand_coverage = Math.round(analysis.brand_coverage || 0);
+  fields.brand_rank = Math.round(analysis.brand_rank || 0);
+  fields.brand_sov = Math.round(analysis.brand_sov || 0);
 
   try {
     const response = await fetch(url, {

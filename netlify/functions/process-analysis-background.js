@@ -429,16 +429,51 @@ function analyzeRunData(results, brandName, validCompetitors, industry) {
   const avgSentDisplay = avgSent > 0 ? avgSent : 50;
 
   let headline;
+  let paragraphs = [];
+  let bullets = [];
+
   if (brandRank && brandRank <= 3 && brandCoverage >= 50) {
-    headline = `${brandName} leads AI visibility`;
+    headline = `${brandName} leads AI visibility in its category`;
+    paragraphs.push(
+      `${brandName} demonstrates strong AI visibility with a score of ${overallScore}, appearing in ${brandCoverage}% of relevant AI queries. The brand is consistently mentioned and recommended across major AI platforms.`
+    );
+    paragraphs.push(
+      `${bestModel} shows the strongest affinity for ${brandName}, while ${worstModel} presents the biggest opportunity for improvement. The brand maintains a ${avgSentDisplay}% positive sentiment rating across all platforms.`
+    );
   } else if (brandCoverage >= 50) {
-    headline = `${brandName} has moderate AI visibility`;
+    headline = `${brandName} has moderate AI visibility with room to grow`;
+    paragraphs.push(
+      `${brandName} appears in ${brandCoverage}% of relevant AI queries with a visibility score of ${overallScore}. While the brand has established presence, there are opportunities to strengthen positioning.`
+    );
+    paragraphs.push(
+      `Performance varies across platforms, with ${bestModel} providing the strongest visibility and ${worstModel} offering the most room for improvement.`
+    );
   } else {
-    headline = `${brandName} has limited AI visibility`;
+    headline = `${brandName} has limited AI visibility - action needed`;
+    paragraphs.push(
+      `${brandName} currently appears in only ${brandCoverage}% of relevant AI queries, with a visibility score of ${overallScore}. This indicates significant opportunity to improve AI discoverability.`
+    );
+    paragraphs.push(
+      `Focusing on content optimization and brand authority signals could help improve visibility across AI platforms.`
+    );
+  }
+
+  // Generate insight bullets
+  bullets.push(`Visibility Score: ${overallScore} out of 100`);
+  bullets.push(`Brand Coverage: Mentioned in ${brandCoverage}% of queries`);
+  bullets.push(`Best Platform: ${bestModel} (strongest performance)`);
+  bullets.push(`Recommendation Rate: ${avgRec}% across all platforms`);
+  if (topCompetitorsList.length > 0) {
+    bullets.push(`Top Competitors: ${topCompetitorsList.join(', ')}`);
+  }
+  if (brandSov > 0) {
+    bullets.push(`Share of Voice: ${brandSov}% of total brand mentions`);
   }
 
   const execSummary = {
     headline,
+    paragraphs,
+    bullets,
     visibility_score: overallScore,
     brand_coverage: brandCoverage,
     brand_rank: brandRank,

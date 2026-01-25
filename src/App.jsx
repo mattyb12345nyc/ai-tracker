@@ -1037,7 +1037,14 @@ export default function App() {
               {['chatgpt', 'claude', 'gemini', 'perplexity'].map(p => {
                 const data = dashboardData.platforms?.[p] || {};
                 return (
-                  <button key={p} onClick={() => setSelectedPlatform(p)} className="bg-white/[0.02] rounded-2xl p-6 border border-white/[0.06] hover:border-white/[0.12] transition-all text-left">
+                  <div key={p} className="relative bg-white/[0.02] rounded-2xl p-6 border border-white/[0.06] hover:border-white/[0.12] transition-all">
+                    <button
+                      onClick={() => setSelectedPlatform(p)}
+                      className="absolute top-4 right-4 px-3 py-1.5 text-xs font-semibold rounded-lg text-white transition-all hover:opacity-90"
+                      style={{ background: 'linear-gradient(to right, #F3764C, #E7488D)' }}
+                    >
+                      Dive Deeper
+                    </button>
                     <img src={platformLogos[p]} alt={platformNames[p]} className="h-8 object-contain mb-4" />
                     <div className="text-2xl font-bold">{data.score || 0}</div>
                     <div className="text-sm text-white/40">Overall Score</div>
@@ -1046,7 +1053,7 @@ export default function App() {
                       <div className="flex justify-between"><span className="text-white/40">Sentiment</span><span>{data.sentiment || 0}%</span></div>
                       <div className="flex justify-between"><span className="text-white/40">Recommend</span><span>{data.recommendation || 0}%</span></div>
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>

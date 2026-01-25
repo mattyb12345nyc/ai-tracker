@@ -279,6 +279,8 @@ export default function App() {
   const [expandedResponses, setExpandedResponses] = useState({});
   const [selectedPlatform, setSelectedPlatform] = useState(null);
   const [viewedPlatforms, setViewedPlatforms] = useState(new Set());
+  const [expandedQuestions, setExpandedQuestions] = useState({});
+  const [hasSeenExpandTip, setHasSeenExpandTip] = useState(false);
   const pollingRef = useRef(null);
   const [currentStatIndex, setCurrentStatIndex] = useState(0);
 
@@ -310,6 +312,17 @@ export default function App() {
     }
     // Locked if: one platform viewed and this is a different one
     return true;
+  };
+
+  const toggleQuestionExpand = (qIndex) => {
+    setExpandedQuestions(prev => ({
+      ...prev,
+      [qIndex]: !prev[qIndex]
+    }));
+    // Hide the expand tip after first interaction
+    if (!hasSeenExpandTip) {
+      setHasSeenExpandTip(true);
+    }
   };
 
   const toggleResponseExpand = (questionIndex, platform) => {
@@ -1356,55 +1369,78 @@ export default function App() {
                 <div className="w-12 h-12 rounded-2xl fp-icon-gradient flex items-center justify-center shrink-0"><MessageSquare className="w-6 h-6 text-white" /></div>
                 <div><h2 className="text-xl font-bold">Question-by-Question Analysis</h2><p className="text-sm fp-text-muted">How each AI responded to test queries</p></div>
               </div>
-              <div className="space-y-6">
-                {(dashboardData.question_breakdown || []).map((q, qIndex) => (
-                  <div key={qIndex} className="p-6 rounded-2xl fp-card">
-                    <div className="flex items-start gap-4 mb-4">
+              <div className="space-y-4">
+                {(dashboardData.question_breakdown || []).map((q, qIndex) => {
+                  const isQuestionExpanded = expandedQuestions[qIndex];
+                  return (
+                  <div key={qIndex} className="rounded-2xl fp-card overflow-hidden">
+                    {/* Clickable Question Header */}
+                    <div
+                      onClick={() => toggleQuestionExpand(qIndex)}
+                      className="p-6 flex items-start gap-4 cursor-pointer transition-all duration-200 hover:bg-white/[0.03] group"
+                      style={{ borderBottom: isQuestionExpanded ? '1px solid rgba(255,107,74,0.15)' : 'none' }}
+                    >
                       <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ${q.brand_mentioned ? 'fp-rank-number text-white' : 'fp-rank-number-neutral'}`}>{q.question_number}</span>
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <p className="font-medium text-white/90">{q.question_text}</p>
-                        <div className="flex items-center gap-2 mt-2">
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
                           <span className="px-2 py-0.5 rounded text-xs fp-badge-neutral">{q.category}</span>
                           {q.brand_mentioned ? (<span className="px-2 py-0.5 rounded text-xs fp-badge-success">Brand Mentioned</span>) : (<span className="px-2 py-0.5 rounded text-xs fp-badge-neutral">Not Mentioned</span>)}
+                          {!hasSeenExpandTip && qIndex === 0 && (
+                            <span className="px-2 py-0.5 rounded text-xs bg-[#ff6b4a]/20 text-[#ff6b4a] animate-pulse">Click to expand</span>
+                          )}
                         </div>
-                        <p className="text-sm fp-text-muted mt-3">{q.executive_summary}</p>
+                        {!isQuestionExpanded && <p className="text-sm fp-text-muted mt-3 line-clamp-2">{q.executive_summary}</p>}
+                      </div>
+                      <div className="shrink-0 ml-2">
+                        <ChevronDown
+                          className={`w-5 h-5 fp-text-muted transition-transform duration-300 ease-out group-hover:text-[#ff6b4a] ${isQuestionExpanded ? 'rotate-180' : ''}`}
+                        />
                       </div>
                     </div>
-                    <div className="grid grid-cols-4 gap-3">
-                      {['chatgpt', 'claude', 'gemini', 'perplexity'].map(p => {
-                        const data = q.platforms?.[p] || {};
-                        const isExpanded = expandedResponses[`${qIndex}-${p}`];
-                        return (
-                          <div key={p} className="bg-white/[0.05] rounded-xl overflow-hidden">
-                            <button onClick={() => toggleResponseExpand(qIndex, p)} className="w-full p-3 text-left hover:bg-white/[0.02]">
-                              <div className="flex items-center gap-2 mb-2">
-                                <img src={platformLogos[p]} alt={p} className="h-4 object-contain" />
-                                <span className={`ml-auto text-xs px-1.5 py-0.5 rounded ${data.mention > 0 ? 'fp-badge-success' : 'fp-badge-neutral'}`}>{data.mention > 0 ? 'Yes' : 'No'}</span>
-                              </div>
-                              <div className="text-lg font-bold">{data.overall || 0}</div>
-                              <div className="text-xs fp-text-muted">Score</div>
-                            </button>
-                            {isExpanded && (
-                              <div className="p-3 border-t fp-divider">
-                                {data.notes && (
-                                  <div className="mb-3 p-2 rounded-lg fp-card-strong">
-                                    <p className="text-xs leading-relaxed" style={{ color: 'var(--fp-accent-1)' }}>{data.notes}</p>
+
+                    {/* Expandable Content */}
+                    <div className={`transition-all duration-300 ease-out overflow-hidden ${isQuestionExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                      <div className="px-6 pb-6 pt-4">
+                        <p className="text-sm fp-text-muted mb-4">{q.executive_summary}</p>
+                        <div className="grid grid-cols-4 gap-3">
+                          {['chatgpt', 'claude', 'gemini', 'perplexity'].map(p => {
+                            const data = q.platforms?.[p] || {};
+                            const isExpanded = expandedResponses[`${qIndex}-${p}`];
+                            return (
+                              <div key={p} className="bg-white/[0.05] rounded-xl overflow-hidden">
+                                <button onClick={(e) => { e.stopPropagation(); toggleResponseExpand(qIndex, p); }} className="w-full p-3 text-left hover:bg-white/[0.02] transition-colors">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <img src={platformLogos[p]} alt={p} className="h-4 object-contain" />
+                                    <span className={`ml-auto text-xs px-1.5 py-0.5 rounded ${data.mention > 0 ? 'fp-badge-success' : 'fp-badge-neutral'}`}>{data.mention > 0 ? 'Yes' : 'No'}</span>
+                                  </div>
+                                  <div className="text-lg font-bold">{data.overall || 0}</div>
+                                  <div className="text-xs fp-text-muted">Score</div>
+                                </button>
+                                {isExpanded && (
+                                  <div className="p-3 border-t fp-divider">
+                                    {data.notes && (
+                                      <div className="mb-3 p-2 rounded-lg fp-card-strong">
+                                        <p className="text-xs leading-relaxed" style={{ color: 'var(--fp-accent-1)' }}>{data.notes}</p>
+                                      </div>
+                                    )}
+                                    <div className="max-h-64 overflow-y-auto">
+                                      <div className="text-xs leading-relaxed"><FormattedResponse text={data.full_response || data.response_summary} /></div>
+                                    </div>
+                                    {data.competitors_mentioned?.length > 0 && (
+                                      <div className="mt-2 text-xs fp-text-muted">Competitors: {data.competitors_mentioned.join(', ')}</div>
+                                    )}
                                   </div>
                                 )}
-                                <div className="max-h-64 overflow-y-auto">
-                                  <div className="text-xs leading-relaxed"><FormattedResponse text={data.full_response || data.response_summary} /></div>
-                                </div>
-                                {data.competitors_mentioned?.length > 0 && (
-                                  <div className="mt-2 text-xs fp-text-muted">Competitors: {data.competitors_mentioned.join(', ')}</div>
-                                )}
                               </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

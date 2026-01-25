@@ -209,7 +209,6 @@ async function saveToAirtable(results, sessionId) {
           chatgpt_recommendation: analysis.chatgpt?.recommendation || 0,
           chatgpt_message_alignment: analysis.chatgpt?.message_alignment || 0,
           chatgpt_overall: analysis.chatgpt?.overall || 0,
-          chatgpt_competitors_mentioned: analysis.chatgpt?.competitors_mentioned || "",
           chatgpt_notes: analysis.chatgpt?.notes || "",
           claude_mention: analysis.claude?.mention || 0,
           claude_position: analysis.claude?.position || 0,
@@ -217,7 +216,6 @@ async function saveToAirtable(results, sessionId) {
           claude_recommendation: analysis.claude?.recommendation || 0,
           claude_message_alignment: analysis.claude?.message_alignment || 0,
           claude_overall: analysis.claude?.overall || 0,
-          claude_competitors_mentioned: analysis.claude?.competitors_mentioned || "",
           claude_notes: analysis.claude?.notes || "",
           gemini_mention: analysis.gemini?.mention || 0,
           gemini_position: analysis.gemini?.position || 0,
@@ -225,7 +223,6 @@ async function saveToAirtable(results, sessionId) {
           gemini_recommendation: analysis.gemini?.recommendation || 0,
           gemini_message_alignment: analysis.gemini?.message_alignment || 0,
           gemini_overall: analysis.gemini?.overall || 0,
-          gemini_competitors_mentioned: analysis.gemini?.competitors_mentioned || "",
           gemini_notes: analysis.gemini?.notes || "",
           perplexity_mention: analysis.perplexity?.mention || 0,
           perplexity_position: analysis.perplexity?.position || 0,
@@ -233,7 +230,6 @@ async function saveToAirtable(results, sessionId) {
           perplexity_recommendation: analysis.perplexity?.recommendation || 0,
           perplexity_message_alignment: analysis.perplexity?.message_alignment || 0,
           perplexity_overall: analysis.perplexity?.overall || 0,
-          perplexity_competitors_mentioned: analysis.perplexity?.competitors_mentioned || "",
           perplexity_notes: analysis.perplexity?.notes || "",
         },
       };
@@ -527,15 +523,10 @@ async function saveDashboardOutput(analysis, runId, sessionId, brandLogo) {
     history_json: JSON.stringify([{ date: "Current", score }]),
   };
 
-  if (analysis.brand_coverage > 0) {
-    fields.brand_coverage = parseFloat(analysis.brand_coverage);
-  }
-  if (analysis.brand_rank > 0) {
-    fields.brand_rank = parseInt(analysis.brand_rank);
-  }
-  if (analysis.brand_sov > 0) {
-    fields.brand_sov = parseFloat(analysis.brand_sov);
-  }
+  // Ensure numeric fields are numbers, not strings
+  fields.brand_coverage = Number(analysis.brand_coverage) || 0;
+  fields.brand_rank = Number(analysis.brand_rank) || 0;
+  fields.brand_sov = Number(analysis.brand_sov) || 0;
 
   try {
     const response = await fetch(url, {

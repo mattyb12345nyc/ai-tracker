@@ -5,3 +5,15 @@
 
 [functions]
   node_bundler = "esbuild"
+
+# Serve pricing page at /pricing
+[[redirects]]
+  from = "/pricing"
+  to = "/pricing.html"
+  status = 200
+
+# SPA fallback - serve index.html for all other routes
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

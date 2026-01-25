@@ -14,10 +14,10 @@ const AIRTABLE_RAW_TABLE_ID = 'tblusxWUrocGCwUHb';
 const STORAGE_KEY = 'ai-tracker-customer-v10';
 
 const platformLogos = {
-  chatgpt: 'http://cdn.mcauto-images-production.sendgrid.net/d157e984273caff5/6e515ad0-76a8-4c99-9c31-4a9ddb82fcb4/301x167.png',
-  claude: 'http://cdn.mcauto-images-production.sendgrid.net/d157e984273caff5/938283a6-6f08-40f3-8312-db242b04df00/866x650.png',
-  gemini: 'http://cdn.mcauto-images-production.sendgrid.net/d157e984273caff5/56d036dd-ee48-48fa-a315-739bd86644f9/1600x900.png',
-  perplexity: 'http://cdn.mcauto-images-production.sendgrid.net/d157e984273caff5/5b1d8753-3bc5-49eb-880f-ccf62ebcad25/1366x542.png'
+  chatgpt: 'http://cdn.mcauto-images-production.sendgrid.net/d157e984273caff5/2210a84a-e267-4929-b7ab-14359ef9fbbe/800x250.png',
+  claude: 'http://cdn.mcauto-images-production.sendgrid.net/d157e984273caff5/5f93fa41-e101-4a70-bb98-664493ca0474/1700x531.png',
+  gemini: 'http://cdn.mcauto-images-production.sendgrid.net/d157e984273caff5/92aa3c12-8d09-4e94-9a93-21df4e2f960b/1800x563.png',
+  perplexity: 'http://cdn.mcauto-images-production.sendgrid.net/d157e984273caff5/cc7eefe4-dea8-4a39-9de8-dc9ae9bfaf7d/1800x563.png'
 };
 
 const platformNames = { chatgpt: 'ChatGPT', claude: 'Claude', gemini: 'Gemini', perplexity: 'Perplexity' };

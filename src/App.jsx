@@ -922,7 +922,7 @@ export default function App() {
             </div>
           </div>
 
-          <div className="mt-8 grid grid-cols-4 gap-4">
+          <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
             {Object.entries(platformLogos).map(([key, logo]) => (
               <div key={key} className="fp-card rounded-xl p-4 flex items-center justify-center">
                 <img src={logo} alt={platformNames[key]} className="h-8 object-contain opacity-50" />
@@ -1221,46 +1221,46 @@ export default function App() {
   return (
     <div className="min-h-screen text-white fp-shell">
       <header className="fp-header sticky top-0 backdrop-blur-xl z-50">
-        <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
-            <span className="text-white/20">|</span>
-            <span className="font-semibold">AI Visibility Tracker</span>
+        <div className="max-w-6xl mx-auto px-4 md:px-8 py-3 md:py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 md:gap-4">
+            <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-6 md:h-8" />
+            <span className="text-white/20 hidden sm:inline">|</span>
+            <span className="font-semibold text-sm md:text-base hidden sm:inline">AI Visibility Tracker</span>
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-8 py-12">
+      <main className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-12">
         {dashboardData && !selectedPlatform && (
-          <div className="animate-fadeIn space-y-8">
+          <div className="animate-fadeIn space-y-4 md:space-y-8">
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="text-3xl font-bold flex items-center gap-3">{dashboardData.brand_name}<span className="text-lg font-normal fp-text-muted">AI Visibility Report</span></h1>
-                <p className="fp-text-muted mt-1">{dashboardData.report_date}</p>
+                <h1 className="text-xl md:text-3xl font-bold flex flex-col md:flex-row md:items-center gap-1 md:gap-3">{dashboardData.brand_name}<span className="text-sm md:text-lg font-normal fp-text-muted">AI Visibility Report</span></h1>
+                <p className="fp-text-muted mt-1 text-sm">{dashboardData.report_date}</p>
               </div>
             </div>
 
             {/* SECTION 1: EXECUTIVE SUMMARY */}
-            <div className="fp-card-strong rounded-3xl p-8">
-              <div className="flex items-start gap-4 mb-6">
-                <div className="w-12 h-12 rounded-2xl fp-icon-gradient flex items-center justify-center shrink-0"><Sparkles className="w-6 h-6 text-white" /></div>
-                <div><h2 className="text-xl font-bold">Executive Summary</h2><p className="text-sm fp-text-muted">TL;DR of the most important findings</p></div>
+            <div className="fp-card-strong rounded-2xl md:rounded-3xl p-4 md:p-8">
+              <div className="flex items-start gap-3 md:gap-4 mb-4 md:mb-6">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl fp-icon-gradient flex items-center justify-center shrink-0"><Sparkles className="w-5 h-5 md:w-6 md:h-6 text-white" /></div>
+                <div><h2 className="text-lg md:text-xl font-bold">Executive Summary</h2><p className="text-xs md:text-sm fp-text-muted">TL;DR of the most important findings</p></div>
               </div>
-              <div className="space-y-4">
-                <h3 className="text-2xl font-semibold text-white/90">{dashboardData.executive_summary?.headline}</h3>
-                {(dashboardData.executive_summary?.paragraphs || []).map((p, i) => (<p key={i} className="text-white/80 leading-relaxed">{p}</p>))}
-                <ul className="grid grid-cols-2 gap-3 mt-6">
-                  {(dashboardData.executive_summary?.bullets || []).map((bullet, i) => (<li key={i} className="flex items-start gap-2 text-sm fp-text-muted"><ChevronRight className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--fp-accent-3)' }} /><span>{bullet}</span></li>))}
+              <div className="space-y-3 md:space-y-4">
+                <h3 className="text-lg md:text-2xl font-semibold text-white/90">{dashboardData.executive_summary?.headline}</h3>
+                {(dashboardData.executive_summary?.paragraphs || []).map((p, i) => (<p key={i} className="text-sm md:text-base text-white/80 leading-relaxed">{p}</p>))}
+                <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3 mt-4 md:mt-6">
+                  {(dashboardData.executive_summary?.bullets || []).map((bullet, i) => (<li key={i} className="flex items-start gap-2 text-xs md:text-sm fp-text-muted"><ChevronRight className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--fp-accent-3)' }} /><span>{bullet}</span></li>))}
                 </ul>
               </div>
             </div>
 
             {/* SECTION 2: BRAND RANKINGS */}
-            <div className="fp-card rounded-3xl p-8">
-              <div className="flex items-start gap-4 mb-4">
-                <div className="w-12 h-12 rounded-2xl fp-icon-gradient flex items-center justify-center shrink-0"><Award className="w-6 h-6 text-white" /></div>
-                <div className="flex-1"><h2 className="text-xl font-bold">Brand Rankings</h2><p className="text-sm fp-text-muted">Share of voice across all AI responses</p></div>
-                {dashboardData.brand_sov !== undefined && (<div className="text-right"><div className="text-3xl font-bold" style={{ color: 'var(--fp-accent-1)' }}>{dashboardData.brand_sov}%</div><div className="text-sm fp-text-muted">Share of Voice</div></div>)}
+            <div className="fp-card rounded-2xl md:rounded-3xl p-4 md:p-8">
+              <div className="flex items-start gap-3 md:gap-4 mb-3 md:mb-4">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl fp-icon-gradient flex items-center justify-center shrink-0"><Award className="w-5 h-5 md:w-6 md:h-6 text-white" /></div>
+                <div className="flex-1"><h2 className="text-lg md:text-xl font-bold">Brand Rankings</h2><p className="text-xs md:text-sm fp-text-muted">Share of voice across all AI responses</p></div>
+                {dashboardData.brand_sov !== undefined && (<div className="text-right"><div className="text-2xl md:text-3xl font-bold" style={{ color: 'var(--fp-accent-1)' }}>{dashboardData.brand_sov}%</div><div className="text-xs md:text-sm fp-text-muted">Share of Voice</div></div>)}
               </div>
               {(() => {
                 const rankings = dashboardData.brand_rankings || [];
@@ -1299,23 +1299,24 @@ export default function App() {
             </div>
 
             {/* SECTION 3: PLATFORM CARDS */}
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {['chatgpt', 'claude', 'gemini', 'perplexity'].map(p => {
                 const data = dashboardData.platforms?.[p] || {};
                 const locked = isPlatformLocked(p);
                 return (
-                  <div key={p} className="relative fp-card rounded-2xl p-6 hover:border-[rgba(255,122,61,0.5)] transition-all">
+                  <div key={p} className="relative fp-card rounded-2xl p-4 md:p-6 hover:border-[rgba(255,122,61,0.5)] transition-all">
                     <button
                       onClick={() => handlePlatformDiveDeeper(p)}
-                      className={`absolute top-4 right-4 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${locked ? 'fp-badge-neutral cursor-pointer' : 'text-white hover:opacity-90 fp-button-primary'}`}
+                      className={`absolute top-3 right-3 md:top-4 md:right-4 px-2 md:px-3 py-1 md:py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${locked ? 'fp-badge-neutral cursor-pointer' : 'text-white hover:opacity-90 fp-button-primary'}`}
                     >
                       {locked && <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" /></svg>}
-                      {locked ? 'Unlock' : 'Dive Deeper'}
+                      <span className="hidden sm:inline">{locked ? 'Unlock' : 'Dive Deeper'}</span>
+                      <span className="sm:hidden">{locked ? '🔒' : '→'}</span>
                     </button>
-                    <img src={platformLogos[p]} alt={platformNames[p]} className="h-8 object-contain mb-4" />
-                    <div className="text-2xl font-bold">{data.score || 0}</div>
-                    <div className="text-sm fp-text-muted">Overall Score</div>
-                    <div className="mt-4 space-y-1 text-sm">
+                    <img src={platformLogos[p]} alt={platformNames[p]} className="h-6 md:h-8 object-contain mb-3 md:mb-4" />
+                    <div className="text-xl md:text-2xl font-bold">{data.score || 0}</div>
+                    <div className="text-xs md:text-sm fp-text-muted">Overall Score</div>
+                    <div className="mt-3 md:mt-4 space-y-1 text-xs md:text-sm">
                       <div className="flex justify-between"><span className="fp-text-muted">Mention</span><span>{data.mention || 0}%</span></div>
                       <div className="flex justify-between"><span className="fp-text-muted">Sentiment</span><span>{data.sentiment || 0}%</span></div>
                       <div className="flex justify-between"><span className="fp-text-muted">Recommend</span><span>{data.recommendation || 0}%</span></div>
@@ -1326,12 +1327,12 @@ export default function App() {
             </div>
 
             {/* SECTION 5: CONTENT STRATEGY RECOMMENDATIONS */}
-            <div className="fp-card-strong rounded-3xl p-8">
-              <div className="flex items-start gap-4 mb-6">
-                <div className="w-12 h-12 rounded-2xl fp-icon-gradient flex items-center justify-center shrink-0"><Lightbulb className="w-6 h-6 text-white" /></div>
-                <div><h2 className="text-xl font-bold">Content Strategy Recommendations</h2><p className="text-sm fp-text-muted">AI-powered content strategies to improve your visibility rankings</p></div>
+            <div className="fp-card-strong rounded-2xl md:rounded-3xl p-4 md:p-8">
+              <div className="flex items-start gap-3 md:gap-4 mb-4 md:mb-6">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl fp-icon-gradient flex items-center justify-center shrink-0"><Lightbulb className="w-5 h-5 md:w-6 md:h-6 text-white" /></div>
+                <div><h2 className="text-lg md:text-xl font-bold">Content Strategy Recommendations</h2><p className="text-xs md:text-sm fp-text-muted">AI-powered content strategies to improve your visibility rankings</p></div>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-3 md:space-y-4">
                 {(dashboardData.recommendations || []).map((rec, i) => {
                   const priorityColors = {
                     high: { bg: 'fp-stage-active', border: 'fp-stage-active', badge: 'fp-badge-success' },
@@ -1340,95 +1341,95 @@ export default function App() {
                   };
                   const colors = priorityColors[rec.priority] || priorityColors.medium;
                   return (
-                    <div key={i} className={`relative p-6 rounded-xl border ${colors.bg} ${colors.border}`}>
-                      <div className="flex items-start gap-4">
-                        <span className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold shrink-0 ${colors.badge}`}>{i + 1}</span>
+                    <div key={i} className={`relative p-4 md:p-6 rounded-xl border ${colors.bg} ${colors.border}`}>
+                      <div className="flex items-start gap-3 md:gap-4">
+                        <span className={`w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl flex items-center justify-center text-xs md:text-sm font-bold shrink-0 ${colors.badge}`}>{i + 1}</span>
                         <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2 flex-wrap">
-                            <span className={`text-xs font-bold uppercase tracking-wide ${colors.badge.split(' ')[1]}`}>{rec.priority} priority</span>
+                          <div className="flex items-center gap-2 md:gap-3 mb-2 flex-wrap">
+                            <span className={`text-[10px] md:text-xs font-bold uppercase tracking-wide ${colors.badge.split(' ')[1]}`}>{rec.priority} priority</span>
                             {rec.content_type && (
-                              <span className="px-2 py-0.5 rounded text-xs fp-badge-neutral">{rec.content_type}</span>
+                              <span className="px-2 py-0.5 rounded text-[10px] md:text-xs fp-badge-neutral">{rec.content_type}</span>
                             )}
                           </div>
-                          <h3 className="font-semibold text-lg text-white/90 mb-2">{rec.title || rec.action}</h3>
-                          <p className="text-sm fp-text-muted leading-relaxed">{rec.description || rec.detail || 'Implement this strategy to improve your AI visibility.'}</p>
+                          <h3 className="font-semibold text-base md:text-lg text-white/90 mb-1 md:mb-2">{rec.title || rec.action}</h3>
+                          <p className="text-xs md:text-sm fp-text-muted leading-relaxed">{rec.description || rec.detail || 'Implement this strategy to improve your AI visibility.'}</p>
                         </div>
                       </div>
                     </div>
                   );
                 })}
                 {(!dashboardData.recommendations || dashboardData.recommendations.length === 0) && (
-                  <div className="text-center py-8 fp-text-muted">Content recommendations will be generated based on AI analysis</div>
+                  <div className="text-center py-6 md:py-8 fp-text-muted text-sm">Content recommendations will be generated based on AI analysis</div>
                 )}
               </div>
             </div>
 
             {/* SECTION 6: QUESTION BREAKDOWN */}
-            <div className="fp-card rounded-3xl p-8">
-              <div className="flex items-start gap-4 mb-6">
-                <div className="w-12 h-12 rounded-2xl fp-icon-gradient flex items-center justify-center shrink-0"><MessageSquare className="w-6 h-6 text-white" /></div>
-                <div><h2 className="text-xl font-bold">Question-by-Question Analysis</h2><p className="text-sm fp-text-muted">How each AI responded to test queries</p></div>
+            <div className="fp-card rounded-2xl md:rounded-3xl p-4 md:p-8">
+              <div className="flex items-start gap-3 md:gap-4 mb-4 md:mb-6">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl fp-icon-gradient flex items-center justify-center shrink-0"><MessageSquare className="w-5 h-5 md:w-6 md:h-6 text-white" /></div>
+                <div><h2 className="text-lg md:text-xl font-bold">Question-by-Question Analysis</h2><p className="text-xs md:text-sm fp-text-muted">How each AI responded to test queries</p></div>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-3 md:space-y-4">
                 {(dashboardData.question_breakdown || []).map((q, qIndex) => {
                   const isQuestionExpanded = expandedQuestions[qIndex];
                   return (
-                  <div key={qIndex} className="rounded-2xl fp-card overflow-hidden">
+                  <div key={qIndex} className="rounded-xl md:rounded-2xl fp-card overflow-hidden">
                     {/* Clickable Question Header */}
                     <div
                       onClick={() => toggleQuestionExpand(qIndex)}
-                      className="p-6 flex items-start gap-4 cursor-pointer transition-all duration-200 hover:bg-white/[0.03] group"
+                      className="p-3 md:p-6 flex items-start gap-2 md:gap-4 cursor-pointer transition-all duration-200 hover:bg-white/[0.03] group"
                       style={{ borderBottom: isQuestionExpanded ? '1px solid rgba(255,107,74,0.15)' : 'none' }}
                     >
-                      <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ${q.brand_mentioned ? 'fp-rank-number text-white' : 'fp-rank-number-neutral'}`}>{q.question_number}</span>
+                      <span className={`w-6 h-6 md:w-8 md:h-8 rounded-md md:rounded-lg flex items-center justify-center text-xs md:text-sm font-bold shrink-0 ${q.brand_mentioned ? 'fp-rank-number text-white' : 'fp-rank-number-neutral'}`}>{q.question_number}</span>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-white/90">{q.question_text}</p>
-                        <div className="flex items-center gap-2 mt-2 flex-wrap">
-                          <span className="px-2 py-0.5 rounded text-xs fp-badge-neutral">{q.category}</span>
-                          {q.brand_mentioned ? (<span className="px-2 py-0.5 rounded text-xs fp-badge-success">Brand Mentioned</span>) : (<span className="px-2 py-0.5 rounded text-xs fp-badge-neutral">Not Mentioned</span>)}
+                        <p className="font-medium text-white/90 text-sm md:text-base">{q.question_text}</p>
+                        <div className="flex items-center gap-1.5 md:gap-2 mt-1.5 md:mt-2 flex-wrap">
+                          <span className="px-1.5 md:px-2 py-0.5 rounded text-[10px] md:text-xs fp-badge-neutral">{q.category}</span>
+                          {q.brand_mentioned ? (<span className="px-1.5 md:px-2 py-0.5 rounded text-[10px] md:text-xs fp-badge-success">Mentioned</span>) : (<span className="px-1.5 md:px-2 py-0.5 rounded text-[10px] md:text-xs fp-badge-neutral">Not Mentioned</span>)}
                           {!hasSeenExpandTip && qIndex === 0 && (
-                            <span className="px-2 py-0.5 rounded text-xs bg-[#ff6b4a]/20 text-[#ff6b4a] animate-pulse">Click to expand</span>
+                            <span className="px-1.5 md:px-2 py-0.5 rounded text-[10px] md:text-xs bg-[#ff6b4a]/20 text-[#ff6b4a] animate-pulse">Tap to expand</span>
                           )}
                         </div>
-                        {!isQuestionExpanded && <p className="text-sm fp-text-muted mt-3 line-clamp-2">{q.executive_summary}</p>}
+                        {!isQuestionExpanded && <p className="text-xs md:text-sm fp-text-muted mt-2 md:mt-3 line-clamp-2">{q.executive_summary}</p>}
                       </div>
-                      <div className="shrink-0 ml-2">
+                      <div className="shrink-0 ml-1 md:ml-2">
                         <ChevronDown
-                          className={`w-5 h-5 fp-text-muted transition-transform duration-300 ease-out group-hover:text-[#ff6b4a] ${isQuestionExpanded ? 'rotate-180' : ''}`}
+                          className={`w-4 h-4 md:w-5 md:h-5 fp-text-muted transition-transform duration-300 ease-out group-hover:text-[#ff6b4a] ${isQuestionExpanded ? 'rotate-180' : ''}`}
                         />
                       </div>
                     </div>
 
                     {/* Expandable Content */}
                     <div className={`transition-all duration-300 ease-out overflow-hidden ${isQuestionExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-                      <div className="px-6 pb-6 pt-4">
-                        <p className="text-sm fp-text-muted mb-4">{q.executive_summary}</p>
-                        <div className="grid grid-cols-4 gap-3">
+                      <div className="px-3 md:px-6 pb-4 md:pb-6 pt-3 md:pt-4">
+                        <p className="text-xs md:text-sm fp-text-muted mb-3 md:mb-4">{q.executive_summary}</p>
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
                           {['chatgpt', 'claude', 'gemini', 'perplexity'].map(p => {
                             const data = q.platforms?.[p] || {};
                             const isExpanded = expandedResponses[`${qIndex}-${p}`];
                             return (
                               <div key={p} className="bg-white/[0.05] rounded-xl overflow-hidden">
-                                <button onClick={(e) => { e.stopPropagation(); toggleResponseExpand(qIndex, p); }} className="w-full p-3 text-left hover:bg-white/[0.02] transition-colors">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <img src={platformLogos[p]} alt={p} className="h-4 object-contain" />
-                                    <span className={`ml-auto text-xs px-1.5 py-0.5 rounded ${data.mention > 0 ? 'fp-badge-success' : 'fp-badge-neutral'}`}>{data.mention > 0 ? 'Yes' : 'No'}</span>
+                                <button onClick={(e) => { e.stopPropagation(); toggleResponseExpand(qIndex, p); }} className="w-full p-2 md:p-3 text-left hover:bg-white/[0.02] transition-colors">
+                                  <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+                                    <img src={platformLogos[p]} alt={p} className="h-3 md:h-4 object-contain" />
+                                    <span className={`ml-auto text-[10px] md:text-xs px-1 md:px-1.5 py-0.5 rounded ${data.mention > 0 ? 'fp-badge-success' : 'fp-badge-neutral'}`}>{data.mention > 0 ? 'Yes' : 'No'}</span>
                                   </div>
-                                  <div className="text-lg font-bold">{data.overall || 0}</div>
-                                  <div className="text-xs fp-text-muted">Score</div>
+                                  <div className="text-base md:text-lg font-bold">{data.overall || 0}</div>
+                                  <div className="text-[10px] md:text-xs fp-text-muted">Score</div>
                                 </button>
                                 {isExpanded && (
-                                  <div className="p-3 border-t fp-divider">
+                                  <div className="p-2 md:p-3 border-t fp-divider">
                                     {data.notes && (
-                                      <div className="mb-3 p-2 rounded-lg fp-card-strong">
-                                        <p className="text-xs leading-relaxed" style={{ color: 'var(--fp-accent-1)' }}>{data.notes}</p>
+                                      <div className="mb-2 md:mb-3 p-2 rounded-lg fp-card-strong">
+                                        <p className="text-[10px] md:text-xs leading-relaxed" style={{ color: 'var(--fp-accent-1)' }}>{data.notes}</p>
                                       </div>
                                     )}
-                                    <div className="max-h-64 overflow-y-auto">
-                                      <div className="text-xs leading-relaxed"><FormattedResponse text={data.full_response || data.response_summary} /></div>
+                                    <div className="max-h-48 md:max-h-64 overflow-y-auto">
+                                      <div className="text-[10px] md:text-xs leading-relaxed"><FormattedResponse text={data.full_response || data.response_summary} /></div>
                                     </div>
                                     {data.competitors_mentioned?.length > 0 && (
-                                      <div className="mt-2 text-xs fp-text-muted">Competitors: {data.competitors_mentioned.join(', ')}</div>
+                                      <div className="mt-2 text-[10px] md:text-xs fp-text-muted">Competitors: {data.competitors_mentioned.join(', ')}</div>
                                     )}
                                   </div>
                                 )}
@@ -1451,51 +1452,51 @@ export default function App() {
         {dashboardData && selectedPlatform && (
           <div className="animate-fadeIn space-y-8">
             <button onClick={() => setSelectedPlatform(null)} className="flex items-center gap-2 text-[#d4a5a5]/80 hover:text-white">← Back to Dashboard</button>
-            <div className="flex items-center gap-6">
-              <img src={platformLogos[selectedPlatform]} alt={selectedPlatform} className="w-16 h-16 object-contain" />
-              <div><h1 className="text-3xl font-bold">{platformNames[selectedPlatform]} Deep Dive</h1><p className="fp-text-muted">Detailed analysis for {dashboardData.brand_name}</p></div>
+            <div className="flex items-center gap-4 md:gap-6">
+              <img src={platformLogos[selectedPlatform]} alt={selectedPlatform} className="w-12 h-12 md:w-16 md:h-16 object-contain" />
+              <div><h1 className="text-2xl md:text-3xl font-bold">{platformNames[selectedPlatform]} Deep Dive</h1><p className="fp-text-muted text-sm md:text-base">Detailed analysis for {dashboardData.brand_name}</p></div>
             </div>
-            <div className="fp-card-strong rounded-3xl p-8">
-              <h2 className="text-xl font-bold mb-4">Executive Summary</h2>
-              <p className="text-white/80 leading-relaxed text-lg">{dashboardData.platform_deep_dives?.[selectedPlatform]?.executive_summary}</p>
-              <div className="grid grid-cols-4 gap-6 mt-8">
-                <div className="text-center"><div className="text-3xl font-bold" style={{ color: 'var(--fp-accent-1)' }}>{dashboardData.platform_deep_dives?.[selectedPlatform]?.mention_rate}%</div><div className="text-sm fp-text-muted">Mention Rate</div></div>
-                <div className="text-center"><div className="text-3xl font-bold" style={{ color: 'var(--fp-accent-1)' }}>{dashboardData.platform_deep_dives?.[selectedPlatform]?.sentiment}%</div><div className="text-sm fp-text-muted">Sentiment</div></div>
-                <div className="text-center"><div className="text-3xl font-bold" style={{ color: 'var(--fp-accent-1)' }}>{dashboardData.platform_deep_dives?.[selectedPlatform]?.recommendation_rate}%</div><div className="text-sm fp-text-muted">Recommendation</div></div>
-                <div className="text-center"><div className="text-3xl font-bold" style={{ color: 'var(--fp-accent-3)' }}>{dashboardData.platform_deep_dives?.[selectedPlatform]?.overall_score}</div><div className="text-sm fp-text-muted">Overall Score</div></div>
+            <div className="fp-card-strong rounded-2xl md:rounded-3xl p-4 md:p-8">
+              <h2 className="text-lg md:text-xl font-bold mb-3 md:mb-4">Executive Summary</h2>
+              <p className="text-white/80 leading-relaxed text-sm md:text-lg">{dashboardData.platform_deep_dives?.[selectedPlatform]?.executive_summary}</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mt-6 md:mt-8">
+                <div className="text-center"><div className="text-2xl md:text-3xl font-bold" style={{ color: 'var(--fp-accent-1)' }}>{dashboardData.platform_deep_dives?.[selectedPlatform]?.mention_rate}%</div><div className="text-xs md:text-sm fp-text-muted">Mention Rate</div></div>
+                <div className="text-center"><div className="text-2xl md:text-3xl font-bold" style={{ color: 'var(--fp-accent-1)' }}>{dashboardData.platform_deep_dives?.[selectedPlatform]?.sentiment}%</div><div className="text-xs md:text-sm fp-text-muted">Sentiment</div></div>
+                <div className="text-center"><div className="text-2xl md:text-3xl font-bold" style={{ color: 'var(--fp-accent-1)' }}>{dashboardData.platform_deep_dives?.[selectedPlatform]?.recommendation_rate}%</div><div className="text-xs md:text-sm fp-text-muted">Recommendation</div></div>
+                <div className="text-center"><div className="text-2xl md:text-3xl font-bold" style={{ color: 'var(--fp-accent-3)' }}>{dashboardData.platform_deep_dives?.[selectedPlatform]?.overall_score}</div><div className="text-xs md:text-sm fp-text-muted">Overall Score</div></div>
               </div>
             </div>
-            <div className="fp-card rounded-3xl p-8">
-              <h2 className="text-xl font-bold mb-6">{platformNames[selectedPlatform]} Responses</h2>
-              <div className="space-y-6">
+            <div className="fp-card rounded-2xl md:rounded-3xl p-4 md:p-8">
+              <h2 className="text-lg md:text-xl font-bold mb-4 md:mb-6">{platformNames[selectedPlatform]} Responses</h2>
+              <div className="space-y-4 md:space-y-6">
                 {(dashboardData.question_breakdown || []).map((q, qIndex) => {
                   const platformData = q.platforms[selectedPlatform];
                   if (!platformData) return null;
                   return (
-                    <div key={qIndex} className="p-6 rounded-xl fp-card">
-                      <div className="flex items-start gap-4 mb-4">
-                        <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ${platformData.mention > 0 ? 'fp-rank-number text-white' : 'fp-rank-number-neutral'}`}>{q.question_number}</span>
-                        <div><p className="font-medium text-white/90">{q.question_text}</p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <span className="px-2 py-0.5 rounded text-xs fp-badge-neutral">{q.category}</span>
-                            {platformData.mention > 0 ? (<span className="px-2 py-0.5 rounded text-xs fp-badge-success">Mentioned</span>) : (<span className="px-2 py-0.5 rounded text-xs fp-badge">Not Mentioned</span>)}
-                            <span className="text-xs fp-text-muted">Score: {platformData.overall}</span>
+                    <div key={qIndex} className="p-4 md:p-6 rounded-xl fp-card">
+                      <div className="flex items-start gap-3 md:gap-4 mb-3 md:mb-4">
+                        <span className={`w-7 h-7 md:w-8 md:h-8 rounded-lg flex items-center justify-center text-xs md:text-sm font-bold shrink-0 ${platformData.mention > 0 ? 'fp-rank-number text-white' : 'fp-rank-number-neutral'}`}>{q.question_number}</span>
+                        <div><p className="font-medium text-white/90 text-sm md:text-base">{q.question_text}</p>
+                          <div className="flex flex-wrap items-center gap-2 mt-2">
+                            <span className="px-2 py-0.5 rounded text-[10px] md:text-xs fp-badge-neutral">{q.category}</span>
+                            {platformData.mention > 0 ? (<span className="px-2 py-0.5 rounded text-[10px] md:text-xs fp-badge-success">Mentioned</span>) : (<span className="px-2 py-0.5 rounded text-[10px] md:text-xs fp-badge">Not Mentioned</span>)}
+                            <span className="text-[10px] md:text-xs fp-text-muted">Score: {platformData.overall}</span>
                           </div>
                         </div>
                       </div>
                       {platformData.notes && (
-                        <div className="mb-4 p-3 rounded-xl fp-card-strong">
-                          <p className="text-sm leading-relaxed" style={{ color: 'var(--fp-accent-1)' }}>{platformData.notes}</p>
+                        <div className="mb-3 md:mb-4 p-2 md:p-3 rounded-xl fp-card-strong">
+                          <p className="text-xs md:text-sm leading-relaxed" style={{ color: 'var(--fp-accent-1)' }}>{platformData.notes}</p>
                         </div>
                       )}
-                      <div className="p-4 fp-card rounded-xl max-h-96 overflow-y-auto text-sm leading-relaxed"><FormattedResponse text={platformData.full_response || platformData.response_summary} /></div>
-                      <div className="grid grid-cols-4 gap-4 mt-4 text-sm">
+                      <div className="p-3 md:p-4 fp-card rounded-xl max-h-64 md:max-h-96 overflow-y-auto text-xs md:text-sm leading-relaxed"><FormattedResponse text={platformData.full_response || platformData.response_summary} /></div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mt-3 md:mt-4 text-xs md:text-sm">
                         <div><span className="fp-text-muted">Mention:</span> <span className="font-medium">{platformData.mention}%</span></div>
                         <div><span className="fp-text-muted">Sentiment:</span> <span className="font-medium">{platformData.sentiment}%</span></div>
-                        <div><span className="fp-text-muted">Recommendation:</span> <span className="font-medium">{platformData.recommendation}%</span></div>
+                        <div><span className="fp-text-muted">Recommend:</span> <span className="font-medium">{platformData.recommendation}%</span></div>
                         <div><span className="fp-text-muted">Position:</span> <span className="font-medium">{platformData.position}</span></div>
                       </div>
-                      {platformData.competitors_mentioned?.length > 0 && (<div className="mt-3 pt-3 border-t fp-divider text-sm"><span className="fp-text-muted">Competitors: </span><span className="fp-text-muted">{platformData.competitors_mentioned.join(', ')}</span></div>)}
+                      {platformData.competitors_mentioned?.length > 0 && (<div className="mt-2 md:mt-3 pt-2 md:pt-3 border-t fp-divider text-xs md:text-sm"><span className="fp-text-muted">Competitors: </span><span className="fp-text-muted">{platformData.competitors_mentioned.join(', ')}</span></div>)}
                     </div>
                   );
                 })}
@@ -1505,10 +1506,10 @@ export default function App() {
         )}
       </main>
 
-      <footer className="relative border-t border-[rgba(255,107,74,0.15)] mt-16">
-        <div className="max-w-6xl mx-auto px-8 py-8 flex items-center justify-between">
-          <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-6 opacity-40" />
-          <div className="text-sm fp-text-subtle">AI Visibility Intelligence Platform</div>
+      <footer className="relative border-t border-[rgba(255,107,74,0.15)] mt-8 md:mt-16">
+        <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-8 flex flex-col md:flex-row items-center justify-between gap-2">
+          <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-5 md:h-6 opacity-40" />
+          <div className="text-xs md:text-sm fp-text-subtle">AI Visibility Intelligence Platform</div>
         </div>
       </footer>
 

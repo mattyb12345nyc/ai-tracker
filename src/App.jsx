@@ -1094,7 +1094,57 @@ export default function App() {
               })}
             </div>
 
-            {/* SECTION 5: QUESTION BREAKDOWN */}
+            {/* SECTION 5: RECOMMENDATIONS - MOVED ABOVE QUESTIONS */}
+            <div className="bg-gradient-to-br from-orange-500/10 via-transparent to-pink-500/10 rounded-3xl p-8 border border-orange-500/20">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center shrink-0"><Lightbulb className="w-6 h-6 text-white" /></div>
+                <div><h2 className="text-xl font-bold">Recommended Next Steps</h2><p className="text-sm text-white/40">Strategic actions to enhance your AI visibility and brand presence</p></div>
+              </div>
+              <div className="space-y-4">
+                {(dashboardData.recommendations || []).map((rec, i) => {
+                  const descriptions = {
+                    'Maintain strong visibility presence': 'Your brand is performing exceptionally well in AI responses. Continue monitoring to protect this competitive advantage and ensure consistent representation across all platforms.',
+                    'Expand coverage to more query types': 'There are untapped opportunities in certain query categories. Expanding your content strategy could capture additional visibility in related search contexts.',
+                    'Increase visibility': 'Your brand needs more presence in AI-generated responses. Focus on creating authoritative content that AI models can reference when answering user queries.',
+                    'Sustain high recommendation rate': 'AI models are actively recommending your brand. Maintain the quality signals that drive these positive recommendations.',
+                    'Boost recommendation frequency': 'While your brand appears in responses, it could be recommended more often. Strengthen differentiators and value propositions in your content.',
+                    'Improve recommendation rate': 'AI models mention your brand but rarely recommend it. Focus on building stronger trust signals and clearer competitive advantages.',
+                    'Continue positive brand positioning': 'Sentiment around your brand is strong. Keep delivering quality experiences that reinforce this positive perception.',
+                    'Enhance sentiment in AI responses': 'The way AI describes your brand could be more positive. Address any negative perceptions and amplify positive brand attributes.',
+                  };
+                  const ctaLabels = {
+                    'high': 'Take Action Now',
+                    'medium': 'Learn More',
+                    'low': 'View Details'
+                  };
+                  const description = descriptions[rec.action] || `${rec.detail || 'Take steps to improve this metric and strengthen your overall AI visibility score.'}`;
+                  return (
+                    <div key={i} className={`relative p-6 rounded-xl border ${rec.priority === 'high' ? 'bg-red-500/10 border-red-500/20' : rec.priority === 'medium' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-emerald-500/5 border-emerald-500/20'}`}>
+                      <button
+                        className="absolute top-4 right-4 px-3 py-1.5 text-xs font-semibold rounded-lg text-white transition-all hover:opacity-90"
+                        style={{ background: 'linear-gradient(to right, #F3764C, #E7488D)' }}
+                      >
+                        {ctaLabels[rec.priority] || 'Learn More'}
+                      </button>
+                      <div className="flex items-start gap-4 pr-28">
+                        <span className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold shrink-0 ${rec.priority === 'high' ? 'bg-red-500/20 text-red-400' : rec.priority === 'medium' ? 'bg-amber-500/20 text-amber-400' : 'bg-emerald-500/20 text-emerald-400'}`}>{i + 1}</span>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className={`text-xs font-bold uppercase tracking-wide ${rec.priority === 'high' ? 'text-red-400' : rec.priority === 'medium' ? 'text-amber-400' : 'text-emerald-400'}`}>{rec.priority} priority</span>
+                          </div>
+                          <h3 className="font-semibold text-lg text-white/90 mb-2">{rec.action}</h3>
+                          <p className="text-sm text-white/60 leading-relaxed">{description}</p>
+                          {rec.detail && <p className="text-sm text-white/40 mt-2 italic">{rec.detail}</p>}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {(!dashboardData.recommendations || dashboardData.recommendations.length === 0) && (<div className="text-center py-8 text-white/40">Recommendations will be generated by AI analysis</div>)}
+              </div>
+            </div>
+
+            {/* SECTION 6: QUESTION BREAKDOWN */}
             <div className="bg-white/[0.02] rounded-3xl p-8 border border-white/[0.06]">
               <div className="flex items-start gap-4 mb-6">
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shrink-0"><MessageSquare className="w-6 h-6 text-white" /></div>
@@ -1144,32 +1194,6 @@ export default function App() {
                     </div>
                   </div>
                 ))}
-              </div>
-            </div>
-
-            {/* SECTION 6: RECOMMENDATIONS */}
-            <div className="bg-gradient-to-br from-orange-500/10 via-transparent to-pink-500/10 rounded-3xl p-8 border border-orange-500/20">
-              <div className="flex items-start gap-4 mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center shrink-0"><Lightbulb className="w-6 h-6 text-white" /></div>
-                <div><h2 className="text-xl font-bold">Recommendations & Next Steps</h2><p className="text-sm text-white/40">Priority actions to improve AI visibility</p></div>
-              </div>
-              <div className="space-y-4">
-                {(dashboardData.recommendations || []).map((rec, i) => (
-                  <div key={i} className={`p-5 rounded-xl border ${rec.priority === 'high' ? 'bg-red-500/10 border-red-500/20' : rec.priority === 'medium' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-white/[0.03] border-white/[0.06]'}`}>
-                    <div className="flex items-start gap-4">
-                      <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ${rec.priority === 'high' ? 'bg-red-500/20 text-red-400' : rec.priority === 'medium' ? 'bg-amber-500/20 text-amber-400' : 'bg-white/10 text-white/50'}`}>{i + 1}</span>
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={`text-xs font-bold uppercase ${rec.priority === 'high' ? 'text-red-400' : rec.priority === 'medium' ? 'text-amber-400' : 'text-white/50'}`}>{rec.priority} priority</span>
-                          {rec.category && <span className="text-xs text-white/30">• {rec.category}</span>}
-                        </div>
-                        <div className="font-medium text-white/90">{rec.action}</div>
-                        {rec.detail && <p className="text-sm text-white/50 mt-1">{rec.detail}</p>}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {(!dashboardData.recommendations || dashboardData.recommendations.length === 0) && (<div className="text-center py-8 text-white/40">Recommendations will be generated by AI analysis</div>)}
               </div>
             </div>
 

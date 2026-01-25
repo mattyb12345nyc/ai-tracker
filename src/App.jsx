@@ -39,6 +39,85 @@ const LOADING_MESSAGES = [
   'Surveying the AI ecosystem...'
 ];
 
+// AI consumer journey statistics
+const AI_CONSUMER_STATS = [
+  {
+    stat: '56%',
+    text: 'of U.S. consumers plan to use AI chatbots to compare prices and find deals during 2025 holiday shopping.',
+    source: 'Deloitte survey via Digiday'
+  },
+  {
+    stat: '47%',
+    text: 'of consumers plan to use AI chatbots to summarize product reviews before making a purchase decision.',
+    source: 'Deloitte survey via Digiday'
+  },
+  {
+    stat: '33%',
+    text: 'of consumers plan to use AI chatbots to generate shopping lists for their purchases.',
+    source: 'Deloitte survey via Digiday'
+  },
+  {
+    stat: '50%',
+    text: 'of all shoppers used conversational AI tools to assist with purchase decisions during 2025 Black Friday.',
+    source: 'Joey Ahnn, "The Advent of AI Agents"'
+  },
+  {
+    stat: '67%',
+    text: 'of Gen Z shoppers used AI chatbots during 2025 Black Friday to guide their retail journey.',
+    source: 'Joey Ahnn, "The Advent of AI Agents"'
+  },
+  {
+    stat: '7%',
+    text: 'increase in online shopping penetration in 2025, driven by AI-powered price tracking and comparisons.',
+    source: 'Joey Ahnn, "The Advent of AI Agents"'
+  },
+  {
+    stat: '2.1%',
+    text: 'of all ChatGPT queries between May 2024 and June 2025 were shopping-related prompts such as product recommendations under a budget.',
+    source: 'eMarketer'
+  },
+  {
+    stat: '21%',
+    text: 'of global holiday orders in 2025 are expected to be driven by AI-powered tools, up from 19% the previous year.',
+    source: 'eMarketer citing Salesforce'
+  },
+  {
+    stat: '70%',
+    text: 'of CX leaders believe chatbots are becoming skilled architects of highly personalized customer journeys.',
+    source: 'Zendesk, "AI customer service statistics for 2026"'
+  },
+  {
+    stat: '51%',
+    text: 'of consumers say they prefer interacting with bots over humans when they want immediate service.',
+    source: 'Zendesk, "AI customer service statistics for 2026"'
+  },
+  {
+    stat: '67%',
+    text: 'of consumers are expanding their range of inquiries and asking AI/bots more varied questions than before.',
+    source: 'Zendesk, "AI customer service statistics for 2026"'
+  },
+  {
+    stat: '59%',
+    text: 'of consumers expect an improved digital customer experience thanks to AI technologies like chatbots.',
+    source: 'Jotform, "50+ chatbot statistics you must know in 2026"'
+  },
+  {
+    stat: '12-27%',
+    text: 'customer satisfaction improvements reported by companies when using AI-powered personalization tools such as chatbots.',
+    source: 'Jotform, "50+ chatbot statistics you must know in 2026"'
+  },
+  {
+    stat: '55%',
+    text: 'of companies report reduced wait times after implementing AI support, including chatbots.',
+    source: 'Jotform, "50+ chatbot statistics you must know in 2026"'
+  },
+  {
+    stat: '69%',
+    text: 'of companies report improved overall service quality after adopting AI, including AI-powered chatbots in their customer journey.',
+    source: 'Jotform, "50+ chatbot statistics you must know in 2026"'
+  }
+];
+
 // Format LLM response: remove asterisks and clean up text
 const formatLLMResponse = (text) => {
   if (!text) return '';
@@ -201,6 +280,7 @@ export default function App() {
   const [selectedPlatform, setSelectedPlatform] = useState(null);
   const [viewedPlatforms, setViewedPlatforms] = useState(new Set());
   const pollingRef = useRef(null);
+  const [currentStatIndex, setCurrentStatIndex] = useState(0);
 
   // Sign-up page URL for gated features
   const SIGNUP_URL = 'https://futureproof.work/ai-optimizer-sign-up';
@@ -635,6 +715,15 @@ export default function App() {
     return () => clearInterval(interval);
   }, [isAnalyzing]);
 
+  // Rotate AI consumer stats on processing page
+  useEffect(() => {
+    if (step !== 'processing') return;
+    const interval = setInterval(() => {
+      setCurrentStatIndex(prev => (prev + 1) % AI_CONSUMER_STATS.length);
+    }, 5000); // Change stat every 5 seconds
+    return () => clearInterval(interval);
+  }, [step]);
+
   const pollForResults = async (targetSessionId) => {
     try {
       console.log('Polling for session:', targetSessionId);
@@ -1008,6 +1097,42 @@ export default function App() {
             <p className="fp-text-muted">This takes about 5 minutes. You'll receive an email when ready.</p>
             <p className="fp-text-subtle text-sm mt-2">Feel free to close this page.</p>
           </div>
+
+          {/* Rotating AI Consumer Stats */}
+          <div className="mb-8">
+            <div className="fp-card-strong rounded-2xl p-6 animate-fadeIn">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl fp-icon-gradient flex items-center justify-center shrink-0">
+                  <TrendingUp className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex-1 text-left">
+                  <div className="text-3xl font-bold mb-2" style={{ color: 'var(--fp-accent-1)' }}>
+                    {AI_CONSUMER_STATS[currentStatIndex].stat}
+                  </div>
+                  <p className="text-white/90 text-sm leading-relaxed mb-2">
+                    {AI_CONSUMER_STATS[currentStatIndex].text}
+                  </p>
+                  <p className="fp-text-subtle text-xs">
+                    Source: {AI_CONSUMER_STATS[currentStatIndex].source}
+                  </p>
+                </div>
+              </div>
+              {/* Progress dots indicator */}
+              <div className="flex items-center justify-center gap-1.5 mt-4 pt-4 border-t fp-divider">
+                {AI_CONSUMER_STATS.map((_, idx) => (
+                  <div
+                    key={idx}
+                    className={`h-1.5 rounded-full transition-all duration-500 ${
+                      idx === currentStatIndex
+                        ? 'w-6 fp-progress-fill'
+                        : 'w-1.5 bg-white/20'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-4">
             {PROGRESS_STAGES.map((stage, i) => (
               <div key={stage.id} className={`p-4 rounded-xl transition-all ${i < currentStage ? 'fp-stage-complete' : i === currentStage ? 'fp-stage-active' : 'fp-card'}`}>

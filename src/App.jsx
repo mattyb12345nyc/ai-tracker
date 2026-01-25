@@ -248,6 +248,7 @@ export default function App() {
 
   const fetchRawQuestionData = async (runId) => {
     try {
+      console.log('fetchRawQuestionData called with runId:', runId);
       let allRecords = [];
       let offset = null;
       do {
@@ -255,6 +256,10 @@ export default function App() {
         if (offset) url += `&offset=${offset}`;
         const res = await fetch(url, { headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}` } });
         const json = await res.json();
+        console.log('Raw data API response:', json.records?.length, 'records');
+        if (json.records && json.records.length > 0) {
+          console.log('First record chatgpt_response length:', json.records[0].fields?.chatgpt_response?.length);
+        }
         if (json.records) allRecords = allRecords.concat(json.records);
         offset = json.offset;
       } while (offset);
@@ -263,8 +268,17 @@ export default function App() {
   };
 
   const buildQuestionBreakdown = (rawRecords, brandName) => {
-    return rawRecords.map(record => {
+    console.log('buildQuestionBreakdown called with', rawRecords.length, 'records');
+    return rawRecords.map((record, idx) => {
       const f = record.fields;
+      if (idx === 0) {
+        console.log('First record full response lengths:', {
+          chatgpt: f.chatgpt_response?.length,
+          claude: f.claude_response?.length,
+          gemini: f.gemini_response?.length,
+          perplexity: f.perplexity_response?.length
+        });
+      }
       const platforms = {
         chatgpt: {
           response_summary: (f.chatgpt_response || '').substring(0, 200) + ((f.chatgpt_response || '').length > 200 ? '...' : ''),

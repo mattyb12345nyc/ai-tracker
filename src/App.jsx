@@ -23,6 +23,42 @@ const platformLogos = {
 const platformNames = { chatgpt: 'ChatGPT', claude: 'Claude', gemini: 'Gemini', perplexity: 'Perplexity' };
 const FUTUREPROOF_LOGO = 'http://cdn.mcauto-images-production.sendgrid.net/d157e984273caff5/d19d829c-a9a9-4fad-b0e7-7938012be26c/800x200.png';
 
+// Format LLM response: remove asterisks and clean up text
+const formatLLMResponse = (text) => {
+  if (!text) return '';
+  return text
+    .replace(/\*\*/g, '') // Remove bold markers
+    .replace(/\*/g, '')   // Remove remaining asterisks
+    .replace(/#{1,6}\s/g, '') // Remove markdown headers
+    .trim();
+};
+
+// Component to render formatted response with basic structure
+const FormattedResponse = ({ text }) => {
+  if (!text) return <span className="text-white/40">No response</span>;
+
+  const cleanText = formatLLMResponse(text);
+  const lines = cleanText.split('\n').filter(line => line.trim());
+
+  return (
+    <div className="space-y-2">
+      {lines.map((line, i) => {
+        const trimmed = line.trim();
+        // Check if it's a numbered list item
+        if (/^\d+[\.\)]\s/.test(trimmed)) {
+          return <p key={i} className="pl-4 text-white/70">{trimmed}</p>;
+        }
+        // Check if it's a bullet point
+        if (/^[-•]\s/.test(trimmed)) {
+          return <p key={i} className="pl-4 text-white/70">{trimmed.replace(/^[-•]\s/, '• ')}</p>;
+        }
+        // Regular paragraph
+        return <p key={i} className="text-white/70">{trimmed}</p>;
+      })}
+    </div>
+  );
+};
+
 const gradeColors = { 
   'A': { text: 'text-emerald-400', bg: 'bg-emerald-500/20', border: 'border-emerald-500/30' }, 
   'B': { text: 'text-green-400', bg: 'bg-green-500/20', border: 'border-green-500/30' }, 
@@ -1095,7 +1131,7 @@ export default function App() {
                             {isExpanded && (
                               <div className="p-3 border-t border-white/[0.06]">
                                 <div className="max-h-64 overflow-y-auto">
-                                  <p className="text-xs text-white/60 leading-relaxed whitespace-pre-wrap">{data.full_response || data.response_summary || 'No response'}</p>
+                                  <div className="text-xs leading-relaxed"><FormattedResponse text={data.full_response || data.response_summary} /></div>
                                 </div>
                                 {data.competitors_mentioned?.length > 0 && (
                                   <div className="mt-2 text-xs text-white/40">Competitors: {data.competitors_mentioned.join(', ')}</div>
@@ -1179,7 +1215,7 @@ export default function App() {
                           </div>
                         </div>
                       </div>
-                      <div className="p-4 bg-white/[0.02] rounded-xl max-h-96 overflow-y-auto"><p className="text-sm text-white/70 leading-relaxed whitespace-pre-wrap">{platformData.full_response || platformData.response_summary || 'No response available'}</p></div>
+                      <div className="p-4 bg-white/[0.02] rounded-xl max-h-96 overflow-y-auto text-sm leading-relaxed"><FormattedResponse text={platformData.full_response || platformData.response_summary} /></div>
                       <div className="grid grid-cols-4 gap-4 mt-4 text-sm">
                         <div><span className="text-white/40">Mention:</span> <span className="font-medium">{platformData.mention}%</span></div>
                         <div><span className="text-white/40">Sentiment:</span> <span className="font-medium">{platformData.sentiment}%</span></div>

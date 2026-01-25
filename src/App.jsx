@@ -51,7 +51,7 @@ const formatLLMResponse = (text) => {
 
 // Component to render formatted response with basic structure
 const FormattedResponse = ({ text }) => {
-  if (!text) return <span className="text-[#d4a5a5]">No response</span>;
+  if (!text) return <span className="fp-text-muted">No response</span>;
 
   const cleanText = formatLLMResponse(text);
   const lines = cleanText.split('\n').filter(line => line.trim());
@@ -743,8 +743,8 @@ export default function App() {
   // ============================================================
   if (step === 'setup') {
     return (
-      <div className="min-h-screen text-white" style={{ background: 'linear-gradient(135deg, #1a0a0f 0%, #2d0a20 50%, #1a0515 100%)' }}">
-        <header className="border-b border-[rgba(255,107,74,0.15)] sticky top-0 bg-[#1a0a0f]/95 backdrop-blur-xl z-50">
+      <div className="min-h-screen text-white fp-shell">
+        <header className="fp-header sticky top-0 backdrop-blur-xl z-50">
           <div className="max-w-6xl mx-auto px-8 py-4 flex items-center gap-4">
             <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
             <span className="text-white/20">|</span>
@@ -753,42 +753,42 @@ export default function App() {
         </header>
         <main className="max-w-2xl mx-auto px-8 py-16 animate-fadeIn">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#ff6b4a]/10 border border-[rgba(168,85,247,0.3)] text-[#a855f7] text-sm mb-6">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full fp-chip text-sm mb-6">
               <Sparkles className="w-4 h-4" /> AI-Powered Brand Intelligence
             </div>
             <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent">
               Discover Your AI Visibility
             </h1>
-            <p className="text-[#d4a5a5]/80 text-lg">
+            <p className="fp-text-muted text-lg">
               See how ChatGPT, Claude, Gemini, and Perplexity recommend your brand
             </p>
           </div>
 
-          <div className="bg-white/[0.05] backdrop-blur-sm rounded-3xl p-8 border border-[rgba(255,107,74,0.2)] shadow-[0_0_30px_rgba(255,107,74,0.1)]">
+          <div className="fp-card rounded-3xl p-8">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#ff6b4a] to-[#a855f7] flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl fp-icon-gradient flex items-center justify-center">
                 <Globe className="w-5 h-5" />
               </div>
               <div>
                 <h2 className="font-semibold">Enter Your Brand URL</h2>
-                <p className="text-sm text-[#d4a5a5]">We'll analyze your brand and generate relevant questions</p>
+                <p className="text-sm fp-text-muted">We'll analyze your brand and generate relevant questions</p>
               </div>
             </div>
 
             <div className="space-y-4">
               <div className="relative">
-                <Link className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#d4a5a5]/60" />
+                <Link className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 fp-text-subtle" />
                 <input
                   type="text"
                   value={url}
                   onChange={e => setUrl(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 rounded-xl bg-white/[0.04] border border-[rgba(255,107,74,0.2)] focus:border-[#ff6b4a]/50 focus:bg-white/[0.06] outline-none transition-all text-lg"
+                  className="w-full pl-12 pr-4 py-4 rounded-xl fp-input outline-none transition-all text-lg"
                   placeholder="yourbrand.com"
                 />
               </div>
 
               {error && (
-                <div className="p-4 rounded-xl bg-[#ff6b4a]/10 border border-[#ff6b4a]/20 text-[#ff6b4a] text-sm flex items-center gap-2">
+                <div className="p-4 rounded-xl fp-error text-sm flex items-center gap-2">
                   <AlertCircle className="w-4 h-4" /> {error}
                 </div>
               )}
@@ -796,7 +796,7 @@ export default function App() {
               <button
                 onClick={analyzeUrl}
                 disabled={!url.trim() || isAnalyzing}
-                className="w-full py-4 rounded-xl bg-gradient-to-r from-[#ff6b4a] to-[#f97316] hover:from-[#ff7a5c] hover:to-[#fb923c] hover:shadow-[0_0_20px_rgba(255,107,74,0.5)] disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-lg flex items-center justify-center gap-3 transition-all"
+                className="w-full py-4 rounded-xl fp-button-primary disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-lg flex items-center justify-center gap-3 transition-all"
               >
                 {isAnalyzing ? (
                   <>
@@ -812,8 +812,8 @@ export default function App() {
               </button>
             </div>
 
-            <div className="mt-8 pt-6 border-t border-[rgba(255,107,74,0.15)]">
-              <p className="text-xs text-[#d4a5a5]/60 text-center">
+            <div className="mt-8 pt-6 border-t fp-divider">
+              <p className="text-xs fp-text-subtle text-center">
                 We'll extract your brand info, generate recommendation-focused questions,
                 and test how AI assistants respond to purchase intent queries.
               </p>
@@ -822,7 +822,7 @@ export default function App() {
 
           <div className="mt-8 grid grid-cols-4 gap-4">
             {Object.entries(platformLogos).map(([key, logo]) => (
-              <div key={key} className="bg-white/[0.05] rounded-xl p-4 flex items-center justify-center">
+              <div key={key} className="fp-card rounded-xl p-4 flex items-center justify-center">
                 <img src={logo} alt={platformNames[key]} className="h-8 object-contain opacity-50" />
               </div>
             ))}
@@ -838,8 +838,8 @@ export default function App() {
   // ============================================================
   if (step === 'questions') {
     return (
-      <div className="min-h-screen text-white" style={{ background: 'linear-gradient(135deg, #1a0a0f 0%, #2d0a20 50%, #1a0515 100%)' }}">
-        <header className="border-b border-[rgba(255,107,74,0.15)] sticky top-0 bg-[#1a0a0f]/95 backdrop-blur-xl z-50">
+      <div className="min-h-screen text-white fp-shell">
+        <header className="fp-header sticky top-0 backdrop-blur-xl z-50">
           <div className="max-w-6xl mx-auto px-8 py-4 flex items-center gap-4">
             <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
             <span className="text-white/20">|</span>
@@ -850,27 +850,27 @@ export default function App() {
           
           {/* Brand Summary Card */}
           {brandData && (
-            <div className="bg-gradient-to-br from-[#ff6b4a]/10 via-transparent to-[#a855f7]/10 rounded-2xl p-6 border border-[rgba(255,107,74,0.2)] mb-8">
+            <div className="fp-card-strong rounded-2xl p-6 mb-8">
               <div className="flex items-start justify-between">
                 <div>
                   <h2 className="text-xl font-bold mb-1">{brandData.brand_name}</h2>
-                  <p className="text-[#d4a5a5]/80 text-sm">{brandData.category} • {brandData.industry}</p>
+                  <p className="fp-text-muted text-sm">{brandData.category} • {brandData.industry}</p>
                 </div>
-                <button onClick={() => { setStep('setup'); setBrandData(null); setGeneratedQuestions([]); }} className="text-[#d4a5a5] hover:text-white text-sm">
+                <button onClick={() => { setStep('setup'); setBrandData(null); setGeneratedQuestions([]); }} className="fp-text-muted hover:text-white text-sm">
                   ← Change URL
                 </button>
               </div>
               <div className="grid grid-cols-3 gap-4 mt-4 text-sm">
                 <div>
-                  <span className="text-[#d4a5a5]">Price Tier:</span>
+                  <span className="fp-text-muted">Price Tier:</span>
                   <span className="ml-2 text-white/80">{brandData.price_tier}</span>
                 </div>
                 <div>
-                  <span className="text-[#d4a5a5]">Audience:</span>
+                  <span className="fp-text-muted">Audience:</span>
                   <span className="ml-2 text-white/80">{brandData.target_audience?.slice(0, 2).join(', ')}</span>
                 </div>
                 <div>
-                  <span className="text-[#d4a5a5]">Competitors:</span>
+                  <span className="fp-text-muted">Competitors:</span>
                   <span className="ml-2 text-white/80">{brandData.competitors?.slice(0, 3).join(', ')}</span>
                 </div>
               </div>
@@ -878,13 +878,13 @@ export default function App() {
           )}
 
           {/* Email Input */}
-          <div className="bg-white/[0.05] backdrop-blur-sm rounded-2xl p-6 border border-[rgba(255,107,74,0.15)] shadow-[0_0_20px_rgba(255,107,74,0.08)] mb-6">
+          <div className="fp-card rounded-2xl p-6 mb-6">
             <label className="block text-sm font-medium text-white/80 mb-2">Email for Report Delivery *</label>
             <input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-[rgba(255,107,74,0.2)] focus:border-[#ff6b4a]/50 focus:bg-white/[0.06] outline-none transition-all"
+              className="w-full px-4 py-3 rounded-xl fp-input outline-none transition-all"
               placeholder="you@company.com"
             />
           </div>
@@ -893,12 +893,12 @@ export default function App() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-2xl font-bold">Review Questions</h2>
-              <p className="text-[#d4a5a5]/80">
+              <p className="fp-text-muted">
                 {generatedQuestions.filter(q => q.included).length} of {generatedQuestions.length} questions selected
               </p>
             </div>
             {isGenerating && (
-              <div className="flex items-center gap-2 text-[#a855f7]">
+              <div className="flex items-center gap-2" style={{ color: 'var(--fp-accent-3)' }}>
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Generating...
               </div>
@@ -908,11 +908,11 @@ export default function App() {
           {/* Questions List */}
           <div className="space-y-3 mb-8">
             {generatedQuestions.map(q => (
-              <div key={q.id} className={`p-4 rounded-xl border transition-all ${q.included ? 'bg-white/[0.03] border-[rgba(255,107,74,0.2)]' : 'bg-white/[0.01] border-[rgba(255,107,74,0.1)] opacity-50'}`}>
+              <div key={q.id} className={`p-4 rounded-xl transition-all ${q.included ? 'fp-question-card-active' : 'fp-question-card opacity-50'}`}>
                 <div className="flex items-start gap-4">
                   <button onClick={() => handleToggle(q.id)} className="mt-1">
                     {q.included ? (
-                      <div className="w-5 h-5 rounded bg-[#ff6b4a] flex items-center justify-center"><Check className="w-3 h-3" /></div>
+                      <div className="w-5 h-5 rounded fp-checkbox flex items-center justify-center"><Check className="w-3 h-3" /></div>
                     ) : (
                       <div className="w-5 h-5 rounded border border-white/20" />
                     )}
@@ -924,19 +924,19 @@ export default function App() {
                           type="text"
                           value={editText}
                           onChange={e => setEditText(e.target.value)}
-                          className="flex-1 px-3 py-2 rounded-lg bg-white/[0.06] border border-[#ff6b4a]/50 outline-none"
+                          className="flex-1 px-3 py-2 rounded-lg fp-input outline-none"
                           autoFocus
                         />
-                        <button onClick={() => handleSaveEdit(q.id)} className="p-2 rounded-lg bg-[#ff6b4a]/20 text-[#a855f7] hover:bg-[#ff6b4a]/30"><Check className="w-4 h-4" /></button>
-                        <button onClick={() => setEditingId(null)} className="p-2 rounded-lg bg-white/[0.06] text-[#d4a5a5]/80 hover:text-white"><X className="w-4 h-4" /></button>
+                        <button onClick={() => handleSaveEdit(q.id)} className="p-2 rounded-lg fp-badge hover:opacity-80"><Check className="w-4 h-4" /></button>
+                        <button onClick={() => setEditingId(null)} className="p-2 rounded-lg bg-white/[0.06] fp-text-muted hover:text-white"><X className="w-4 h-4" /></button>
                       </div>
                     ) : (
                       <div className="flex items-start justify-between">
                         <div>
                           <p className="text-white/90">{q.text}</p>
-                          <span className="text-xs text-[#d4a5a5] mt-1 inline-block">{q.category}</span>
+                          <span className="text-xs fp-text-muted mt-1 inline-block">{q.category}</span>
                         </div>
-                        <button onClick={() => handleEdit(q)} className="p-2 rounded-lg hover:bg-white/[0.06] text-[#d4a5a5] hover:text-white"><Pencil className="w-4 h-4" /></button>
+                        <button onClick={() => handleEdit(q)} className="p-2 rounded-lg hover:bg-white/[0.06] fp-text-muted hover:text-white"><Pencil className="w-4 h-4" /></button>
                       </div>
                     )}
                   </div>
@@ -947,20 +947,20 @@ export default function App() {
 
           {/* Action Buttons */}
           <div className="flex gap-4">
-            <button onClick={handleAdd} className="flex-1 py-3 rounded-xl border border-dashed border-white/20 hover:border-white/40 text-[#d4a5a5]/80 hover:text-white flex items-center justify-center gap-2">
-              <Plus className="w-4 h-4" /> Add Question
-            </button>
+              <button onClick={handleAdd} className="flex-1 py-3 rounded-xl fp-button-ghost hover:border-white/40 fp-text-muted hover:text-white flex items-center justify-center gap-2">
+                <Plus className="w-4 h-4" /> Add Question
+              </button>
             <button
               onClick={handleSubmit}
               disabled={generatedQuestions.filter(q => q.included).length === 0 || !email.includes('@')}
-              className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#ff6b4a] to-[#f97316] hover:from-[#ff7a5c] hover:to-[#fb923c] hover:shadow-[0_0_20px_rgba(255,107,74,0.5)] disabled:opacity-50 font-semibold flex items-center justify-center gap-2"
+                className="flex-1 py-3 rounded-xl fp-button-primary disabled:opacity-50 font-semibold flex items-center justify-center gap-2"
             >
               Run Analysis <ArrowRight className="w-4 h-4" />
             </button>
           </div>
 
           {error && (
-            <div className="mt-4 p-4 rounded-xl bg-[#ff6b4a]/10 border border-[#ff6b4a]/20 text-[#ff6b4a] text-sm">
+            <div className="mt-4 p-4 rounded-xl fp-error text-sm">
               {error}
             </div>
           )}
@@ -975,8 +975,8 @@ export default function App() {
   // ============================================================
   if (step === 'processing') {
     return (
-      <div className="min-h-screen text-white" style={{ background: 'linear-gradient(135deg, #1a0a0f 0%, #2d0a20 50%, #1a0515 100%)' }}">
-        <header className="border-b border-[rgba(255,107,74,0.15)] sticky top-0 bg-[#1a0a0f]/95 backdrop-blur-xl z-50">
+      <div className="min-h-screen text-white fp-shell">
+        <header className="fp-header sticky top-0 backdrop-blur-xl z-50">
           <div className="max-w-6xl mx-auto px-8 py-4 flex items-center gap-4">
             <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
             <span className="text-white/20">|</span>
@@ -988,33 +988,34 @@ export default function App() {
             {/* Creative animated loader in FutureProof colors */}
             <div className="relative w-28 h-28 mx-auto mb-6">
               {/* Outer pulsing ring */}
-              <div className="absolute inset-0 rounded-full animate-fp-pulse" style={{ background: 'linear-gradient(135deg, rgba(255,107,74,0.3), rgba(168,85,247,0.3))' }} />
+              <div className="absolute inset-0 rounded-full animate-fp-pulse" style={{ background: 'linear-gradient(135deg, rgba(255, 122, 61, 0.3), rgba(139, 92, 246, 0.3))' }} />
               {/* Middle spinning ring */}
-              <div className="absolute inset-2 rounded-full animate-fp-spin" style={{ background: 'conic-gradient(from 0deg, #ff6b4a, #a855f7, #ff6b4a)', mask: 'radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 4px))', WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 4px))' }} />
+              <div className="absolute inset-2 rounded-full animate-fp-spin" style={{ background: 'conic-gradient(from 0deg, var(--fp-accent-1), var(--fp-accent-3), var(--fp-accent-1))', mask: 'radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 4px))', WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 4px))' }} />
               {/* Inner gradient circle */}
-              <div className="absolute inset-5 rounded-full bg-[#1a0a0f] flex items-center justify-center">
-                <div className="w-12 h-12 rounded-full animate-fp-glow" style={{ background: 'linear-gradient(135deg, #ff6b4a, #a855f7)', boxShadow: '0 0 20px rgba(255,107,74,0.5)' }} />
+              <div className="absolute inset-5 rounded-full" style={{ background: 'var(--fp-bg-1)' }} />
+              <div className="absolute inset-5 rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full animate-fp-glow fp-icon-gradient" style={{ boxShadow: '0 0 20px rgba(255, 122, 61, 0.5)' }} />
               </div>
               {/* Orbiting dots */}
               <div className="absolute inset-0 animate-fp-orbit">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full" style={{ background: '#ff6b4a', boxShadow: '0 0 10px rgba(255,107,74,0.8)' }} />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full" style={{ background: 'var(--fp-accent-1)', boxShadow: '0 0 10px rgba(255, 122, 61, 0.8)' }} />
               </div>
               <div className="absolute inset-0 animate-fp-orbit-reverse">
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full" style={{ background: '#a855f7', boxShadow: '0 0 10px rgba(168,85,247,0.8)' }} />
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full" style={{ background: 'var(--fp-accent-3)', boxShadow: '0 0 10px rgba(139, 92, 246, 0.8)' }} />
               </div>
             </div>
             <h2 className="text-2xl font-bold mb-2">Analyzing AI Visibility</h2>
-            <p className="text-[#d4a5a5]/80">This takes about 5 minutes. You'll receive an email when ready.</p>
-            <p className="text-[#d4a5a5]/60 text-sm mt-2">Feel free to close this page.</p>
+            <p className="fp-text-muted">This takes about 5 minutes. You'll receive an email when ready.</p>
+            <p className="fp-text-subtle text-sm mt-2">Feel free to close this page.</p>
           </div>
           <div className="space-y-4">
             {PROGRESS_STAGES.map((stage, i) => (
-              <div key={stage.id} className={`p-4 rounded-xl border transition-all ${i < currentStage ? 'bg-[#ff6b4a]/10 border-[#ff6b4a]/20' : i === currentStage ? 'bg-[#ff6b4a]/10 border-[#ff6b4a]/30' : 'bg-white/[0.02] border-[rgba(255,107,74,0.15)]'}`}>
+              <div key={stage.id} className={`p-4 rounded-xl transition-all ${i < currentStage ? 'fp-stage-complete' : i === currentStage ? 'fp-stage-active' : 'fp-card'}`}>
                 <div className="flex items-center gap-4">
-                  {stage.icon ? (<img src={platformLogos[stage.icon]} alt={stage.icon} className="w-8 h-8 object-contain" />) : (<div className={`w-8 h-8 rounded-lg flex items-center justify-center ${i < currentStage ? 'bg-[#ff6b4a]' : i === currentStage ? 'bg-[#ff6b4a]' : 'bg-white/10'}`}>{i < currentStage ? <Check className="w-4 h-4" /> : <span className="text-sm">{stage.id}</span>}</div>)}
+                  {stage.icon ? (<img src={platformLogos[stage.icon]} alt={stage.icon} className="w-8 h-8 object-contain" />) : (<div className={`w-8 h-8 rounded-lg flex items-center justify-center ${i < currentStage ? 'fp-checkbox' : i === currentStage ? 'fp-checkbox' : 'bg-white/10'}`}>{i < currentStage ? <Check className="w-4 h-4" /> : <span className="text-sm">{stage.id}</span>}</div>)}
                   <div className="flex-1 text-left">
-                    <p className={`font-medium ${i <= currentStage ? 'text-white' : 'text-[#d4a5a5]'}`}>{stage.label}</p>
-                    {i === currentStage && (<div className="h-1 bg-white/10 rounded-full mt-2 overflow-hidden"><div className="h-full bg-[#ff6b4a] transition-all duration-500" style={{ width: `${stageProgress}%` }} /></div>)}
+                    <p className={`font-medium ${i <= currentStage ? 'text-white' : 'fp-text-muted'}`}>{stage.label}</p>
+                    {i === currentStage && (<div className="h-1 fp-progress-bar rounded-full mt-2 overflow-hidden"><div className="h-full fp-progress-fill transition-all duration-500" style={{ width: `${stageProgress}%` }} /></div>)}
                   </div>
                 </div>
               </div>
@@ -1045,8 +1046,8 @@ export default function App() {
   if (step === 'ready') {
     const reportUrl = `https://ai.futureproof.work/?report=${sessionId}&utm_campaign=website&utm_medium=email&utm_source=sendgrid.com`;
     return (
-      <div className="min-h-screen text-white" style={{ background: 'linear-gradient(135deg, #1a0a0f 0%, #2d0a20 50%, #1a0515 100%)' }}">
-        <header className="border-b border-[rgba(255,107,74,0.15)] sticky top-0 bg-[#1a0a0f]/95 backdrop-blur-xl z-50">
+      <div className="min-h-screen text-white fp-shell">
+        <header className="fp-header sticky top-0 backdrop-blur-xl z-50">
           <div className="max-w-6xl mx-auto px-8 py-4 flex items-center gap-4">
             <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
             <span className="text-white/20">|</span>
@@ -1055,18 +1056,17 @@ export default function App() {
         </header>
         <main className="max-w-xl mx-auto px-8 py-24 text-center animate-fadeIn">
           <div className="mb-8">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-r from-[#ff6b4a] to-[#a855f7] flex items-center justify-center mx-auto mb-8">
+            <div className="w-24 h-24 rounded-full fp-icon-gradient flex items-center justify-center mx-auto mb-8">
               <CheckCircle className="w-12 h-12 text-white" />
             </div>
             <h2 className="text-3xl font-bold mb-4">Your AI Optimization Report Is Ready</h2>
-            <p className="text-[#d4a5a5] text-lg mb-2">We've finished analyzing your brand's AI visibility across ChatGPT, Claude, Gemini, and Perplexity.</p>
-            <p className="text-[#d4a5a5]">A copy has also been sent to your email.</p>
+            <p className="fp-text-muted text-lg mb-2">We've finished analyzing your brand's AI visibility across ChatGPT, Claude, Gemini, and Perplexity.</p>
+            <p className="fp-text-muted">A copy has also been sent to your email.</p>
           </div>
           <div className="space-y-4">
             <button
               onClick={() => { window.location.href = reportUrl; }}
-              className="w-full py-4 px-8 rounded-2xl text-lg font-semibold text-white transition-all hover:opacity-90 hover:scale-[1.02]"
-              style={{ background: 'linear-gradient(135deg, #ff6b4a 0%, #f97316 100%)' }}
+              className="w-full py-4 px-8 rounded-2xl text-lg font-semibold text-white transition-all fp-button-primary"
             >
               View Your Report
             </button>
@@ -1081,8 +1081,8 @@ export default function App() {
   // RENDER - COMPLETE/DASHBOARD STEP
   // ============================================================
   return (
-    <div className="min-h-screen text-white" style={{ background: 'linear-gradient(135deg, #1a0a0f 0%, #2d0a20 50%, #1a0515 100%)' }}">
-      <header className="border-b border-[rgba(255,107,74,0.15)] sticky top-0 bg-[#1a0a0f]/95 backdrop-blur-xl z-50">
+    <div className="min-h-screen text-white fp-shell">
+      <header className="fp-header sticky top-0 backdrop-blur-xl z-50">
         <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
@@ -1097,32 +1097,32 @@ export default function App() {
           <div className="animate-fadeIn space-y-8">
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="text-3xl font-bold flex items-center gap-3">{dashboardData.brand_name}<span className="text-lg font-normal text-[#d4a5a5]">AI Visibility Report</span></h1>
-                <p className="text-[#d4a5a5] mt-1">{dashboardData.report_date}</p>
+                <h1 className="text-3xl font-bold flex items-center gap-3">{dashboardData.brand_name}<span className="text-lg font-normal fp-text-muted">AI Visibility Report</span></h1>
+                <p className="fp-text-muted mt-1">{dashboardData.report_date}</p>
               </div>
             </div>
 
             {/* SECTION 1: EXECUTIVE SUMMARY */}
-            <div className="bg-gradient-to-br from-[#ff6b4a]/10 via-transparent to-[#a855f7]/10 rounded-3xl p-8 border border-[rgba(255,107,74,0.2)] shadow-[0_0_30px_rgba(255,107,74,0.1)]">
+            <div className="fp-card-strong rounded-3xl p-8">
               <div className="flex items-start gap-4 mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#ff6b4a] to-[#a855f7] flex items-center justify-center shrink-0"><Sparkles className="w-6 h-6 text-white" /></div>
-                <div><h2 className="text-xl font-bold">Executive Summary</h2><p className="text-sm text-[#d4a5a5]">TL;DR of the most important findings</p></div>
+                <div className="w-12 h-12 rounded-2xl fp-icon-gradient flex items-center justify-center shrink-0"><Sparkles className="w-6 h-6 text-white" /></div>
+                <div><h2 className="text-xl font-bold">Executive Summary</h2><p className="text-sm fp-text-muted">TL;DR of the most important findings</p></div>
               </div>
               <div className="space-y-4">
                 <h3 className="text-2xl font-semibold text-white/90">{dashboardData.executive_summary?.headline}</h3>
                 {(dashboardData.executive_summary?.paragraphs || []).map((p, i) => (<p key={i} className="text-white/80 leading-relaxed">{p}</p>))}
                 <ul className="grid grid-cols-2 gap-3 mt-6">
-                  {(dashboardData.executive_summary?.bullets || []).map((bullet, i) => (<li key={i} className="flex items-start gap-2 text-sm text-[#d4a5a5]"><ChevronRight className="w-4 h-4 text-[#a855f7] shrink-0 mt-0.5" /><span>{bullet}</span></li>))}
+                  {(dashboardData.executive_summary?.bullets || []).map((bullet, i) => (<li key={i} className="flex items-start gap-2 text-sm fp-text-muted"><ChevronRight className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--fp-accent-3)' }} /><span>{bullet}</span></li>))}
                 </ul>
               </div>
             </div>
 
             {/* SECTION 2: BRAND RANKINGS */}
-            <div className="bg-white/[0.05] backdrop-blur-sm rounded-3xl p-8 border border-[rgba(255,107,74,0.2)] shadow-[0_0_30px_rgba(255,107,74,0.1)]">
+            <div className="fp-card rounded-3xl p-8">
               <div className="flex items-start gap-4 mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#ff6b4a] to-[#f97316] flex items-center justify-center shrink-0"><Award className="w-6 h-6 text-white" /></div>
-                <div className="flex-1"><h2 className="text-xl font-bold">Brand Rankings</h2><p className="text-sm text-[#d4a5a5]">Share of voice across all AI responses</p></div>
-                {dashboardData.brand_sov !== undefined && (<div className="text-right"><div className="text-3xl font-bold text-[#ff6b4a]">{dashboardData.brand_sov}%</div><div className="text-sm text-[#d4a5a5]">Share of Voice</div></div>)}
+                <div className="w-12 h-12 rounded-2xl fp-icon-gradient flex items-center justify-center shrink-0"><Award className="w-6 h-6 text-white" /></div>
+                <div className="flex-1"><h2 className="text-xl font-bold">Brand Rankings</h2><p className="text-sm fp-text-muted">Share of voice across all AI responses</p></div>
+                {dashboardData.brand_sov !== undefined && (<div className="text-right"><div className="text-3xl font-bold" style={{ color: 'var(--fp-accent-1)' }}>{dashboardData.brand_sov}%</div><div className="text-sm fp-text-muted">Share of Voice</div></div>)}
               </div>
               {(() => {
                 const rankings = dashboardData.brand_rankings || [];
@@ -1145,16 +1145,16 @@ export default function App() {
                 }
 
                 return summary ? (
-                  <p className="text-sm text-[#d4a5a5] leading-relaxed mb-6 px-1">{summary}</p>
+                  <p className="text-sm fp-text-muted leading-relaxed mb-6 px-1">{summary}</p>
                 ) : null;
               })()}
               <div className="space-y-3">
                 {(dashboardData.brand_rankings || []).slice(0, 10).map((brand, i) => (
-                  <div key={i} className={`flex items-center gap-4 p-3 rounded-xl ${brand.is_tracked_brand ? 'bg-[#ff6b4a]/10 border border-[#ff6b4a]/20' : 'bg-white/[0.02]'}`}>
-                    <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${brand.is_tracked_brand ? 'bg-[#ff6b4a] text-white' : 'bg-white/10 text-[#d4a5a5]/80'}`}>{i + 1}</span>
-                    <span className={`flex-1 font-medium ${brand.is_tracked_brand ? 'text-[#ff6b4a]' : 'text-white/80'}`}>{brand.brand}</span>
-                    <span className="text-[#d4a5a5] text-sm">{brand.mentions} mentions</span>
-                    <span className={`font-semibold ${brand.is_tracked_brand ? 'text-[#ff6b4a]' : 'text-white/80'}`}>{brand.share_of_voice}%</span>
+                  <div key={i} className={`flex items-center gap-4 p-3 rounded-xl ${brand.is_tracked_brand ? 'fp-stage-active' : 'fp-card'}`}>
+                    <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${brand.is_tracked_brand ? 'fp-rank-number text-white' : 'fp-rank-number-neutral'}`}>{i + 1}</span>
+                    <span className={`flex-1 font-medium ${brand.is_tracked_brand ? 'text-white' : 'text-white/80'}`} style={brand.is_tracked_brand ? { color: 'var(--fp-accent-1)' } : {}}>{brand.brand}</span>
+                    <span className="fp-text-muted text-sm">{brand.mentions} mentions</span>
+                    <span className={`font-semibold ${brand.is_tracked_brand ? 'text-white' : 'text-white/80'}`} style={brand.is_tracked_brand ? { color: 'var(--fp-accent-1)' } : {}}>{brand.share_of_voice}%</span>
                   </div>
                 ))}
               </div>
@@ -1166,22 +1166,21 @@ export default function App() {
                 const data = dashboardData.platforms?.[p] || {};
                 const locked = isPlatformLocked(p);
                 return (
-                  <div key={p} className="relative bg-white/[0.05] backdrop-blur-sm rounded-2xl p-6 border border-[rgba(255,107,74,0.15)] shadow-[0_0_20px_rgba(255,107,74,0.08)] hover:border-[rgba(255,107,74,0.4)] transition-all">
+                  <div key={p} className="relative fp-card rounded-2xl p-6 hover:border-[rgba(255,122,61,0.5)] transition-all">
                     <button
                       onClick={() => handlePlatformDiveDeeper(p)}
-                      className={`absolute top-4 right-4 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${locked ? 'bg-white/10 text-[#d4a5a5] cursor-pointer' : 'text-white hover:opacity-90'}`}
-                      style={locked ? {} : { background: 'linear-gradient(135deg, #ff6b4a 0%, #f97316 100%)' }}
+                      className={`absolute top-4 right-4 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${locked ? 'fp-badge-neutral cursor-pointer' : 'text-white hover:opacity-90 fp-button-primary'}`}
                     >
                       {locked && <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" /></svg>}
                       {locked ? 'Unlock' : 'Dive Deeper'}
                     </button>
                     <img src={platformLogos[p]} alt={platformNames[p]} className="h-8 object-contain mb-4" />
                     <div className="text-2xl font-bold">{data.score || 0}</div>
-                    <div className="text-sm text-[#d4a5a5]">Overall Score</div>
+                    <div className="text-sm fp-text-muted">Overall Score</div>
                     <div className="mt-4 space-y-1 text-sm">
-                      <div className="flex justify-between"><span className="text-[#d4a5a5]">Mention</span><span>{data.mention || 0}%</span></div>
-                      <div className="flex justify-between"><span className="text-[#d4a5a5]">Sentiment</span><span>{data.sentiment || 0}%</span></div>
-                      <div className="flex justify-between"><span className="text-[#d4a5a5]">Recommend</span><span>{data.recommendation || 0}%</span></div>
+                      <div className="flex justify-between"><span className="fp-text-muted">Mention</span><span>{data.mention || 0}%</span></div>
+                      <div className="flex justify-between"><span className="fp-text-muted">Sentiment</span><span>{data.sentiment || 0}%</span></div>
+                      <div className="flex justify-between"><span className="fp-text-muted">Recommend</span><span>{data.recommendation || 0}%</span></div>
                     </div>
                   </div>
                 );
@@ -1189,17 +1188,17 @@ export default function App() {
             </div>
 
             {/* SECTION 5: CONTENT STRATEGY RECOMMENDATIONS */}
-            <div className="bg-gradient-to-br from-[#ff6b4a]/10 via-transparent to-[#a855f7]/10 rounded-3xl p-8 border border-[rgba(255,107,74,0.2)] shadow-[0_0_30px_rgba(255,107,74,0.1)]">
+            <div className="fp-card-strong rounded-3xl p-8">
               <div className="flex items-start gap-4 mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#ff6b4a] to-[#a855f7] flex items-center justify-center shrink-0"><Lightbulb className="w-6 h-6 text-white" /></div>
-                <div><h2 className="text-xl font-bold">Content Strategy Recommendations</h2><p className="text-sm text-[#d4a5a5]">AI-powered content strategies to improve your visibility rankings</p></div>
+                <div className="w-12 h-12 rounded-2xl fp-icon-gradient flex items-center justify-center shrink-0"><Lightbulb className="w-6 h-6 text-white" /></div>
+                <div><h2 className="text-xl font-bold">Content Strategy Recommendations</h2><p className="text-sm fp-text-muted">AI-powered content strategies to improve your visibility rankings</p></div>
               </div>
               <div className="space-y-4">
                 {(dashboardData.recommendations || []).map((rec, i) => {
                   const priorityColors = {
-                    high: { bg: 'bg-red-500/10', border: 'border-red-500/20', badge: 'bg-[#ff6b4a]/20 text-[#ff6b4a]' },
-                    medium: { bg: 'bg-[#ff6b4a]/10', border: 'border-[#f97316]/20', badge: 'bg-[#ff6b4a]/20 text-[#ff6b4a]' },
-                    low: { bg: 'bg-[#ff6b4a]/5', border: 'border-[#ff8a80]/20', badge: 'bg-[#ff6b4a]/20 text-[#ff8a80]' }
+                    high: { bg: 'fp-stage-active', border: 'fp-stage-active', badge: 'fp-badge-success' },
+                    medium: { bg: 'fp-stage-complete', border: 'fp-stage-complete', badge: 'fp-badge' },
+                    low: { bg: 'fp-card', border: 'fp-card', badge: 'fp-badge-neutral' }
                   };
                   const colors = priorityColors[rec.priority] || priorityColors.medium;
                   return (
@@ -1210,40 +1209,40 @@ export default function App() {
                           <div className="flex items-center gap-3 mb-2 flex-wrap">
                             <span className={`text-xs font-bold uppercase tracking-wide ${colors.badge.split(' ')[1]}`}>{rec.priority} priority</span>
                             {rec.content_type && (
-                              <span className="px-2 py-0.5 rounded text-xs bg-white/10 text-[#d4a5a5]">{rec.content_type}</span>
+                              <span className="px-2 py-0.5 rounded text-xs fp-badge-neutral">{rec.content_type}</span>
                             )}
                           </div>
                           <h3 className="font-semibold text-lg text-white/90 mb-2">{rec.title || rec.action}</h3>
-                          <p className="text-sm text-[#d4a5a5] leading-relaxed">{rec.description || rec.detail || 'Implement this strategy to improve your AI visibility.'}</p>
+                          <p className="text-sm fp-text-muted leading-relaxed">{rec.description || rec.detail || 'Implement this strategy to improve your AI visibility.'}</p>
                         </div>
                       </div>
                     </div>
                   );
                 })}
                 {(!dashboardData.recommendations || dashboardData.recommendations.length === 0) && (
-                  <div className="text-center py-8 text-[#d4a5a5]">Content recommendations will be generated based on AI analysis</div>
+                  <div className="text-center py-8 fp-text-muted">Content recommendations will be generated based on AI analysis</div>
                 )}
               </div>
             </div>
 
             {/* SECTION 6: QUESTION BREAKDOWN */}
-            <div className="bg-white/[0.05] backdrop-blur-sm rounded-3xl p-8 border border-[rgba(255,107,74,0.2)] shadow-[0_0_30px_rgba(255,107,74,0.1)]">
+            <div className="fp-card rounded-3xl p-8">
               <div className="flex items-start gap-4 mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#a855f7] to-[#ff8a80] flex items-center justify-center shrink-0"><MessageSquare className="w-6 h-6 text-white" /></div>
-                <div><h2 className="text-xl font-bold">Question-by-Question Analysis</h2><p className="text-sm text-[#d4a5a5]">How each AI responded to test queries</p></div>
+                <div className="w-12 h-12 rounded-2xl fp-icon-gradient flex items-center justify-center shrink-0"><MessageSquare className="w-6 h-6 text-white" /></div>
+                <div><h2 className="text-xl font-bold">Question-by-Question Analysis</h2><p className="text-sm fp-text-muted">How each AI responded to test queries</p></div>
               </div>
               <div className="space-y-6">
                 {(dashboardData.question_breakdown || []).map((q, qIndex) => (
-                  <div key={qIndex} className="p-6 rounded-2xl bg-white/[0.02] border border-[rgba(255,107,74,0.15)]">
+                  <div key={qIndex} className="p-6 rounded-2xl fp-card">
                     <div className="flex items-start gap-4 mb-4">
-                      <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ${q.brand_mentioned ? 'bg-[#ff6b4a] text-white' : 'bg-white/10 text-[#d4a5a5]/80'}`}>{q.question_number}</span>
+                      <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ${q.brand_mentioned ? 'fp-rank-number text-white' : 'fp-rank-number-neutral'}`}>{q.question_number}</span>
                       <div className="flex-1">
                         <p className="font-medium text-white/90">{q.question_text}</p>
                         <div className="flex items-center gap-2 mt-2">
-                          <span className="px-2 py-0.5 rounded text-xs bg-white/10 text-[#d4a5a5]/80">{q.category}</span>
-                          {q.brand_mentioned ? (<span className="px-2 py-0.5 rounded text-xs bg-[#ff6b4a]/20 text-[#ff8a80]">Brand Mentioned</span>) : (<span className="px-2 py-0.5 rounded text-xs bg-white/10 text-[#d4a5a5]">Not Mentioned</span>)}
+                          <span className="px-2 py-0.5 rounded text-xs fp-badge-neutral">{q.category}</span>
+                          {q.brand_mentioned ? (<span className="px-2 py-0.5 rounded text-xs fp-badge-success">Brand Mentioned</span>) : (<span className="px-2 py-0.5 rounded text-xs fp-badge-neutral">Not Mentioned</span>)}
                         </div>
-                        <p className="text-sm text-[#d4a5a5]/80 mt-3">{q.executive_summary}</p>
+                        <p className="text-sm fp-text-muted mt-3">{q.executive_summary}</p>
                       </div>
                     </div>
                     <div className="grid grid-cols-4 gap-3">
@@ -1255,23 +1254,23 @@ export default function App() {
                             <button onClick={() => toggleResponseExpand(qIndex, p)} className="w-full p-3 text-left hover:bg-white/[0.02]">
                               <div className="flex items-center gap-2 mb-2">
                                 <img src={platformLogos[p]} alt={p} className="h-4 object-contain" />
-                                <span className={`ml-auto text-xs px-1.5 py-0.5 rounded ${data.mention > 0 ? 'bg-[#ff6b4a]/20 text-[#ff8a80]' : 'bg-white/10 text-[#d4a5a5]'}`}>{data.mention > 0 ? 'Yes' : 'No'}</span>
+                                <span className={`ml-auto text-xs px-1.5 py-0.5 rounded ${data.mention > 0 ? 'fp-badge-success' : 'fp-badge-neutral'}`}>{data.mention > 0 ? 'Yes' : 'No'}</span>
                               </div>
                               <div className="text-lg font-bold">{data.overall || 0}</div>
-                              <div className="text-xs text-[#d4a5a5]">Score</div>
+                              <div className="text-xs fp-text-muted">Score</div>
                             </button>
                             {isExpanded && (
-                              <div className="p-3 border-t border-[rgba(255,107,74,0.15)]">
+                              <div className="p-3 border-t fp-divider">
                                 {data.notes && (
-                                  <div className="mb-3 p-2 rounded-lg bg-gradient-to-r from-[#a855f7]/10 to-[#ff6b4a]/10 border border-[rgba(168,85,247,0.3)]">
-                                    <p className="text-xs text-[#ff8a80] leading-relaxed">{data.notes}</p>
+                                  <div className="mb-3 p-2 rounded-lg fp-card-strong">
+                                    <p className="text-xs leading-relaxed" style={{ color: 'var(--fp-accent-1)' }}>{data.notes}</p>
                                   </div>
                                 )}
                                 <div className="max-h-64 overflow-y-auto">
                                   <div className="text-xs leading-relaxed"><FormattedResponse text={data.full_response || data.response_summary} /></div>
                                 </div>
                                 {data.competitors_mentioned?.length > 0 && (
-                                  <div className="mt-2 text-xs text-[#d4a5a5]">Competitors: {data.competitors_mentioned.join(', ')}</div>
+                                  <div className="mt-2 text-xs fp-text-muted">Competitors: {data.competitors_mentioned.join(', ')}</div>
                                 )}
                               </div>
                             )}
@@ -1293,49 +1292,49 @@ export default function App() {
             <button onClick={() => setSelectedPlatform(null)} className="flex items-center gap-2 text-[#d4a5a5]/80 hover:text-white">← Back to Dashboard</button>
             <div className="flex items-center gap-6">
               <img src={platformLogos[selectedPlatform]} alt={selectedPlatform} className="w-16 h-16 object-contain" />
-              <div><h1 className="text-3xl font-bold">{platformNames[selectedPlatform]} Deep Dive</h1><p className="text-[#d4a5a5]/80">Detailed analysis for {dashboardData.brand_name}</p></div>
+              <div><h1 className="text-3xl font-bold">{platformNames[selectedPlatform]} Deep Dive</h1><p className="fp-text-muted">Detailed analysis for {dashboardData.brand_name}</p></div>
             </div>
-            <div className="bg-gradient-to-br from-[#a855f7]/10 via-transparent to-[#ff6b4a]/10 rounded-3xl p-8 border border-[rgba(168,85,247,0.2)] shadow-[0_0_30px_rgba(168,85,247,0.1)]">
+            <div className="fp-card-strong rounded-3xl p-8">
               <h2 className="text-xl font-bold mb-4">Executive Summary</h2>
               <p className="text-white/80 leading-relaxed text-lg">{dashboardData.platform_deep_dives?.[selectedPlatform]?.executive_summary}</p>
               <div className="grid grid-cols-4 gap-6 mt-8">
-                <div className="text-center"><div className="text-3xl font-bold text-[#ff6b4a]">{dashboardData.platform_deep_dives?.[selectedPlatform]?.mention_rate}%</div><div className="text-sm text-[#d4a5a5]">Mention Rate</div></div>
-                <div className="text-center"><div className="text-3xl font-bold text-[#ff8a80]">{dashboardData.platform_deep_dives?.[selectedPlatform]?.sentiment}%</div><div className="text-sm text-[#d4a5a5]">Sentiment</div></div>
-                <div className="text-center"><div className="text-3xl font-bold text-[#ff6b4a]">{dashboardData.platform_deep_dives?.[selectedPlatform]?.recommendation_rate}%</div><div className="text-sm text-[#d4a5a5]">Recommendation</div></div>
-                <div className="text-center"><div className="text-3xl font-bold text-[#a855f7]">{dashboardData.platform_deep_dives?.[selectedPlatform]?.overall_score}</div><div className="text-sm text-[#d4a5a5]">Overall Score</div></div>
+                <div className="text-center"><div className="text-3xl font-bold" style={{ color: 'var(--fp-accent-1)' }}>{dashboardData.platform_deep_dives?.[selectedPlatform]?.mention_rate}%</div><div className="text-sm fp-text-muted">Mention Rate</div></div>
+                <div className="text-center"><div className="text-3xl font-bold" style={{ color: 'var(--fp-accent-1)' }}>{dashboardData.platform_deep_dives?.[selectedPlatform]?.sentiment}%</div><div className="text-sm fp-text-muted">Sentiment</div></div>
+                <div className="text-center"><div className="text-3xl font-bold" style={{ color: 'var(--fp-accent-1)' }}>{dashboardData.platform_deep_dives?.[selectedPlatform]?.recommendation_rate}%</div><div className="text-sm fp-text-muted">Recommendation</div></div>
+                <div className="text-center"><div className="text-3xl font-bold" style={{ color: 'var(--fp-accent-3)' }}>{dashboardData.platform_deep_dives?.[selectedPlatform]?.overall_score}</div><div className="text-sm fp-text-muted">Overall Score</div></div>
               </div>
             </div>
-            <div className="bg-white/[0.05] backdrop-blur-sm rounded-3xl p-8 border border-[rgba(255,107,74,0.2)] shadow-[0_0_30px_rgba(255,107,74,0.1)]">
+            <div className="fp-card rounded-3xl p-8">
               <h2 className="text-xl font-bold mb-6">{platformNames[selectedPlatform]} Responses</h2>
               <div className="space-y-6">
                 {(dashboardData.question_breakdown || []).map((q, qIndex) => {
                   const platformData = q.platforms[selectedPlatform];
                   if (!platformData) return null;
                   return (
-                    <div key={qIndex} className="p-6 rounded-xl bg-white/[0.03] border border-[rgba(255,107,74,0.15)]">
+                    <div key={qIndex} className="p-6 rounded-xl fp-card">
                       <div className="flex items-start gap-4 mb-4">
-                        <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ${platformData.mention > 0 ? 'bg-[#ff6b4a] text-white' : 'bg-white/10 text-[#d4a5a5]/80'}`}>{q.question_number}</span>
+                        <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ${platformData.mention > 0 ? 'fp-rank-number text-white' : 'fp-rank-number-neutral'}`}>{q.question_number}</span>
                         <div><p className="font-medium text-white/90">{q.question_text}</p>
                           <div className="flex items-center gap-2 mt-2">
-                            <span className="px-2 py-0.5 rounded text-xs bg-white/10 text-[#d4a5a5]/80">{q.category}</span>
-                            {platformData.mention > 0 ? (<span className="px-2 py-0.5 rounded text-xs bg-[#ff6b4a]/20 text-[#ff8a80]">Mentioned</span>) : (<span className="px-2 py-0.5 rounded text-xs bg-[#ff6b4a]/20 text-[#ff6b4a]">Not Mentioned</span>)}
-                            <span className="text-xs text-[#d4a5a5]">Score: {platformData.overall}</span>
+                            <span className="px-2 py-0.5 rounded text-xs fp-badge-neutral">{q.category}</span>
+                            {platformData.mention > 0 ? (<span className="px-2 py-0.5 rounded text-xs fp-badge-success">Mentioned</span>) : (<span className="px-2 py-0.5 rounded text-xs fp-badge">Not Mentioned</span>)}
+                            <span className="text-xs fp-text-muted">Score: {platformData.overall}</span>
                           </div>
                         </div>
                       </div>
                       {platformData.notes && (
-                        <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-[#a855f7]/10 to-[#ff6b4a]/10 border border-[rgba(168,85,247,0.3)]">
-                          <p className="text-sm text-[#ff8a80] leading-relaxed">{platformData.notes}</p>
+                        <div className="mb-4 p-3 rounded-xl fp-card-strong">
+                          <p className="text-sm leading-relaxed" style={{ color: 'var(--fp-accent-1)' }}>{platformData.notes}</p>
                         </div>
                       )}
-                      <div className="p-4 bg-white/[0.05] rounded-xl max-h-96 overflow-y-auto text-sm leading-relaxed"><FormattedResponse text={platformData.full_response || platformData.response_summary} /></div>
+                      <div className="p-4 fp-card rounded-xl max-h-96 overflow-y-auto text-sm leading-relaxed"><FormattedResponse text={platformData.full_response || platformData.response_summary} /></div>
                       <div className="grid grid-cols-4 gap-4 mt-4 text-sm">
-                        <div><span className="text-[#d4a5a5]">Mention:</span> <span className="font-medium">{platformData.mention}%</span></div>
-                        <div><span className="text-[#d4a5a5]">Sentiment:</span> <span className="font-medium">{platformData.sentiment}%</span></div>
-                        <div><span className="text-[#d4a5a5]">Recommendation:</span> <span className="font-medium">{platformData.recommendation}%</span></div>
-                        <div><span className="text-[#d4a5a5]">Position:</span> <span className="font-medium">{platformData.position}</span></div>
+                        <div><span className="fp-text-muted">Mention:</span> <span className="font-medium">{platformData.mention}%</span></div>
+                        <div><span className="fp-text-muted">Sentiment:</span> <span className="font-medium">{platformData.sentiment}%</span></div>
+                        <div><span className="fp-text-muted">Recommendation:</span> <span className="font-medium">{platformData.recommendation}%</span></div>
+                        <div><span className="fp-text-muted">Position:</span> <span className="font-medium">{platformData.position}</span></div>
                       </div>
-                      {platformData.competitors_mentioned?.length > 0 && (<div className="mt-3 pt-3 border-t border-[rgba(255,107,74,0.15)] text-sm"><span className="text-[#d4a5a5]">Competitors: </span><span className="text-[#d4a5a5]">{platformData.competitors_mentioned.join(', ')}</span></div>)}
+                      {platformData.competitors_mentioned?.length > 0 && (<div className="mt-3 pt-3 border-t fp-divider text-sm"><span className="fp-text-muted">Competitors: </span><span className="fp-text-muted">{platformData.competitors_mentioned.join(', ')}</span></div>)}
                     </div>
                   );
                 })}
@@ -1348,7 +1347,7 @@ export default function App() {
       <footer className="relative border-t border-[rgba(255,107,74,0.15)] mt-16">
         <div className="max-w-6xl mx-auto px-8 py-8 flex items-center justify-between">
           <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-6 opacity-40" />
-          <div className="text-sm text-[#d4a5a5]/60">AI Visibility Intelligence Platform</div>
+          <div className="text-sm fp-text-subtle">AI Visibility Intelligence Platform</div>
         </div>
       </footer>
 

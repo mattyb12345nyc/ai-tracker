@@ -2,7 +2,181 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  min-height: 100vh;
+@layer base {
+  :root {
+    --fp-bg-1: #14010f;
+    --fp-bg-2: #2a0b2e;
+    --fp-bg-3: #3a0b1e;
+    --fp-accent-1: #ff6a3d;
+    --fp-accent-2: #ff3d8a;
+    --fp-accent-3: #8b5cf6;
+    --fp-highlight: #ffd08a;
+    --fp-border: rgba(255, 122, 61, 0.22);
+    --fp-card: rgba(255, 255, 255, 0.06);
+    --fp-card-strong: rgba(255, 255, 255, 0.08);
+    --fp-glow: 0 0 40px rgba(255, 122, 61, 0.18);
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    color: #f7e9f0;
+    background: var(--fp-bg-1);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer components {
+  .fp-shell {
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgba(255, 122, 61, 0.25), transparent 60%),
+      radial-gradient(900px 600px at 10% 10%, rgba(255, 61, 138, 0.2), transparent 60%),
+      radial-gradient(700px 500px at 50% 120%, rgba(139, 92, 246, 0.18), transparent 65%),
+      linear-gradient(135deg, var(--fp-bg-1) 0%, var(--fp-bg-2) 55%, var(--fp-bg-3) 100%);
+  }
+
+  .fp-header {
+    background: rgba(20, 1, 15, 0.85);
+    border-bottom: 1px solid rgba(255, 122, 61, 0.18);
+    box-shadow: 0 8px 24px rgba(20, 1, 15, 0.35);
+  }
+
+  .fp-card {
+    background: var(--fp-card);
+    border: 1px solid var(--fp-border);
+    box-shadow: var(--fp-glow);
+    backdrop-filter: blur(12px);
+  }
+
+  .fp-card-strong {
+    background:
+      linear-gradient(135deg, rgba(255, 122, 61, 0.12), rgba(255, 61, 138, 0.08), rgba(139, 92, 246, 0.1));
+    border: 1px solid rgba(255, 122, 61, 0.24);
+    box-shadow: 0 0 50px rgba(255, 122, 61, 0.2);
+    backdrop-filter: blur(14px);
+  }
+
+  .fp-button-primary {
+    background: linear-gradient(135deg, var(--fp-accent-1) 0%, var(--fp-accent-2) 60%, var(--fp-accent-3) 100%);
+    box-shadow: 0 12px 30px rgba(255, 61, 138, 0.28);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  }
+
+  .fp-button-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 16px 40px rgba(255, 61, 138, 0.35);
+    filter: saturate(1.05);
+  }
+
+  .fp-button-ghost {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+  }
+
+  .fp-chip {
+    background: rgba(255, 122, 61, 0.12);
+    border: 1px solid rgba(255, 61, 138, 0.25);
+    color: #ffd1e5;
+  }
+
+  .fp-glow-text {
+    text-shadow: 0 0 24px rgba(255, 122, 61, 0.35);
+  }
+
+  .fp-input {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--fp-border);
+    color: #f7e9f0;
+  }
+
+  .fp-input:focus {
+    border-color: rgba(255, 122, 61, 0.5);
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 0 0 3px rgba(255, 122, 61, 0.1);
+  }
+
+  .fp-text-muted {
+    color: rgba(247, 233, 240, 0.6);
+  }
+
+  .fp-text-subtle {
+    color: rgba(247, 233, 240, 0.5);
+  }
+
+  .fp-badge {
+    background: rgba(255, 122, 61, 0.15);
+    border: 1px solid rgba(255, 122, 61, 0.25);
+    color: #ffd1e5;
+  }
+
+  .fp-badge-success {
+    background: rgba(255, 122, 61, 0.2);
+    border: 1px solid rgba(255, 122, 61, 0.3);
+    color: #ffd1e5;
+  }
+
+  .fp-badge-neutral {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: rgba(247, 233, 240, 0.7);
+  }
+
+  .fp-progress-bar {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .fp-progress-fill {
+    background: linear-gradient(90deg, var(--fp-accent-1), var(--fp-accent-2));
+    box-shadow: 0 0 10px rgba(255, 122, 61, 0.4);
+  }
+
+  .fp-icon-gradient {
+    background: linear-gradient(135deg, var(--fp-accent-1), var(--fp-accent-3));
+  }
+
+  .fp-divider {
+    border-color: rgba(255, 122, 61, 0.18);
+  }
+
+  .fp-error {
+    background: rgba(255, 122, 61, 0.12);
+    border: 1px solid rgba(255, 122, 61, 0.25);
+    color: #ffd1e5;
+  }
+
+  .fp-question-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--fp-border);
+  }
+
+  .fp-question-card-active {
+    background: rgba(255, 122, 61, 0.08);
+    border: 1px solid rgba(255, 122, 61, 0.3);
+  }
+
+  .fp-checkbox {
+    background: var(--fp-accent-1);
+    box-shadow: 0 0 12px rgba(255, 122, 61, 0.4);
+  }
+
+  .fp-stage-active {
+    background: rgba(255, 122, 61, 0.12);
+    border: 1px solid rgba(255, 122, 61, 0.3);
+  }
+
+  .fp-stage-complete {
+    background: rgba(255, 122, 61, 0.1);
+    border: 1px solid rgba(255, 122, 61, 0.2);
+  }
+
+  .fp-rank-number {
+    background: var(--fp-accent-1);
+    box-shadow: 0 0 12px rgba(255, 122, 61, 0.3);
+  }
+
+  .fp-rank-number-neutral {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(247, 233, 240, 0.6);
+  }
 }

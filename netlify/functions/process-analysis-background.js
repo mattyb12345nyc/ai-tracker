@@ -293,7 +293,7 @@ function analyzeRunData(results, brandName, validCompetitors, industry) {
     }
   }
 
-  // Count brand mentions
+  // Count brand mentions and competitor mentions
   const brandMentionCounts = {};
   const brandMentionedPerQuestion = [];
 
@@ -303,6 +303,14 @@ function analyzeRunData(results, brandName, validCompetitors, industry) {
       if (platformData[p].mention[i] > 0) {
         questionBrandMentioned = true;
         brandMentionCounts[brandName] = (brandMentionCounts[brandName] || 0) + 1;
+      }
+      // Parse competitors mentioned from analysis
+      const competitorsStr = platformData[p].competitors_mentioned[i] || "";
+      if (competitorsStr) {
+        const competitors = competitorsStr.split(",").map(c => c.trim()).filter(c => c);
+        for (const comp of competitors) {
+          brandMentionCounts[comp] = (brandMentionCounts[comp] || 0) + 1;
+        }
       }
     }
     brandMentionedPerQuestion.push(questionBrandMentioned);
@@ -347,6 +355,7 @@ function analyzeRunData(results, brandName, validCompetitors, industry) {
 
   const sortedPlatforms = Object.entries(platformsSummary).sort((a, b) => b[1].score - a[1].score);
   const bestModel = sortedPlatforms.length ? platformNames[sortedPlatforms[0][0]] : "";
+  const bestScore = sortedPlatforms.length ? sortedPlatforms[0][1].score : 0;
   const worstModel = sortedPlatforms.length ? platformNames[sortedPlatforms[sortedPlatforms.length - 1][0]] : "";
 
   // Platform consistency
@@ -386,13 +395,33 @@ function analyzeRunData(results, brandName, validCompetitors, industry) {
   const avgSent = avgNonzero(platforms.map((p) => platformsSummary[p].sentiment));
 
   if (brandCoverage < 50) {
-    recommendations.push({ priority: "high", action: "Increase visibility", detail: `${brandCoverage}% coverage` });
+    recommendations.push({ priority: "high", action: "Increase visibility", detail: `Current coverage: ${brandCoverage}%` });
+  } else if (brandCoverage < 80) {
+    recommendations.push({ priority: "medium", action: "Expand coverage to more query types", detail: `Current coverage: ${brandCoverage}%` });
+  } else {
+    recommendations.push({ priority: "low", action: "Maintain strong visibility presence", detail: `Excellent coverage: ${brandCoverage}%` });
   }
+
   if (avgRec < 30) {
-    recommendations.push({ priority: "high", action: "Improve recommendations", detail: `${avgRec}% rate` });
+    recommendations.push({ priority: "high", action: "Improve recommendation rate", detail: `Current rate: ${avgRec}%` });
+  } else if (avgRec < 60) {
+    recommendations.push({ priority: "medium", action: "Boost recommendation frequency", detail: `Current rate: ${avgRec}%` });
+  } else {
+    recommendations.push({ priority: "low", action: "Sustain high recommendation rate", detail: `Strong rate: ${avgRec}%` });
   }
+
   if (avgSent > 0 && avgSent < 60) {
-    recommendations.push({ priority: "medium", action: "Enhance sentiment", detail: `${avgSent}%` });
+    recommendations.push({ priority: "medium", action: "Enhance sentiment in AI responses", detail: `Current sentiment: ${avgSent}%` });
+  } else if (avgSent >= 60) {
+    recommendations.push({ priority: "low", action: "Continue positive brand positioning", detail: `Positive sentiment: ${avgSent}%` });
+  }
+
+  // Platform-specific recommendation
+  if (worstModel) {
+    const worstScore = sortedPlatforms[sortedPlatforms.length - 1]?.[1]?.score || 0;
+    if (worstScore < bestScore - 10) {
+      recommendations.push({ priority: "medium", action: `Improve performance on ${worstModel}`, detail: `Gap of ${Math.round(bestScore - worstScore)} points vs ${bestModel}` });
+    }
   }
 
   // Executive summary

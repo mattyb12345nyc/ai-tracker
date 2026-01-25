@@ -484,9 +484,12 @@ export default function App() {
     let platformDeepDives = parse(fields.platform_deep_dives_json, {});
     
     if (fields.run_id && (questionBreakdown.length === 0 || !questionBreakdown[0]?.platforms?.chatgpt?.full_response)) {
+      console.log('Fetching raw question data for run_id:', fields.run_id);
       const rawRecords = await fetchRawQuestionData(fields.run_id);
+      console.log('Raw records found:', rawRecords.length);
       if (rawRecords.length > 0) {
         questionBreakdown = buildQuestionBreakdown(rawRecords, fields.brand_name);
+        console.log('Built question breakdown:', questionBreakdown.length, 'questions');
         if (brandRankings.length === 0) brandRankings = calculateBrandRankings(rawRecords, fields.brand_name);
         if (sentimentRankings.length === 0) sentimentRankings = calculateSentimentRankings(rawRecords, fields.brand_name);
         if (!platformConsistency.rates) platformConsistency = calculatePlatformConsistency(rawRecords);

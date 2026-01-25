@@ -624,8 +624,8 @@ export default function App() {
         setDashboardData(data);
         clearInterval(pollingRef.current);
         await fetchAllReports();
-        setStep('complete');
-        console.log('Step set to complete');
+        setStep('ready');
+        console.log('Step set to ready');
         return true;
       }
       console.log('No records found yet');
@@ -977,6 +977,50 @@ export default function App() {
                 </div>
               </div>
             ))}
+          </div>
+        </main>
+        <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } } .animate-fadeIn { animation: fadeIn 0.6s ease-out; }`}</style>
+      </div>
+    );
+  }
+
+  // ============================================================
+  // RENDER - READY STEP (Report Complete, Show CTA)
+  // ============================================================
+  if (step === 'ready') {
+    const reportUrl = `${window.location.origin}?report=${sessionId}`;
+    return (
+      <div className="min-h-screen bg-[#0a0a0f] text-white">
+        <header className="border-b border-white/[0.04] sticky top-0 bg-[#0a0a0f]/90 backdrop-blur-xl z-50">
+          <div className="max-w-6xl mx-auto px-8 py-4 flex items-center gap-4">
+            <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
+            <span className="text-white/20">|</span>
+            <span className="font-semibold">AI Visibility Tracker</span>
+          </div>
+        </header>
+        <main className="max-w-xl mx-auto px-8 py-24 text-center animate-fadeIn">
+          <div className="mb-8">
+            <div className="w-24 h-24 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 flex items-center justify-center mx-auto mb-8">
+              <CheckCircle className="w-12 h-12 text-white" />
+            </div>
+            <h2 className="text-3xl font-bold mb-4">Your Report is Ready!</h2>
+            <p className="text-white/60 text-lg mb-2">We've finished analyzing your brand's AI visibility across ChatGPT, Claude, Gemini, and Perplexity.</p>
+            <p className="text-white/40">A copy has also been sent to your email.</p>
+          </div>
+          <div className="space-y-4">
+            <button
+              onClick={() => { window.location.href = reportUrl; }}
+              className="w-full py-4 px-8 rounded-2xl text-lg font-semibold text-white transition-all hover:opacity-90 hover:scale-[1.02]"
+              style={{ background: 'linear-gradient(to right, #F3764C, #E7488D)' }}
+            >
+              View Your Report
+            </button>
+            <button
+              onClick={() => { setStep('setup'); setGeneratedQuestions([]); setDashboardData(null); setSessionId(null); setBrandData(null); setUrl(''); setEmail(''); }}
+              className="w-full py-3 px-6 rounded-xl text-sm text-white/50 hover:text-white/80 transition-all"
+            >
+              Run Another Analysis
+            </button>
           </div>
         </main>
         <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } } .animate-fadeIn { animation: fadeIn 0.6s ease-out; }`}</style>

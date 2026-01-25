@@ -1087,7 +1087,9 @@ export default function App() {
                             </button>
                             {isExpanded && (
                               <div className="p-3 border-t border-white/[0.06]">
-                                <p className="text-xs text-white/60 leading-relaxed">{data.response_summary || 'No response'}</p>
+                                <div className="max-h-64 overflow-y-auto">
+                                  <p className="text-xs text-white/60 leading-relaxed whitespace-pre-wrap">{data.full_response || data.response_summary || 'No response'}</p>
+                                </div>
                                 {data.competitors_mentioned?.length > 0 && (
                                   <div className="mt-2 text-xs text-white/40">Competitors: {data.competitors_mentioned.join(', ')}</div>
                                 )}
@@ -1170,7 +1172,7 @@ export default function App() {
                           </div>
                         </div>
                       </div>
-                      <div className="p-4 bg-white/[0.02] rounded-xl"><p className="text-sm text-white/70 leading-relaxed whitespace-pre-wrap">{platformData.full_response || platformData.response_summary || 'No response available'}</p></div>
+                      <div className="p-4 bg-white/[0.02] rounded-xl max-h-96 overflow-y-auto"><p className="text-sm text-white/70 leading-relaxed whitespace-pre-wrap">{platformData.full_response || platformData.response_summary || 'No response available'}</p></div>
                       <div className="grid grid-cols-4 gap-4 mt-4 text-sm">
                         <div><span className="text-white/40">Mention:</span> <span className="font-medium">{platformData.mention}%</span></div>
                         <div><span className="text-white/40">Sentiment:</span> <span className="font-medium">{platformData.sentiment}%</span></div>

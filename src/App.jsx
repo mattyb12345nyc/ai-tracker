@@ -558,18 +558,24 @@ export default function App() {
 
   const pollForResults = async (targetSessionId) => {
     try {
+      console.log('Polling for session:', targetSessionId);
       const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_DASHBOARD_TABLE_ID}?filterByFormula={session_id}="${targetSessionId}"`;
       const res = await fetch(url, { headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}` } });
       const json = await res.json();
+      console.log('Poll response:', json);
       if (json.records && json.records.length > 0) {
+        console.log('Found record, parsing...');
         const r = json.records[0].fields;
         const data = await parseReportData(r);
+        console.log('Parsed data:', data);
         setDashboardData(data);
         clearInterval(pollingRef.current);
         await fetchAllReports();
         setStep('complete');
+        console.log('Step set to complete');
         return true;
       }
+      console.log('No records found yet');
       return false;
     } catch (e) { console.error('Polling error:', e); return false; }
   };

@@ -1,6 +1,6 @@
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || '';
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,

@@ -598,8 +598,9 @@ export default function App() {
 
   useEffect(() => {
     if (step === 'processing' && sessionId) {
-      setTimeout(() => { pollForResults(sessionId); }, 60000);
-      pollingRef.current = setInterval(() => { pollForResults(sessionId); }, 30000);
+      // Start polling after 10 seconds, then every 15 seconds
+      setTimeout(() => { pollForResults(sessionId); }, 10000);
+      pollingRef.current = setInterval(() => { pollForResults(sessionId); }, 15000);
       return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
     }
   }, [step, sessionId]);
@@ -620,7 +621,8 @@ export default function App() {
     const activeQuestions = generatedQuestions.filter(q => q.included);
     
     try {
-      await fetch(PROCESS_ANALYSIS_URL, {
+      console.log('Submitting analysis request...', { sid, runId, brandName: brandData.brand_name });
+      const response = await fetch(PROCESS_ANALYSIS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -638,6 +640,7 @@ export default function App() {
           timestamp: new Date().toISOString()
         })
       });
+      console.log('Analysis response:', response.status, await response.text());
     } catch (error) { console.error('Submit error:', error); }
   };
 

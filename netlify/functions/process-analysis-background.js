@@ -765,7 +765,6 @@ async function saveDashboardOutput(analysis, runId, sessionId, brandLogo, brandA
     session_id: sessionId,
     brand_name: analysis.brand_name || "",
     brand_logo: brandLogo || "",
-    brand_assets_json: JSON.stringify(brandAssets || {}),
     report_date: new Date().toISOString().split("T")[0],
     visibility_score: parseFloat(score),
     grade,

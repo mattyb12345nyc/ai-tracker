@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Zap, Loader2, CheckCircle, ArrowRight, RefreshCw, TrendingUp, TrendingDown, AlertCircle, X, Pencil, Check, Plus, ChevronRight, Eye, FileText, BarChart3, Download, Calendar, ChevronDown, Sparkles, Target, Activity, ArrowUpRight, ArrowDownRight, Minus, Mail, ExternalLink, Award, Users, MessageSquare, Search, Lightbulb, Globe, Link } from 'lucide-react';
-import { UserButton } from '@clerk/clerk-react';
+import { UserButton, useUser } from '@clerk/clerk-react';
 import { pdf } from '@react-pdf/renderer';
 import BrandedPDFReport from './components/BrandedPDFReport';
 
@@ -264,10 +264,18 @@ const generateRunId = () => {
 // MAIN APP COMPONENT
 // ============================================================
 export default function App() {
+  const { user } = useUser();
   const [step, setStep] = useState('setup'); // setup, analyzing, questions, processing, complete
   const [url, setUrl] = useState('');
   const [email, setEmail] = useState('');
   const [brandData, setBrandData] = useState(null);
+
+  // Auto-set email from Clerk user
+  useEffect(() => {
+    if (user?.primaryEmailAddress?.emailAddress && !email) {
+      setEmail(user.primaryEmailAddress.emailAddress);
+    }
+  }, [user]);
   const [generatedQuestions, setGeneratedQuestions] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState('');
@@ -1014,16 +1022,15 @@ export default function App() {
             </div>
           )}
 
-          {/* Email Input */}
+          {/* Email Display - Pre-filled from Clerk */}
           <div className="fp-card rounded-2xl p-6 mb-6">
-            <label className="block text-sm font-medium text-white/80 mb-2">Email for Report Delivery *</label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl fp-input outline-none transition-all"
-              placeholder="you@company.com"
-            />
+            <label className="block text-sm font-medium text-white/80 mb-2">Report will be sent to</label>
+            <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/10">
+              <Mail className="w-5 h-5 fp-text-muted" />
+              <span className="text-white">{email || 'Loading...'}</span>
+              <CheckCircle className="w-4 h-4 text-green-400 ml-auto" />
+            </div>
+            <p className="text-xs fp-text-muted mt-2">Email from your signed-in account</p>
           </div>
 
           {/* Questions Header */}

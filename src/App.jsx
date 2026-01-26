@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Zap, Loader2, CheckCircle, ArrowRight, RefreshCw, TrendingUp, TrendingDown, AlertCircle, X, Pencil, Check, Plus, ChevronRight, Eye, FileText, BarChart3, Download, Calendar, ChevronDown, Sparkles, Target, Activity, ArrowUpRight, ArrowDownRight, Minus, Mail, ExternalLink, Award, Users, MessageSquare, Search, Lightbulb, Globe, Link } from 'lucide-react';
+import { UserButton } from '@clerk/clerk-react';
+import { pdf } from '@react-pdf/renderer';
+import BrandedPDFReport from './components/BrandedPDFReport';
 
 // ============================================================
 // CONFIGURATION
@@ -283,9 +286,31 @@ export default function App() {
   const [hasSeenExpandTip, setHasSeenExpandTip] = useState(false);
   const pollingRef = useRef(null);
   const [currentStatIndex, setCurrentStatIndex] = useState(0);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   // Sign-up page URL for gated features
   const SIGNUP_URL = 'https://futureproof.work/ai-optimizer-sign-up';
+
+  // Generate and download PDF report
+  const handleDownloadPDF = async () => {
+    if (!dashboardData) return;
+
+    setIsGeneratingPDF(true);
+    try {
+      const blob = await pdf(<BrandedPDFReport dashboardData={dashboardData} />).toBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${dashboardData.brand_name.replace(/\s+/g, '-')}-AI-Visibility-Report.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('PDF generation error:', error);
+    }
+    setIsGeneratingPDF(false);
+  };
 
   const handlePlatformDiveDeeper = (platform) => {
     // If already viewed this platform, allow re-viewing
@@ -672,6 +697,8 @@ export default function App() {
 
     return {
       brand_name: fields.brand_name,
+      brand_logo: fields.brand_logo || '',
+      brand_assets: parse(fields.brand_assets_json, {}),
       run_id: fields.run_id,
       report_date: fields.report_date || new Date().toLocaleDateString(),
       visibility_score: parseFloat(fields.visibility_score) || 0,
@@ -816,6 +843,8 @@ export default function App() {
           run_id: runId,
           brand_name: brandData.brand_name,
           brand_url: normalizeUrl(url),
+          logo_url: brandData.logo_url || '',
+          brand_assets: brandData.brand_assets || {},
           email: email,
           industry: brandData.industry,
           category: brandData.category,
@@ -847,10 +876,13 @@ export default function App() {
     return (
       <div className="min-h-screen text-white fp-shell">
         <header className="fp-header sticky top-0 backdrop-blur-xl z-50">
-          <div className="max-w-6xl mx-auto px-8 py-4 flex items-center gap-4">
-            <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
-            <span className="text-white/20">|</span>
-            <span className="font-semibold">AI Visibility Tracker</span>
+          <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
+              <span className="text-white/20">|</span>
+              <span className="font-semibold">AI Visibility Tracker</span>
+            </div>
+            <UserButton afterSignOutUrl="/login" />
           </div>
         </header>
         <main className="max-w-2xl mx-auto px-8 py-16 animate-fadeIn">
@@ -942,14 +974,17 @@ export default function App() {
     return (
       <div className="min-h-screen text-white fp-shell">
         <header className="fp-header sticky top-0 backdrop-blur-xl z-50">
-          <div className="max-w-6xl mx-auto px-8 py-4 flex items-center gap-4">
-            <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
-            <span className="text-white/20">|</span>
-            <span className="font-semibold">AI Visibility Tracker</span>
+          <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
+              <span className="text-white/20">|</span>
+              <span className="font-semibold">AI Visibility Tracker</span>
+            </div>
+            <UserButton afterSignOutUrl="/login" />
           </div>
         </header>
         <main className="max-w-3xl mx-auto px-8 py-12 animate-fadeIn">
-          
+
           {/* Brand Summary Card */}
           {brandData && (
             <div className="fp-card-strong rounded-2xl p-6 mb-8">
@@ -1079,10 +1114,13 @@ export default function App() {
     return (
       <div className="min-h-screen text-white fp-shell">
         <header className="fp-header sticky top-0 backdrop-blur-xl z-50">
-          <div className="max-w-6xl mx-auto px-8 py-4 flex items-center gap-4">
-            <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
-            <span className="text-white/20">|</span>
-            <span className="font-semibold">AI Visibility Tracker</span>
+          <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
+              <span className="text-white/20">|</span>
+              <span className="font-semibold">AI Visibility Tracker</span>
+            </div>
+            <UserButton afterSignOutUrl="/login" />
           </div>
         </header>
         <main className="max-w-xl mx-auto px-8 py-12 text-center animate-fadeIn">
@@ -1186,10 +1224,13 @@ export default function App() {
     return (
       <div className="min-h-screen text-white fp-shell">
         <header className="fp-header sticky top-0 backdrop-blur-xl z-50">
-          <div className="max-w-6xl mx-auto px-8 py-4 flex items-center gap-4">
-            <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
-            <span className="text-white/20">|</span>
-            <span className="font-semibold">AI Visibility Tracker</span>
+          <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
+              <span className="text-white/20">|</span>
+              <span className="font-semibold">AI Visibility Tracker</span>
+            </div>
+            <UserButton afterSignOutUrl="/login" />
           </div>
         </header>
         <main className="max-w-xl mx-auto px-8 py-24 text-center animate-fadeIn">
@@ -1227,6 +1268,7 @@ export default function App() {
             <span className="text-white/20 hidden sm:inline">|</span>
             <span className="font-semibold text-sm md:text-base hidden sm:inline">AI Visibility Tracker</span>
           </div>
+          <UserButton afterSignOutUrl="/login" />
         </div>
       </header>
 
@@ -1234,10 +1276,37 @@ export default function App() {
         {dashboardData && !selectedPlatform && (
           <div className="animate-fadeIn space-y-4 md:space-y-8">
             <div className="flex items-start justify-between">
-              <div>
-                <h1 className="text-xl md:text-3xl font-bold flex flex-col md:flex-row md:items-center gap-1 md:gap-3">{dashboardData.brand_name}<span className="text-sm md:text-lg font-normal fp-text-muted">AI Visibility Report</span></h1>
-                <p className="fp-text-muted mt-1 text-sm">{dashboardData.report_date}</p>
+              <div className="flex items-center gap-4">
+                {dashboardData.brand_logo && (
+                  <img
+                    src={dashboardData.brand_logo}
+                    alt={dashboardData.brand_name}
+                    className="h-12 md:h-16 w-auto object-contain"
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                )}
+                <div>
+                  <h1 className="text-xl md:text-3xl font-bold flex flex-col md:flex-row md:items-center gap-1 md:gap-3">{dashboardData.brand_name}<span className="text-sm md:text-lg font-normal fp-text-muted">AI Visibility Report</span></h1>
+                  <p className="fp-text-muted mt-1 text-sm">{dashboardData.report_date}</p>
+                </div>
               </div>
+              <button
+                onClick={handleDownloadPDF}
+                disabled={isGeneratingPDF}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl fp-button-primary text-sm font-semibold transition-all disabled:opacity-50"
+              >
+                {isGeneratingPDF ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span className="hidden sm:inline">Generating...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    <span className="hidden sm:inline">Download PDF</span>
+                  </>
+                )}
+              </button>
             </div>
 
             {/* SECTION 1: EXECUTIVE SUMMARY */}

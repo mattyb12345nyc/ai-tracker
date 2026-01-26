@@ -700,7 +700,7 @@ async function analyzeRunData(results, brandName, validCompetitors, industry, ca
 }
 
 // Save dashboard output to Airtable
-async function saveDashboardOutput(analysis, runId, sessionId, brandLogo) {
+async function saveDashboardOutput(analysis, runId, sessionId, brandLogo, brandAssets) {
   const tableId = "tblheMjYJzu1f88Ft";
   const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${tableId}`;
   const headers = {
@@ -765,6 +765,7 @@ async function saveDashboardOutput(analysis, runId, sessionId, brandLogo) {
     session_id: sessionId,
     brand_name: analysis.brand_name || "",
     brand_logo: brandLogo || "",
+    brand_assets_json: JSON.stringify(brandAssets || {}),
     report_date: new Date().toISOString().split("T")[0],
     visibility_score: parseFloat(score),
     grade,
@@ -939,6 +940,8 @@ async function processAnalysis(data) {
     session_id: sessionId,
     run_id: runId,
     brand_name: brandName,
+    logo_url: logoUrl,
+    brand_assets: brandAssets,
     email,
     industry,
     category,
@@ -1004,7 +1007,7 @@ async function processAnalysis(data) {
   const aggregatedAnalysis = await analyzeRunData(results, brandName, competitorsList, industry || "", category || "");
 
   // Save dashboard output
-  await saveDashboardOutput(aggregatedAnalysis, runId, sessionId, "");
+  await saveDashboardOutput(aggregatedAnalysis, runId, sessionId, logoUrl || "", brandAssets || {});
 
   // Send dashboard link via email
   await sendDashboardEmail(email, brandName, sessionId, aggregatedAnalysis);

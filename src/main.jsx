@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { ClerkProvider, SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react'
 import App from './App.jsx'
 import LoginPage from './components/LoginPage.jsx'
@@ -11,13 +11,17 @@ import './index.css'
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 
 function ProtectedRoute({ children }) {
+  const location = useLocation()
+  // Preserve the full URL including query params for redirect after login
+  const returnUrl = location.pathname + location.search
+
   return (
     <>
       <SignedIn>
         {children}
       </SignedIn>
       <SignedOut>
-        <RedirectToSignIn />
+        <RedirectToSignIn redirectUrl={returnUrl} />
       </SignedOut>
     </>
   )

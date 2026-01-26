@@ -1,9 +1,14 @@
 import { SignIn } from '@clerk/clerk-react';
+import { useSearchParams } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 
 const FUTUREPROOF_LOGO = 'http://cdn.mcauto-images-production.sendgrid.net/d157e984273caff5/d19d829c-a9a9-4fad-b0e7-7938012be26c/800x200.png';
 
 export default function LoginPage() {
+  const [searchParams] = useSearchParams();
+  // Get redirect URL from query params, default to home
+  const redirectUrl = searchParams.get('redirect_url') || '/';
+
   return (
     <div className="min-h-screen text-white fp-shell">
       <header className="fp-header sticky top-0 backdrop-blur-xl z-50">
@@ -30,7 +35,8 @@ export default function LoginPage() {
             routing="path"
             path="/login"
             signUpUrl="/sign-up"
-            afterSignInUrl="/"
+            afterSignInUrl={redirectUrl}
+            fallbackRedirectUrl={redirectUrl}
             appearance={{
               elements: {
                 rootBox: 'w-full',

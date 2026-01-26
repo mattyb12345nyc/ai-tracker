@@ -10,11 +10,13 @@
   "dependencies": {
     "@clerk/clerk-react": "^5.59.6",
     "@react-pdf/renderer": "^4.3.2",
+    "@stripe/stripe-js": "^8.6.4",
     "lucide-react": "^0.263.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.13.0",
-    "recharts": "^3.7.0"
+    "recharts": "^3.7.0",
+    "stripe": "^20.2.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.0.0",

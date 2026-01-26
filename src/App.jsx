@@ -376,7 +376,7 @@ export default function App() {
       const response = await fetch('/.netlify/functions/generate-questions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ brandData: brand, questionCount: 15 })
+        body: JSON.stringify({ brandData: brand, questionCount: 5 })
       });
       
       if (!response.ok) throw new Error(`API error: ${response.status}`);

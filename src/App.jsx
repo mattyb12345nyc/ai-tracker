@@ -295,6 +295,7 @@ export default function App() {
   const pollingRef = useRef(null);
   const [currentStatIndex, setCurrentStatIndex] = useState(0);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [pollCount, setPollCount] = useState(0);
 
   // Sign-up page URL for gated features
   const SIGNUP_URL = 'https://futureproof.work/ai-optimizer-sign-up';
@@ -774,6 +775,7 @@ export default function App() {
 
   const pollForResults = async (targetSessionId) => {
     try {
+      setPollCount(prev => prev + 1);
       console.log('Polling for session:', targetSessionId);
       const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_DASHBOARD_TABLE_ID}?filterByFormula={session_id}="${targetSessionId}"`;
       const res = await fetch(url, { headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}` } });
@@ -790,7 +792,7 @@ export default function App() {
         console.log('Step set to ready');
         return true;
       }
-      console.log('No records found yet');
+      console.log('No records found yet, poll count:', pollCount + 1);
       return false;
     } catch (e) { console.error('Polling error:', e); return false; }
   };
@@ -1203,6 +1205,36 @@ export default function App() {
                 </div>
               </div>
             ))}
+
+            {/* Show message when all stages complete but still waiting for results */}
+            {currentStage === PROGRESS_STAGES.length - 1 && stageProgress >= 100 && (
+              <div className="mt-6 p-4 rounded-xl fp-card-strong text-center animate-fadeIn">
+                {pollCount < 40 ? (
+                  <>
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Loader2 className="w-5 h-5 animate-spin" style={{ color: 'var(--fp-accent-1)' }} />
+                      <span className="font-semibold">Finalizing your report...</span>
+                    </div>
+                    <p className="text-sm fp-text-muted">
+                      Almost done! We're compiling insights from all AI platforms.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Mail className="w-5 h-5" style={{ color: 'var(--fp-accent-1)' }} />
+                      <span className="font-semibold">Taking longer than expected</span>
+                    </div>
+                    <p className="text-sm fp-text-muted mb-3">
+                      Your report is still processing. You'll receive an email when it's ready.
+                    </p>
+                    <p className="text-xs fp-text-subtle">
+                      You can safely close this page - check your email in a few minutes.
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </main>
         <style>{`

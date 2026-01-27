@@ -1501,7 +1501,15 @@ export default function App() {
                             )}
                           </div>
                           <h3 className="font-semibold text-base md:text-lg text-white/90 mb-1 md:mb-2">{rec.title || rec.action}</h3>
-                          <p className="text-xs md:text-sm fp-text-muted leading-relaxed">{rec.description || rec.detail || 'Implement this strategy to improve your AI visibility.'}</p>
+                          <p className="text-xs md:text-sm fp-text-muted leading-relaxed mb-3">{rec.description || rec.detail || 'Implement this strategy to improve your AI visibility.'}</p>
+                          <button
+                            onClick={goToPricing}
+                            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white/40 text-xs md:text-sm font-medium hover:bg-white/10 hover:text-white/60 hover:border-white/20 transition-all group"
+                          >
+                            <Lock className="w-3 h-3 md:w-4 md:h-4" />
+                            <span>Take Action</span>
+                            <span className="text-[10px] md:text-xs text-white/30 group-hover:text-white/50">Pro Feature</span>
+                          </button>
                         </div>
                       </div>
                     </div>

@@ -24,6 +24,10 @@ export default {
         'gradient-fp-reverse': 'linear-gradient(135deg, #D4145A 0%, #F5A623 100%)',
         'gradient-fp-horizontal': 'linear-gradient(90deg, #F5A623 0%, #D4145A 100%)',
       },
+      boxShadow: {
+        'glow-magenta': '0 0 40px rgba(212, 20, 90, 0.3)',
+        'glow-orange': '0 0 40px rgba(245, 166, 35, 0.3)',
+      },
     },
   },
   plugins: [],

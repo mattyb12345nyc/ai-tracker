@@ -267,7 +267,7 @@ const generateRunId = () => {
 // ============================================================
 // MAIN APP COMPONENT
 // ============================================================
-export default function App() {
+export default function App({ vipMode = false }) {
   const { user } = useUser();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -279,6 +279,9 @@ export default function App() {
   const [showConversionModal, setShowConversionModal] = useState(false);
   const [conversionModalContext, setConversionModalContext] = useState(null);
 
+  // VIP mode: no restrictions, 15 questions default
+  const isVip = vipMode;
+
   // Auto-set email from Clerk user
   useEffect(() => {
     if (user?.primaryEmailAddress?.emailAddress && !email) {
@@ -286,8 +289,13 @@ export default function App() {
     }
   }, [user]);
 
-  // Initialize trial tracking
+  // Initialize trial tracking (skip for VIP mode)
   useEffect(() => {
+    if (isVip) {
+      // VIP mode: no trial restrictions
+      setTrialStatus({ isActive: false, hasSubscription: true, isVip: true });
+      return;
+    }
     if (user?.id) {
       // Only initialize trial if user doesn't have active subscription
       if (!hasActiveSubscription(user)) {
@@ -299,11 +307,11 @@ export default function App() {
         setTrialStatus({ isActive: false, hasSubscription: true });
       }
     }
-  }, [user]);
+  }, [user, isVip]);
 
-  // Update trial status periodically (every minute)
+  // Update trial status periodically (every minute) - skip for VIP
   useEffect(() => {
-    if (!user?.id || hasActiveSubscription(user)) return;
+    if (isVip || !user?.id || hasActiveSubscription(user)) return;
     
     const interval = setInterval(() => {
       const status = getTrialStatus(user.id);
@@ -365,6 +373,15 @@ export default function App() {
 
   // Navigate to platform deep dive (updates URL for browser back support)
   const handlePlatformDiveDeeper = (platform) => {
+    // VIP mode: no restrictions, allow all platforms
+    if (isVip) {
+      setSelectedPlatform(platform);
+      if (sessionId) {
+        setSearchParams({ report: sessionId, platform });
+      }
+      return;
+    }
+
     // If already viewed this platform, allow re-viewing
     if (viewedPlatforms.has(platform)) {
       setSelectedPlatform(platform);
@@ -397,6 +414,8 @@ export default function App() {
   };
 
   const isPlatformLocked = (platform) => {
+    // VIP mode: nothing is locked
+    if (isVip) return false;
     // Not locked if: no platforms viewed yet, or this platform was already viewed
     if (viewedPlatforms.size === 0 || viewedPlatforms.has(platform)) {
       return false;
@@ -464,10 +483,12 @@ export default function App() {
   const generateQuestions = async (brand) => {
     setIsGenerating(true);
     try {
+      // VIP mode: 15 questions, regular trial: 5 questions
+      const questionCount = isVip ? 15 : 5;
       const response = await fetch('/.netlify/functions/generate-questions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ brandData: brand, questionCount: 5 })
+        body: JSON.stringify({ brandData: brand, questionCount })
       });
       
       if (!response.ok) throw new Error(`API error: ${response.status}`);
@@ -785,8 +806,8 @@ export default function App() {
       recommendations: parse(fields.recommendations_json, [])
     };
 
-    // Show conversion modal after first report view (for trial users)
-    if (user?.id && !hasActiveSubscription(user) && trialStatus?.analysesUsed === 1) {
+    // Show conversion modal after first report view (for trial users, not VIP)
+    if (!isVip && user?.id && !hasActiveSubscription(user) && trialStatus?.analysesUsed === 1) {
       // Small delay to let user see the report first
       setTimeout(() => {
         setConversionModalContext({
@@ -916,8 +937,8 @@ export default function App() {
       return;
     }
     
-    // Check trial limits if user doesn't have subscription
-    if (user?.id && !hasActiveSubscription(user)) {
+    // Check trial limits if user doesn't have subscription (skip for VIP)
+    if (!isVip && user?.id && !hasActiveSubscription(user)) {
       const status = getTrialStatus(user.id);
       if (!status.canRunAnalysis) {
         setError('You\'ve used your free analysis. Upgrade to track unlimited brands and get weekly reports.');
@@ -930,16 +951,16 @@ export default function App() {
         return;
       }
     }
-    
+
     const sid = `SES_${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)}_${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
     const runId = generateRunId();
     setSessionId(sid);
     setCurrentStage(0);
     setStageProgress(0);
     setStep('processing');
-    
-    // Increment analysis count for trial users
-    if (user?.id && !hasActiveSubscription(user)) {
+
+    // Increment analysis count for trial users (skip for VIP)
+    if (!isVip && user?.id && !hasActiveSubscription(user)) {
       incrementAnalysisCount(user.id);
       const updatedStatus = getTrialStatus(user.id);
       setTrialStatus(updatedStatus);

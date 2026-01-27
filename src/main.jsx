@@ -36,6 +36,14 @@ function ProtectedApp() {
   )
 }
 
+function ProtectedVipApp() {
+  return (
+    <ProtectedRoute>
+      <App vipMode={true} />
+    </ProtectedRoute>
+  )
+}
+
 function ProtectedDashboard() {
   return (
     <ProtectedRoute>
@@ -66,6 +74,7 @@ if (!CLERK_PUBLISHABLE_KEY) {
             <Route path="/sign-up/*" element={<SignUpPage />} />
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/dashboard" element={<ProtectedDashboard />} />
+            <Route path="/vip/*" element={<ProtectedVipApp />} />
             <Route path="/*" element={<ProtectedApp />} />
           </Routes>
         </BrowserRouter>

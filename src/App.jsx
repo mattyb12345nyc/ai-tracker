@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap, Loader2, CheckCircle, ArrowRight, RefreshCw, TrendingUp, TrendingDown, AlertCircle, X, Pencil, Check, Plus, ChevronRight, Eye, FileText, BarChart3, Download, Calendar, ChevronDown, Sparkles, Target, Activity, ArrowUpRight, ArrowDownRight, Minus, Mail, ExternalLink, Award, Users, MessageSquare, Search, Lightbulb, Globe, Link, Crown, Lock } from 'lucide-react';
+import { Zap, Loader2, CheckCircle, ArrowRight, RefreshCw, TrendingUp, TrendingDown, AlertCircle, X, Pencil, Check, Plus, ChevronRight, Eye, FileText, BarChart3, Download, Calendar, ChevronDown, Sparkles, Target, Activity, ArrowUpRight, ArrowDownRight, Minus, Mail, ExternalLink, Award, Users, MessageSquare, Search, Lightbulb, Globe, Link, Crown, Lock, Clock } from 'lucide-react';
 import { UserButton, useUser } from '@clerk/clerk-react';
 import { pdf } from '@react-pdf/renderer';
 import BrandedPDFReport from './components/BrandedPDFReport';
+import ConversionModal from './components/ConversionModal';
+import TrialStatusBanner from './components/TrialStatusBanner';
+import { initializeTrial, getTrialStatus, incrementAnalysisCount, hasActiveSubscription } from './utils/trialTracking';
 
 // ============================================================
 // CONFIGURATION
@@ -271,12 +274,42 @@ export default function App() {
   const [url, setUrl] = useState('');
   const [email, setEmail] = useState('');
   const [brandData, setBrandData] = useState(null);
+  const [trialStatus, setTrialStatus] = useState(null);
+  const [showConversionModal, setShowConversionModal] = useState(false);
+  const [conversionModalContext, setConversionModalContext] = useState(null);
 
   // Auto-set email from Clerk user
   useEffect(() => {
     if (user?.primaryEmailAddress?.emailAddress && !email) {
       setEmail(user.primaryEmailAddress.emailAddress);
     }
+  }, [user]);
+
+  // Initialize trial tracking
+  useEffect(() => {
+    if (user?.id) {
+      // Only initialize trial if user doesn't have active subscription
+      if (!hasActiveSubscription(user)) {
+        initializeTrial(user.id);
+        const status = getTrialStatus(user.id);
+        setTrialStatus(status);
+      } else {
+        // User has subscription, no trial needed
+        setTrialStatus({ isActive: false, hasSubscription: true });
+      }
+    }
+  }, [user]);
+
+  // Update trial status periodically (every minute)
+  useEffect(() => {
+    if (!user?.id || hasActiveSubscription(user)) return;
+    
+    const interval = setInterval(() => {
+      const status = getTrialStatus(user.id);
+      setTrialStatus(status);
+    }, 60000); // Update every minute
+    
+    return () => clearInterval(interval);
   }, [user]);
   const [generatedQuestions, setGeneratedQuestions] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -712,7 +745,7 @@ export default function App() {
       }
     }
 
-    return {
+    const reportData = {
       brand_name: fields.brand_name,
       brand_logo: fields.brand_logo || '',
       brand_assets: parse(fields.brand_assets_json, {}),
@@ -735,6 +768,21 @@ export default function App() {
       brand_coverage: parseFloat(fields.brand_coverage) || 0,
       recommendations: parse(fields.recommendations_json, [])
     };
+
+    // Show conversion modal after first report view (for trial users)
+    if (user?.id && !hasActiveSubscription(user) && trialStatus?.analysesUsed === 1) {
+      // Small delay to let user see the report first
+      setTimeout(() => {
+        setConversionModalContext({
+          type: 'after_report',
+          message: 'Great! You\'ve seen your first report',
+          subtitle: 'Upgrade to track unlimited brands and get weekly automated reports'
+        });
+        setShowConversionModal(true);
+      }, 2000);
+    }
+
+    return reportData;
   };
 
   const loadReportBySessionId = async (targetSessionId) => {
@@ -842,12 +890,34 @@ export default function App() {
       return;
     }
     
+    // Check trial limits if user doesn't have subscription
+    if (user?.id && !hasActiveSubscription(user)) {
+      const status = getTrialStatus(user.id);
+      if (!status.canRunAnalysis) {
+        setError('You\'ve used your free analysis. Upgrade to track unlimited brands and get weekly reports.');
+        setConversionModalContext({
+          type: 'trial_limit',
+          message: 'You\'ve used your free analysis',
+          subtitle: 'Upgrade to track unlimited brands and get weekly AI visibility reports'
+        });
+        setShowConversionModal(true);
+        return;
+      }
+    }
+    
     const sid = `SES_${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)}_${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
     const runId = generateRunId();
     setSessionId(sid);
     setCurrentStage(0);
     setStageProgress(0);
     setStep('processing');
+    
+    // Increment analysis count for trial users
+    if (user?.id && !hasActiveSubscription(user)) {
+      incrementAnalysisCount(user.id);
+      const updatedStatus = getTrialStatus(user.id);
+      setTrialStatus(updatedStatus);
+    }
     
     const activeQuestions = generatedQuestions.filter(q => q.included);
     
@@ -893,7 +963,16 @@ export default function App() {
   if (step === 'setup') {
     return (
       <div className="min-h-screen text-white fp-shell">
-        <header className="fp-header sticky top-0 backdrop-blur-xl z-50">
+        {/* Trial Status Banner */}
+        {trialStatus && !hasActiveSubscription(user) && (
+          <TrialStatusBanner 
+            trialStatus={trialStatus} 
+            onUpgrade={goToPricing}
+            isSticky={true}
+          />
+        )}
+        
+        <header className={`fp-header sticky ${trialStatus && !hasActiveSubscription(user) ? 'top-[73px]' : 'top-0'} backdrop-blur-xl z-50`}>
           <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
@@ -945,15 +1024,48 @@ export default function App() {
                 </div>
               )}
 
+              {/* Trial status message */}
+              {trialStatus && !hasActiveSubscription(user) && (
+                <div className={`p-4 rounded-xl mb-4 ${
+                  trialStatus.isExpired 
+                    ? 'bg-red-500/10 border border-red-500/30' 
+                    : !trialStatus.canRunAnalysis
+                    ? 'bg-yellow-500/10 border border-yellow-500/30'
+                    : 'bg-[#ff7a3d]/10 border border-[#ff7a3d]/30'
+                }`}>
+                  {trialStatus.isExpired ? (
+                    <div className="flex items-center gap-2 text-red-400">
+                      <AlertCircle className="w-5 h-5" />
+                      <span className="text-sm font-medium">Your free trial has expired. Upgrade to continue tracking.</span>
+                    </div>
+                  ) : !trialStatus.canRunAnalysis ? (
+                    <div className="flex items-center gap-2 text-yellow-400">
+                      <AlertCircle className="w-5 h-5" />
+                      <span className="text-sm font-medium">You've used your free analysis ({trialStatus.analysesUsed}/{trialStatus.maxAnalyses}). Upgrade for unlimited tracking.</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-[#ff7a3d]">
+                      <CheckCircle className="w-5 h-5" />
+                      <span className="text-sm">Free trial active • {trialStatus.daysRemaining} days remaining</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <button
                 onClick={analyzeUrl}
-                disabled={!url.trim() || isAnalyzing}
+                disabled={!url.trim() || isAnalyzing || (trialStatus && !hasActiveSubscription(user) && (!trialStatus.canRunAnalysis || trialStatus.isExpired))}
                 className="w-full py-4 rounded-xl fp-button-primary disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-lg flex items-center justify-center gap-3 transition-all"
               >
                 {isAnalyzing ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
                     {LOADING_MESSAGES[loadingMessageIndex]}
+                  </>
+                ) : (trialStatus && !hasActiveSubscription(user) && (!trialStatus.canRunAnalysis || trialStatus.isExpired)) ? (
+                  <>
+                    <Crown className="w-5 h-5" />
+                    Upgrade to Continue
                   </>
                 ) : (
                   <>
@@ -991,7 +1103,16 @@ export default function App() {
   if (step === 'questions') {
     return (
       <div className="min-h-screen text-white fp-shell">
-        <header className="fp-header sticky top-0 backdrop-blur-xl z-50">
+        {/* Trial Status Banner */}
+        {trialStatus && !hasActiveSubscription(user) && (
+          <TrialStatusBanner 
+            trialStatus={trialStatus} 
+            onUpgrade={goToPricing}
+            isSticky={true}
+          />
+        )}
+        
+        <header className={`fp-header sticky ${trialStatus && !hasActiveSubscription(user) ? 'top-[73px]' : 'top-0'} backdrop-blur-xl z-50`}>
           <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
@@ -1130,7 +1251,16 @@ export default function App() {
   if (step === 'processing') {
     return (
       <div className="min-h-screen text-white fp-shell">
-        <header className="fp-header sticky top-0 backdrop-blur-xl z-50">
+        {/* Trial Status Banner */}
+        {trialStatus && !hasActiveSubscription(user) && (
+          <TrialStatusBanner 
+            trialStatus={trialStatus} 
+            onUpgrade={goToPricing}
+            isSticky={true}
+          />
+        )}
+        
+        <header className={`fp-header sticky ${trialStatus && !hasActiveSubscription(user) ? 'top-[73px]' : 'top-0'} backdrop-blur-xl z-50`}>
           <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
@@ -1270,7 +1400,16 @@ export default function App() {
     const reportUrl = `https://ai.futureproof.work/?report=${sessionId}&utm_campaign=website&utm_medium=email&utm_source=sendgrid.com`;
     return (
       <div className="min-h-screen text-white fp-shell">
-        <header className="fp-header sticky top-0 backdrop-blur-xl z-50">
+        {/* Trial Status Banner */}
+        {trialStatus && !hasActiveSubscription(user) && (
+          <TrialStatusBanner 
+            trialStatus={trialStatus} 
+            onUpgrade={goToPricing}
+            isSticky={true}
+          />
+        )}
+        
+        <header className={`fp-header sticky ${trialStatus && !hasActiveSubscription(user) ? 'top-[73px]' : 'top-0'} backdrop-blur-xl z-50`}>
           <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
@@ -1298,6 +1437,15 @@ export default function App() {
             </button>
           </div>
         </main>
+        
+        {/* Conversion Modal */}
+        <ConversionModal
+          isOpen={showConversionModal}
+          onClose={() => setShowConversionModal(false)}
+          onUpgrade={goToPricing}
+          context={conversionModalContext}
+        />
+        
         <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } } .animate-fadeIn { animation: fadeIn 0.6s ease-out; }`}</style>
       </div>
     );
@@ -1308,7 +1456,16 @@ export default function App() {
   // ============================================================
   return (
     <div className="min-h-screen text-white fp-shell">
-      <header className="fp-header sticky top-0 backdrop-blur-xl z-50">
+      {/* Trial Status Banner - Sticky at top */}
+      {trialStatus && !hasActiveSubscription(user) && (
+        <TrialStatusBanner 
+          trialStatus={trialStatus} 
+          onUpgrade={goToPricing}
+          isSticky={true}
+        />
+      )}
+      
+      <header className={`fp-header sticky ${trialStatus && !hasActiveSubscription(user) ? 'top-[73px]' : 'top-0'} backdrop-blur-xl z-50`}>
         <div className="max-w-6xl mx-auto px-4 md:px-8 py-3 md:py-4 flex items-center justify-between">
           <div className="flex items-center gap-2 md:gap-4">
             <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-6 md:h-8" />
@@ -1718,6 +1875,14 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Conversion Modal */}
+      <ConversionModal
+        isOpen={showConversionModal}
+        onClose={() => setShowConversionModal(false)}
+        onUpgrade={goToPricing}
+        context={conversionModalContext}
+      />
 
       <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } } .animate-fadeIn { animation: fadeIn 0.6s ease-out; }`}</style>
     </div>

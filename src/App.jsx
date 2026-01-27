@@ -273,6 +273,7 @@ export default function App({ vipMode = false }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [step, setStep] = useState('setup'); // setup, analyzing, questions, processing, complete
   const [url, setUrl] = useState('');
+  const [userContext, setUserContext] = useState('');
   const [email, setEmail] = useState('');
   const [brandData, setBrandData] = useState(null);
   const [trialStatus, setTrialStatus] = useState(null);
@@ -488,7 +489,7 @@ export default function App({ vipMode = false }) {
       const response = await fetch('/.netlify/functions/generate-questions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ brandData: brand, questionCount })
+        body: JSON.stringify({ brandData: brand, questionCount, userContext: userContext.trim() || null })
       });
       
       if (!response.ok) throw new Error(`API error: ${response.status}`);
@@ -1067,6 +1068,24 @@ export default function App({ vipMode = false }) {
                   className="w-full pl-12 pr-4 py-4 rounded-xl fp-input outline-none transition-all text-lg"
                   placeholder="yourbrand.com"
                 />
+              </div>
+
+              {/* Optional context for personalized questions */}
+              <div className="space-y-2">
+                <label className="text-sm fp-text-muted flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Additional Context <span className="text-xs opacity-60">(optional)</span>
+                </label>
+                <textarea
+                  value={userContext}
+                  onChange={e => setUserContext(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl fp-input outline-none transition-all text-sm resize-none"
+                  placeholder="E.g., We're launching a new product line, focusing on sustainability, targeting millennials, want to track competitor X..."
+                  rows={3}
+                />
+                <p className="text-xs fp-text-muted">
+                  Add notes about what you're looking to track or accomplish. This helps us generate more relevant questions.
+                </p>
               </div>
 
               {error && (

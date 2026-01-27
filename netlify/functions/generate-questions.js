@@ -18,8 +18,12 @@ export const handler = async (event) => {
   }
 
   try {
-    const { brandData, questionCount } = JSON.parse(event.body);
-    
+    const { brandData, questionCount, userContext } = JSON.parse(event.body);
+
+    const userContextSection = userContext
+      ? `\nUSER CONTEXT (IMPORTANT - incorporate these priorities into question generation):\n${userContext}\n`
+      : '';
+
     const prompt = `Generate ${questionCount} questions that real consumers would ask AI assistants when looking to purchase a product/service in this category.
 
 Brand Category: ${brandData.category}
@@ -28,7 +32,7 @@ Target Audience: ${brandData.target_audience.join(', ')}
 Key Features: ${brandData.key_features.join(', ')}
 Key Benefits: ${brandData.key_benefits.join(', ')}
 Price Tier: ${brandData.price_tier}
-Use Cases: ${brandData.use_cases.join(', ')}
+Use Cases: ${brandData.use_cases.join(', ')}${userContextSection}
 
 CRITICAL RULES:
 1. Every question MUST ask for recommendations, suggestions, rankings, or "best" options

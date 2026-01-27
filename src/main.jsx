@@ -6,6 +6,7 @@ import App from './App.jsx'
 import LoginPage from './components/LoginPage.jsx'
 import SignUpPage from './components/SignUpPage.jsx'
 import Dashboard from './components/Dashboard.jsx'
+import PricingPage from './components/PricingPage.jsx'
 import './index.css'
 
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
@@ -63,6 +64,7 @@ if (!CLERK_PUBLISHABLE_KEY) {
           <Routes>
             <Route path="/login/*" element={<LoginPage />} />
             <Route path="/sign-up/*" element={<SignUpPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
             <Route path="/dashboard" element={<ProtectedDashboard />} />
             <Route path="/*" element={<ProtectedApp />} />
           </Routes>

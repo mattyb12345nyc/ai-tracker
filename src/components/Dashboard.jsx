@@ -37,8 +37,12 @@ export default function Dashboard() {
   const [isRunningAnalysis, setIsRunningAnalysis] = useState(false);
   const [error, setError] = useState('');
 
-  // Hardcoded question allotment (will pull from Stripe later)
-  const questionAllotment = 15;
+  // Get subscription from Clerk user metadata
+  const subscription = user?.publicMetadata?.subscription;
+  const hasActiveSubscription = subscription?.status === 'active' || subscription?.status === 'trialing';
+
+  // Question allotment from subscription or default free tier
+  const questionAllotment = hasActiveSubscription ? subscription.questionLot : 5; // Free tier: 5 questions
   const questionsUsed = reports.length * 5; // Assuming 5 questions per report
   const questionsRemaining = Math.max(0, questionAllotment - questionsUsed);
 
@@ -441,6 +445,30 @@ export default function Dashboard() {
         {/* Main Dashboard Content - Show if setup complete */}
         {isSetupComplete && (
           <>
+            {/* Subscription Banner - Show if no active subscription */}
+            {!hasActiveSubscription && (
+              <div className="fp-card-strong rounded-2xl p-6 mb-8 border border-[#ff7a3d]/30 bg-gradient-to-r from-[#ff7a3d]/10 to-transparent">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-[#ff7a3d]/20 flex items-center justify-center">
+                      <Zap className="w-6 h-6 text-[#ff7a3d]" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg">Upgrade to Track More</h3>
+                      <p className="fp-text-muted text-sm">You're on the free tier with {questionAllotment} questions. Upgrade for more tracking power.</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => navigate('/pricing')}
+                    className="px-6 py-3 rounded-xl fp-button-primary font-semibold flex items-center gap-2 whitespace-nowrap"
+                  >
+                    View Plans
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               <div className="fp-card rounded-2xl p-4 md:p-6">
@@ -473,10 +501,14 @@ export default function Dashboard() {
               <div className="fp-card rounded-2xl p-4 md:p-6">
                 <div className="flex items-center gap-2 mb-2">
                   <Calendar className="w-4 h-4" style={{ color: 'var(--fp-accent-1)' }} />
-                  <span className="text-xs fp-text-muted">Frequency</span>
+                  <span className="text-xs fp-text-muted">Plan</span>
                 </div>
-                <p className="text-2xl font-bold capitalize">{frequency}</p>
-                <p className="text-xs fp-text-muted">tracking schedule</p>
+                <p className="text-2xl font-bold capitalize">
+                  {hasActiveSubscription ? subscription.frequency : 'Free'}
+                </p>
+                <p className="text-xs fp-text-muted">
+                  {hasActiveSubscription ? `${subscription.questionLot} questions` : 'Limited tier'}
+                </p>
               </div>
             </div>
 
@@ -501,11 +533,11 @@ export default function Dashboard() {
               </button>
 
               <button
-                onClick={() => {/* Placeholder for upgrade */}}
+                onClick={() => navigate('/pricing')}
                 className="px-6 py-4 rounded-xl fp-card hover:bg-white/10 font-semibold flex items-center justify-center gap-2 border border-white/10"
               >
                 <CreditCard className="w-5 h-5" />
-                Upgrade Plan
+                {hasActiveSubscription ? 'Manage Plan' : 'Upgrade Plan'}
               </button>
             </div>
 

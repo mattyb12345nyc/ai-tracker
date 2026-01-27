@@ -244,11 +244,25 @@
             margin-bottom: 8px;
         }
         .price-amount {
-            font-size: 3rem;
+            font-size: 1rem;
             font-weight: 700;
             color: #fff;
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 2px;
         }
-        .price-amount span {
+        .price-currency {
+            font-size: 1.8rem;
+            color: rgba(247, 233, 240, 0.7);
+            font-weight: 600;
+        }
+        .price-value {
+            font-size: 3.5rem;
+            color: #fff;
+            font-weight: 700;
+        }
+        .price-period {
             font-size: 1.2rem;
             color: rgba(247, 233, 240, 0.6);
             font-weight: 400;
@@ -351,7 +365,8 @@
             .features ul { columns: 1; }
             h1 { font-size: 2rem; }
             .calculator-section { padding: 30px 20px; }
-            .price-amount { font-size: 2.4rem; }
+            .price-value { font-size: 2.8rem; }
+            .price-currency { font-size: 1.4rem; }
             .stat-callout .stat-number { font-size: 2rem; }
             .stat-callout .stat-text { font-size: 1.1rem; }
         }
@@ -421,7 +436,7 @@
             
             <div class="price-display" id="priceDisplay">
                 <div class="price-label">Monthly Investment</div>
-                <div class="price-amount">$<span id="priceValue">0</span><span>/mo</span></div>
+                <div class="price-amount"><span class="price-currency">$</span><span class="price-value" id="priceValue">0</span><span class="price-period">/mo</span></div>
                 <div class="price-details"><span id="unitCount">0</span> units/month at $<span id="unitPrice">150</span>/unit</div>
                 <div class="discount-tag" id="discountTag" style="display:none;"></div>
             </div>

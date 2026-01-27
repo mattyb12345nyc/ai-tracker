@@ -1618,27 +1618,29 @@ export default function App({ vipMode = false }) {
               </div>
             </div>
 
-            {/* UPGRADE CTA BANNER 1 */}
-            <div className="relative overflow-hidden rounded-2xl md:rounded-3xl p-6 md:p-8 bg-gradient-to-r from-[#ff7a3d]/20 via-[#ff6b4a]/15 to-[#6366f1]/20 border border-[#ff7a3d]/30">
-              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0djItSDI0di0yaDEyek0zNiAyNHYySDI0di0yaDEyeiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
-              <div className="relative flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#ff7a3d] to-[#ff6b4a] flex items-center justify-center shrink-0">
-                    <Crown className="w-6 h-6 text-white" />
+            {/* UPGRADE CTA BANNER 1 - Hide for VIP */}
+            {!isVip && (
+              <div className="relative overflow-hidden rounded-2xl md:rounded-3xl p-6 md:p-8 bg-gradient-to-r from-[#ff7a3d]/20 via-[#ff6b4a]/15 to-[#6366f1]/20 border border-[#ff7a3d]/30">
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0djItSDI0di0yaDEyek0zNiAyNHYySDI0di0yaDEyeiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
+                <div className="relative flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#ff7a3d] to-[#ff6b4a] flex items-center justify-center shrink-0">
+                      <Crown className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white">This is just a preview</h3>
+                      <p className="text-sm text-white/70">Upgrade for continuous monitoring, competitor tracking, and weekly AI visibility reports</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white">This is just a preview</h3>
-                    <p className="text-sm text-white/70">Upgrade for continuous monitoring, competitor tracking, and weekly AI visibility reports</p>
-                  </div>
+                  <button
+                    onClick={goToPricing}
+                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#ff7a3d] to-[#ff6b4a] text-white font-semibold hover:opacity-90 transition-all shrink-0"
+                  >
+                    See Plans <ArrowRight className="w-4 h-4" />
+                  </button>
                 </div>
-                <button
-                  onClick={goToPricing}
-                  className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#ff7a3d] to-[#ff6b4a] text-white font-semibold hover:opacity-90 transition-all shrink-0"
-                >
-                  See Plans <ArrowRight className="w-4 h-4" />
-                </button>
               </div>
-            </div>
+            )}
 
             {/* SECTION 2: BRAND RANKINGS */}
             <div className="fp-card rounded-2xl md:rounded-3xl p-4 md:p-8">
@@ -1738,14 +1740,16 @@ export default function App({ vipMode = false }) {
                           </div>
                           <h3 className="font-semibold text-base md:text-lg text-white/90 mb-1 md:mb-2">{rec.title || rec.action}</h3>
                           <p className="text-xs md:text-sm fp-text-muted leading-relaxed mb-3">{rec.description || rec.detail || 'Implement this strategy to improve your AI visibility.'}</p>
-                          <button
-                            onClick={goToPricing}
-                            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white/40 text-xs md:text-sm font-medium hover:bg-white/10 hover:text-white/60 hover:border-white/20 transition-all group"
-                          >
-                            <Lock className="w-3 h-3 md:w-4 md:h-4" />
-                            <span>Take Action</span>
-                            <span className="text-[10px] md:text-xs text-white/30 group-hover:text-white/50">Pro Feature</span>
-                          </button>
+                          {!isVip && (
+                            <button
+                              onClick={goToPricing}
+                              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white/40 text-xs md:text-sm font-medium hover:bg-white/10 hover:text-white/60 hover:border-white/20 transition-all group"
+                            >
+                              <Lock className="w-3 h-3 md:w-4 md:h-4" />
+                              <span>Take Action</span>
+                              <span className="text-[10px] md:text-xs text-white/30 group-hover:text-white/50">Pro Feature</span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1757,31 +1761,33 @@ export default function App({ vipMode = false }) {
               </div>
             </div>
 
-            {/* UPGRADE CTA - WEEKLY MONITORING */}
-            <div className="fp-card rounded-2xl md:rounded-3xl p-6 md:p-8 border-2 border-dashed border-[#ff7a3d]/40">
-              <div className="flex flex-col md:flex-row items-center gap-6">
-                <div className="flex-1 text-center md:text-left">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#ff7a3d]/20 text-[#ff7a3d] text-xs font-semibold mb-3">
-                    <TrendingUp className="w-3 h-3" /> Track Changes Over Time
+            {/* UPGRADE CTA - WEEKLY MONITORING - Hide for VIP */}
+            {!isVip && (
+              <div className="fp-card rounded-2xl md:rounded-3xl p-6 md:p-8 border-2 border-dashed border-[#ff7a3d]/40">
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                  <div className="flex-1 text-center md:text-left">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#ff7a3d]/20 text-[#ff7a3d] text-xs font-semibold mb-3">
+                      <TrendingUp className="w-3 h-3" /> Track Changes Over Time
+                    </div>
+                    <h3 className="text-xl md:text-2xl font-bold mb-2">Want to improve these scores?</h3>
+                    <p className="text-sm md:text-base text-white/60 leading-relaxed">
+                      Subscribe for weekly AI visibility tracking. See how your optimizations impact your rankings and get fresh recommendations each week.
+                    </p>
+                    <ul className="flex flex-wrap justify-center md:justify-start gap-4 mt-4 text-sm text-white/70">
+                      <li className="flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-green-400" /> Weekly reports</li>
+                      <li className="flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-green-400" /> Trend tracking</li>
+                      <li className="flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-green-400" /> Competitor alerts</li>
+                    </ul>
                   </div>
-                  <h3 className="text-xl md:text-2xl font-bold mb-2">Want to improve these scores?</h3>
-                  <p className="text-sm md:text-base text-white/60 leading-relaxed">
-                    Subscribe for weekly AI visibility tracking. See how your optimizations impact your rankings and get fresh recommendations each week.
-                  </p>
-                  <ul className="flex flex-wrap justify-center md:justify-start gap-4 mt-4 text-sm text-white/70">
-                    <li className="flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-green-400" /> Weekly reports</li>
-                    <li className="flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-green-400" /> Trend tracking</li>
-                    <li className="flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-green-400" /> Competitor alerts</li>
-                  </ul>
+                  <button
+                    onClick={goToPricing}
+                    className="flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-[#ff7a3d] to-[#ff6b4a] text-white font-semibold hover:opacity-90 transition-all text-lg"
+                  >
+                    Start Tracking <ArrowRight className="w-5 h-5" />
+                  </button>
                 </div>
-                <button
-                  onClick={goToPricing}
-                  className="flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-[#ff7a3d] to-[#ff6b4a] text-white font-semibold hover:opacity-90 transition-all text-lg"
-                >
-                  Start Tracking <ArrowRight className="w-5 h-5" />
-                </button>
               </div>
-            </div>
+            )}
 
             {/* SECTION 6: QUESTION BREAKDOWN */}
             <div className="fp-card rounded-2xl md:rounded-3xl p-4 md:p-8">
@@ -1937,8 +1943,8 @@ export default function App({ vipMode = false }) {
         </div>
       </footer>
 
-      {/* STICKY BOTTOM UPGRADE BANNER - Shows on trial report */}
-      {dashboardData && !selectedPlatform && (
+      {/* STICKY BOTTOM UPGRADE BANNER - Shows on trial report, hide for VIP */}
+      {!isVip && dashboardData && !selectedPlatform && (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-[#1a1a2e] via-[#1f1f35] to-[#1a1a2e] border-t border-[#ff7a3d]/30 shadow-2xl backdrop-blur-xl">
           <div className="max-w-6xl mx-auto px-4 md:px-8 py-3 md:py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-3 text-center sm:text-left">

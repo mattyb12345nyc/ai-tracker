@@ -54,6 +54,7 @@ function PricingContent() {
   const [error, setError] = useState(null);
 
   const cancelled = searchParams.get('checkout') === 'cancelled';
+  const reportId = searchParams.get('report');
 
   const questionOptions = [10, 25, 50];
   const frequencyOptions = ['monthly', 'biweekly', 'weekly'];
@@ -115,10 +116,10 @@ function PricingContent() {
             <span className="font-semibold">AI Visibility Tracker</span>
           </div>
           <button
-            onClick={() => navigate('/')}
-            className="text-white/60 hover:text-white transition-colors"
+            onClick={() => navigate(reportId ? `/?report=${reportId}` : '/')}
+            className="text-white/60 hover:text-white transition-colors flex items-center gap-2"
           >
-            ← Back to App
+            ← {reportId ? 'Back to Report' : 'Back to App'}
           </button>
         </div>
       </header>

@@ -300,8 +300,11 @@ export default function App() {
   const [pdfError, setPdfError] = useState(null);
   const [pollCount, setPollCount] = useState(0);
 
-  // Navigate to pricing page for upgrades
-  const goToPricing = () => navigate('/pricing');
+  // Navigate to pricing page for upgrades (preserve report ID so user can return)
+  const goToPricing = () => {
+    const reportParam = sessionId ? `?report=${sessionId}` : '';
+    navigate(`/pricing${reportParam}`);
+  };
 
   // Generate and download PDF report
   const handleDownloadPDF = async () => {

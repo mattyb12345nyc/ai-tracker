@@ -1,90 +1,111 @@
-# CLAUDE.md
+---
+description: 
+alwaysApply: true
+---
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+AI Visibility Tracker - Cursor Rules
 
-## Build & Development Commands
+You are working on the AI Visibility Tracker, a SaaS platform that analyzes how brands are mentioned and recommended across major AI platforms (ChatGPT, Claude, Gemini, Perplexity).
 
-```bash
-npm run dev      # Start Vite dev server (port 5173)
-npm run build    # Build production bundle to dist/
-npm run preview  # Preview production build locally
+## Tech Stack
+- **Frontend**: React 18 + Vite, Tailwind CSS (dark theme)
+- **Backend**: Netlify Functions (serverless)
+- **Database**: Airtable (Base ID: appgSZR92pGCMlUOc)
+- **Auth**: Clerk (@clerk/clerk-react)
+- **Billing**: Stripe (subscriptions with volume pricing)
+- **Deployment**: Netlify (auto-deploys from GitHub)
+
+## Project Structure
+```
+ai-tracker/
+├── src/
+│   ├── App.jsx              # Main app with routing
+│   ├── components/          # Reusable components
+│   │   ├── BrandedPDFReport.jsx
+│   │   └── ...
+│   └── index.css            # Tailwind imports
+├── netlify/functions/       # Backend API
+│   ├── analyze-brand.js     # Extract brand info from URL
+│   ├── generate-questions.js # Create buyer-intent questions
+│   ├── process-analysis-background.js # Query AI platforms
+│   ├── create-checkout-session.js # Stripe checkout
+│   └── stripe-webhook.js    # Handle Stripe events
+├── .env                     # Local env vars (not in git)
+├── CLAUDE.md               # AI assistant context
+└── AIRTABLE_SCHEMA.md      # Database schema reference
 ```
 
-Netlify functions are automatically available at `/.netlify/functions/[name]` during local dev when using `netlify dev`.
+## Key Patterns
 
-## Architecture Overview
+### Environment Variables
+- Frontend (Vite): `import.meta.env.VITE_*`
+- Backend (Netlify Functions): `process.env.*`
 
-AI Visibility Tracker analyzes how brands are mentioned and recommended across four AI platforms (ChatGPT, Claude, Gemini, Perplexity).
-
-### Data Flow
-
-1. **URL Analysis** → User enters brand URL → `analyze-brand.js` calls Claude to extract brand data
-2. **Question Generation** → `generate-questions.js` generates 15 buyer-intent questions using Claude
-3. **Background Processing** → `process-analysis-background.js` queries all 4 AI platforms in parallel, analyzes responses, saves to Airtable
-4. **Email Notification** → SendGrid sends dashboard link to user's email with score/grade preview
-5. **Polling & Display** → Frontend polls Airtable every 30 seconds until results appear, or user clicks email link (`?report=SESSION_ID`)
-
-### Key Components
-
-**Frontend (src/App.jsx)**
-- Single-file React app with 4-step UI: Setup → Questions → Processing → Complete
-- Polls Airtable directly for results using `VITE_AIRTABLE_TOKEN`
-- Dark theme with Tailwind CSS
-
-**Netlify Functions (netlify/functions/)**
-- `analyze-brand.js` - Sync function, extracts brand info from URL via Claude
-- `generate-questions.js` - Sync function, creates buyer-intent questions via Claude
-- `process-analysis-background.js` - Background function (15-min timeout), queries 4 AI platforms, scores responses, saves to Airtable
-
-**Database (Airtable)**
-- Base ID: `appgSZR92pGCMlUOc`
-- Dashboard Table (`tblheMjYJzu1f88Ft`) - Aggregated reports
-- Raw Question Data Table (`tblusxWUrocGCwUHb`) - Individual question responses
-
-### API Integrations
-
-| Service | Model | Purpose |
-|---------|-------|---------|
-| OpenAI | gpt-4o | Query ChatGPT |
-| Anthropic | claude-sonnet-4-20250514 | Query Claude + analyze all responses |
-| Google | gemini-1.5-flash | Query Gemini |
-| Perplexity | llama-3.1-sonar-large-128k-online | Query Perplexity |
-| Airtable | REST API | Data storage |
-
-## Environment Variables
-
-Frontend (prefix with `VITE_`):
-- `VITE_AIRTABLE_TOKEN` - Read-only Airtable access for frontend
-
-Netlify Functions:
-- `CLAUDE_API_KEY` - Anthropic API key
-- `OPENAI_API_KEY` - OpenAI API key
-- `GEMINI_API_KEY` - Google AI API key
-- `PERPLEXITY_API_KEY` - Perplexity API key
-- `AIRTABLE_API_KEY` - Airtable read/write access
-- `SENDGRID_API_KEY` - SendGrid for dashboard email notifications
-
-## Brand.dev Integration (Future)
-
-When integrating Brand.dev for brand assets (logos, colors, etc.), use the **domain** as the identifier, not the brand name. The domain is extracted from the user-entered URL:
-
+### API Calls from Frontend
 ```javascript
-// Extract domain: "https://www.example.com/page" → "example.com"
-domain = url.replace(/https?:\/\//, '').replace('www.', '').split('/')[0]
+const response = await fetch('/.netlify/functions/function-name', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+});
 ```
 
-API endpoint: `https://api.brand.dev/v1/brand/retrieve?domain={domain}`
+### Airtable Operations
+- Base ID: `appgSZR92pGCMlUOc`
+- Dashboard Table: `tblheMjYJzu1f88Ft`
+- Raw Question Data: `tblusxWUrocGCwUHb`
+- Always check AIRTABLE_SCHEMA.md for field types before writing
 
-See `main.py:get_brand_assets()` for reference implementation.
+### Clerk Auth
+```javascript
+import { useUser, SignedIn, SignedOut } from '@clerk/clerk-react';
+const { user, isLoaded } = useUser();
+// Store plan data in user.publicMetadata
+```
+
+### Stripe Integration
+- Products have volume-based pricing ($50/unit base)
+- After checkout, webhook updates Clerk metadata
+- User plan stored as: { questionLot, frequency, units }
+
+## Styling Guidelines
+- Dark theme: `bg-slate-900`, `bg-slate-800`, `text-white`
+- Accent colors: `blue-500`, `blue-600` for CTAs
+- Cards: `bg-slate-800 rounded-xl p-6`
+- Buttons: `bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg`
 
 ## Scoring System
+Each AI response scored 0-100:
+- **mention**: Was brand mentioned?
+- **position**: Where in response? (first=100, second=75)
+- **sentiment**: Tone (negative=0, neutral=50, positive=100)
+- **recommendation**: Explicitly recommended?
+- **overall**: Weighted average
 
-Each AI response is scored 0-100 on:
-- **mention** - Was brand mentioned? (0=no, 100=prominently)
-- **position** - Where in response? (100=first, 75=second, 50=mentioned, 0=absent)
-- **sentiment** - Tone (0=negative, 50=neutral, 100=positive)
-- **recommendation** - Explicitly recommended? (0=no, 100=yes)
-- **message_alignment** - Reflects key messages? (0-100)
-- **overall** - Weighted average
+Grades: A (90+), B (80-89), C (70-79), D (60-69), F (<60)
 
-Visibility Grade: A (90+), B (80-89), C (70-79), D (60-69), F (<60)
+## Current Pricing Model
+- Base: $50 per unit
+- 1 unit = 1 question tracked for 1 month
+- Question lots: 10, 25, 50
+- Frequencies: Weekly (4x), Bi-weekly (2x), Monthly (1x)
+- Volume discounts: 10% at 21+ units, 20% at 51+, 25% at 100+
+
+## Commands
+```bash
+npm run dev      # Start dev server (port 5173)
+npm run build    # Production build
+netlify dev      # Dev with functions (port 8888)
+```
+
+## Do's
+- Check AIRTABLE_SCHEMA.md before writing to Airtable
+- Use existing component patterns
+- Test locally before pushing
+- Commit with descriptive messages
+
+## Don'ts
+- Don't hardcode API keys
+- Don't use `sudo` for npm installs
+- Don't create new color schemes (use existing dark theme)
+- Don't skip error handling in API calls

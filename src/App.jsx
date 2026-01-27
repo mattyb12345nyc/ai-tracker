@@ -1015,7 +1015,7 @@ export default function App({ vipMode = false }) {
         <div className="fp-sphere fp-sphere-2" />
 
         {/* Trial Status Banner */}
-        {trialStatus && !hasActiveSubscription(user) && (
+        {!isVip && trialStatus && !hasActiveSubscription(user) && (
           <TrialStatusBanner
             trialStatus={trialStatus}
             onUpgrade={goToPricing}
@@ -1076,7 +1076,7 @@ export default function App({ vipMode = false }) {
               )}
 
               {/* Trial status message */}
-              {trialStatus && !hasActiveSubscription(user) && (
+              {!isVip && trialStatus && !hasActiveSubscription(user) && (
                 <div className={`p-4 rounded-xl mb-4 ${
                   trialStatus.isExpired 
                     ? 'bg-red-500/10 border border-red-500/30' 
@@ -1105,7 +1105,7 @@ export default function App({ vipMode = false }) {
 
               <button
                 onClick={analyzeUrl}
-                disabled={!url.trim() || isAnalyzing || (trialStatus && !hasActiveSubscription(user) && (!trialStatus.canRunAnalysis || trialStatus.isExpired))}
+                disabled={!url.trim() || isAnalyzing || (!isVip && trialStatus && !hasActiveSubscription(user) && (!trialStatus.canRunAnalysis || trialStatus.isExpired))}
                 className="w-full py-4 rounded-xl fp-button-primary disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-lg flex items-center justify-center gap-3 transition-all"
               >
                 {isAnalyzing ? (
@@ -1113,7 +1113,7 @@ export default function App({ vipMode = false }) {
                     <Loader2 className="w-5 h-5 animate-spin" />
                     {LOADING_MESSAGES[loadingMessageIndex]}
                   </>
-                ) : (trialStatus && !hasActiveSubscription(user) && (!trialStatus.canRunAnalysis || trialStatus.isExpired)) ? (
+                ) : (!isVip && trialStatus && !hasActiveSubscription(user) && (!trialStatus.canRunAnalysis || trialStatus.isExpired)) ? (
                   <>
                     <Crown className="w-5 h-5" />
                     Upgrade to Continue
@@ -1159,7 +1159,7 @@ export default function App({ vipMode = false }) {
         <div className="fp-sphere fp-sphere-2" />
 
         {/* Trial Status Banner */}
-        {trialStatus && !hasActiveSubscription(user) && (
+        {!isVip && trialStatus && !hasActiveSubscription(user) && (
           <TrialStatusBanner
             trialStatus={trialStatus}
             onUpgrade={goToPricing}
@@ -1311,14 +1311,14 @@ export default function App({ vipMode = false }) {
         <div className="fp-sphere fp-sphere-2" />
 
         {/* Trial Status Banner */}
-        {trialStatus && !hasActiveSubscription(user) && (
+        {!isVip && trialStatus && !hasActiveSubscription(user) && (
           <TrialStatusBanner
             trialStatus={trialStatus}
             onUpgrade={goToPricing}
             isSticky={true}
           />
         )}
-        
+
         <header className="fp-header sticky top-0 backdrop-blur-xl z-40">
           <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -1464,14 +1464,14 @@ export default function App({ vipMode = false }) {
         <div className="fp-sphere fp-sphere-2" />
 
         {/* Trial Status Banner */}
-        {trialStatus && !hasActiveSubscription(user) && (
+        {!isVip && trialStatus && !hasActiveSubscription(user) && (
           <TrialStatusBanner
-            trialStatus={trialStatus} 
+            trialStatus={trialStatus}
             onUpgrade={goToPricing}
             isSticky={true}
           />
         )}
-        
+
         <header className="fp-header sticky top-0 backdrop-blur-xl z-40">
           <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -1524,7 +1524,7 @@ export default function App({ vipMode = false }) {
       <div className="fp-sphere fp-sphere-2" />
 
       {/* Trial Status Banner - Sticky at top */}
-      {trialStatus && !hasActiveSubscription(user) && (
+      {!isVip && trialStatus && !hasActiveSubscription(user) && (
         <TrialStatusBanner
           trialStatus={trialStatus}
           onUpgrade={goToPricing}

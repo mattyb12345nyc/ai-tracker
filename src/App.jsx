@@ -1002,7 +1002,7 @@ export default function App() {
           />
         )}
 
-        <header className={`fp-header sticky ${trialStatus && !hasActiveSubscription(user) ? 'top-[73px]' : 'top-0'} backdrop-blur-xl z-50`}>
+        <header className="fp-header sticky top-0 backdrop-blur-xl z-40">
           <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
@@ -1146,7 +1146,7 @@ export default function App() {
           />
         )}
 
-        <header className={`fp-header sticky ${trialStatus && !hasActiveSubscription(user) ? 'top-[73px]' : 'top-0'} backdrop-blur-xl z-50`}>
+        <header className="fp-header sticky top-0 backdrop-blur-xl z-40">
           <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
@@ -1298,7 +1298,7 @@ export default function App() {
           />
         )}
         
-        <header className={`fp-header sticky ${trialStatus && !hasActiveSubscription(user) ? 'top-[73px]' : 'top-0'} backdrop-blur-xl z-50`}>
+        <header className="fp-header sticky top-0 backdrop-blur-xl z-40">
           <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
@@ -1451,7 +1451,7 @@ export default function App() {
           />
         )}
         
-        <header className={`fp-header sticky ${trialStatus && !hasActiveSubscription(user) ? 'top-[73px]' : 'top-0'} backdrop-blur-xl z-50`}>
+        <header className="fp-header sticky top-0 backdrop-blur-xl z-40">
           <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
@@ -1511,7 +1511,7 @@ export default function App() {
         />
       )}
 
-      <header className={`fp-header sticky ${trialStatus && !hasActiveSubscription(user) ? 'top-[73px]' : 'top-0'} backdrop-blur-xl z-50`}>
+      <header className="fp-header sticky top-0 backdrop-blur-xl z-40">
         <div className="max-w-6xl mx-auto px-4 md:px-8 py-3 md:py-4 flex items-center justify-between">
           <div className="flex items-center gap-2 md:gap-4">
             <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-6 md:h-8" />
@@ -1523,10 +1523,10 @@ export default function App() {
             {sessionId && (
               <button
                 onClick={goBackToReport}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white/70 text-sm font-medium hover:bg-white/10 hover:text-white transition-all"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-[#F5A623] to-[#D4145A] text-white text-sm font-semibold hover:opacity-90 transition-all shadow-lg shadow-[#D4145A]/20"
               >
                 <FileText className="w-4 h-4" />
-                <span className="hidden sm:inline">My Report</span>
+                <span>My Report</span>
               </button>
             )}
             <UserButton afterSignOutUrl="/login" />
@@ -1849,7 +1849,12 @@ export default function App() {
         {/* PLATFORM DEEP DIVE PAGE */}
         {dashboardData && selectedPlatform && (
           <div className="animate-fadeIn space-y-8">
-            <button onClick={goBackToReport} className="flex items-center gap-2 text-[#d4a5a5]/80 hover:text-white">← Back to Report</button>
+            <button
+              onClick={goBackToReport}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-[#F5A623] to-[#D4145A] text-white font-semibold hover:opacity-90 transition-all shadow-lg shadow-[#D4145A]/20"
+            >
+              ← Back to Report
+            </button>
             <div className="flex items-center gap-4 md:gap-6">
               <img src={platformLogos[selectedPlatform]} alt={selectedPlatform} className="w-12 h-12 md:w-16 md:h-16 object-contain" />
               <div><h1 className="text-2xl md:text-3xl font-bold">{platformNames[selectedPlatform]} Deep Dive</h1><p className="fp-text-muted text-sm md:text-base">Detailed analysis for {dashboardData.brand_name}</p></div>

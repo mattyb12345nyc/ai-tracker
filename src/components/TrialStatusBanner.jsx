@@ -15,8 +15,8 @@ export default function TrialStatusBanner({ trialStatus, onUpgrade, isSticky = f
 
   if (isExpired) {
     return (
-      <div className={`${isSticky ? 'fixed top-0 left-0 right-0 z-40' : ''} bg-gradient-to-r from-red-500/20 to-orange-500/20 border-b border-red-500/30 backdrop-blur-xl`}>
-        <div className="max-w-6xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between gap-4">
+      <div className={`${isSticky ? 'sticky top-0 left-0 right-0 z-50' : ''} bg-gradient-to-r from-red-500/20 to-orange-500/20 border-b border-red-500/30 backdrop-blur-xl`}>
+        <div className="max-w-6xl mx-auto px-4 md:px-8 py-2 md:py-3 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-red-400" />
             <div>
@@ -37,14 +37,14 @@ export default function TrialStatusBanner({ trialStatus, onUpgrade, isSticky = f
   }
 
   return (
-    <div className={`${isSticky ? 'fixed top-0 left-0 right-0 z-40' : ''} ${
-      isUrgent 
-        ? 'bg-gradient-to-r from-red-500/20 to-orange-500/20 border-b border-red-500/30' 
-        : isWarning 
+    <div className={`${isSticky ? 'sticky top-0 left-0 right-0 z-50' : ''} ${
+      isUrgent
+        ? 'bg-gradient-to-r from-red-500/20 to-orange-500/20 border-b border-red-500/30'
+        : isWarning
         ? 'bg-gradient-to-r from-orange-500/20 to-yellow-500/20 border-b border-orange-500/30'
-        : 'bg-gradient-to-r from-[#ff7a3d]/20 to-[#ff6b4a]/20 border-b border-[#ff7a3d]/30'
+        : 'bg-gradient-to-r from-[#F5A623]/20 to-[#D4145A]/20 border-b border-[#F5A623]/30'
     } backdrop-blur-xl`}>
-      <div className="max-w-6xl mx-auto px-4 md:px-8 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="max-w-6xl mx-auto px-4 md:px-8 py-2 md:py-3 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <Clock className={`w-5 h-5 shrink-0 ${isUrgent ? 'text-red-400' : isWarning ? 'text-orange-400' : 'text-[#ff7a3d]'}`} />
           <div className="flex-1 min-w-0">

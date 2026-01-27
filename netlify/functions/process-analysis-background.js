@@ -861,18 +861,18 @@ async function sendDashboardEmail(email, brandName, sessionId, analysisData) {
       {
         type: "text/html",
         value: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1a0a0f 0%, #2d0a20 50%, #1a0515 100%); color: #ffffff; padding: 32px; border-radius: 16px;">
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #000000; color: #ffffff; padding: 32px; border-radius: 16px;">
             <div style="text-align: center; margin-bottom: 32px;">
               <img src="http://cdn.mcauto-images-production.sendgrid.net/d157e984273caff5/d19d829c-a9a9-4fad-b0e7-7938012be26c/800x200.png" alt="FutureProof" style="height: 32px; margin-bottom: 16px;" />
               <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Your AI Visibility Report is Ready</h1>
             </div>
 
-            <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,107,74,0.2); border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 0 30px rgba(255,107,74,0.1);">
-              <p style="color: #d4a5a5; font-size: 16px; line-height: 1.6; margin: 0;">${summary}</p>
+            <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(245,166,35,0.3); border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+              <p style="color: #ffffff; font-size: 16px; line-height: 1.6; margin: 0;">${summary}</p>
             </div>
 
             <div style="margin-bottom: 32px;">
-              <h3 style="color: #d4a5a5; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px;">Platform Scores</h3>
+              <h3 style="color: #ffffff; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px;">Platform Scores</h3>
               <table style="width: 100%; border-collapse: collapse;">
                 <tr>
                   <td style="padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,107,74,0.15); border-radius: 8px 0 0 8px; text-align: center; width: 25%;">
@@ -899,14 +899,14 @@ async function sendDashboardEmail(email, brandName, sessionId, analysisData) {
               <a href="${dashboardUrl}" style="display: inline-block; background: linear-gradient(135deg, #ff6b4a 0%, #f97316 100%); color: white; padding: 16px 48px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 16px; box-shadow: 0 0 20px rgba(255,107,74,0.4);">See Full Report</a>
             </div>
 
-            <div style="background: linear-gradient(135deg, rgba(255,107,74,0.1), rgba(168,85,247,0.1)); border: 1px solid rgba(255,107,74,0.3); border-radius: 12px; padding: 24px; text-align: center; box-shadow: 0 0 20px rgba(168,85,247,0.1);">
+            <div style="background: linear-gradient(90deg, rgba(245,166,35,0.15), rgba(212,20,90,0.15)); border: 1px solid rgba(245,166,35,0.3); border-radius: 12px; padding: 24px; text-align: center;">
               <h3 style="color: #ffffff; margin: 0 0 8px 0; font-size: 18px;">Ready to Optimize Your AI Visibility?</h3>
-              <p style="color: #d4a5a5; margin: 0 0 16px 0; font-size: 14px;">Sign up for FutureProof AEO – the ultimate Answer Engine Optimization platform</p>
-              <a href="${signupUrl}" style="display: inline-block; background: transparent; color: #ff6b4a; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; border: 2px solid #ff6b4a;">Sign Up Now</a>
+              <p style="color: rgba(255,255,255,0.8); margin: 0 0 16px 0; font-size: 14px;">Sign up for FutureProof AEO – the ultimate Answer Engine Optimization platform</p>
+              <a href="${signupUrl}" style="display: inline-block; background: linear-gradient(90deg, #F5A623, #D4145A); color: #ffffff; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: bold;">Sign Up Now</a>
             </div>
 
-            <hr style="border: none; border-top: 1px solid rgba(255,107,74,0.2); margin: 32px 0;" />
-            <p style="color: #d4a5a5; font-size: 12px; text-align: center; margin: 0;">FutureProof AI Visibility Tracker<br/>Helping brands win in the age of AI search</p>
+            <hr style="border: none; border-top: 1px solid rgba(245,166,35,0.2); margin: 32px 0;" />
+            <p style="color: rgba(255,255,255,0.6); font-size: 12px; text-align: center; margin: 0;">FutureProof AI Visibility Tracker<br/>Helping brands win in the age of AI search</p>
           </div>
         `,
       },

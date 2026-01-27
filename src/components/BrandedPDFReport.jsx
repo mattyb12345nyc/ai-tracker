@@ -1,15 +1,22 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image, Link, Font } from '@react-pdf/renderer';
 
-// Register Inter font
-Font.register({
-  family: 'Inter',
-  fonts: [
-    { src: 'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2', fontWeight: 400 },
-    { src: 'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuI6fAZ9hiJ-Ek-_EeA.woff2', fontWeight: 600 },
-    { src: 'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYAZ9hiJ-Ek-_EeA.woff2', fontWeight: 700 },
-  ],
-});
+// Register fonts with fallback - use Helvetica as fallback if Inter fails to load
+try {
+  Font.register({
+    family: 'Inter',
+    fonts: [
+      { src: 'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2', fontWeight: 400 },
+      { src: 'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuI6fAZ9hiJ-Ek-_EeA.woff2', fontWeight: 600 },
+      { src: 'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYAZ9hiJ-Ek-_EeA.woff2', fontWeight: 700 },
+    ],
+  });
+} catch (e) {
+  console.warn('Failed to register Inter font, using Helvetica fallback');
+}
+
+// Configure hyphenation callback to prevent crashes
+Font.registerHyphenationCallback(word => [word]);
 
 const SIGNUP_URL = 'https://futureproof.work/ai-optimizer-sign-up';
 const FUTUREPROOF_LOGO = 'http://cdn.mcauto-images-production.sendgrid.net/d157e984273caff5/d19d829c-a9a9-4fad-b0e7-7938012be26c/800x200.png';
@@ -32,7 +39,7 @@ const styles = StyleSheet.create({
   page: {
     padding: 40,
     backgroundColor: colors.background,
-    fontFamily: 'Inter',
+    fontFamily: 'Helvetica',  // Use Helvetica as base - Inter loads async and may not be ready
   },
   // Header
   header: {

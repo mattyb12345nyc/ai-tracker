@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Zap, Loader2, CheckCircle, ArrowRight, RefreshCw, TrendingUp, TrendingDown, AlertCircle, X, Pencil, Check, Plus, ChevronRight, Eye, FileText, BarChart3, Download, Calendar, ChevronDown, Sparkles, Target, Activity, ArrowUpRight, ArrowDownRight, Minus, Mail, ExternalLink, Award, Users, MessageSquare, Search, Lightbulb, Globe, Link } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Zap, Loader2, CheckCircle, ArrowRight, RefreshCw, TrendingUp, TrendingDown, AlertCircle, X, Pencil, Check, Plus, ChevronRight, Eye, FileText, BarChart3, Download, Calendar, ChevronDown, Sparkles, Target, Activity, ArrowUpRight, ArrowDownRight, Minus, Mail, ExternalLink, Award, Users, MessageSquare, Search, Lightbulb, Globe, Link, Crown, Lock } from 'lucide-react';
 import { UserButton, useUser } from '@clerk/clerk-react';
 import { pdf } from '@react-pdf/renderer';
 import BrandedPDFReport from './components/BrandedPDFReport';
@@ -265,6 +266,7 @@ const generateRunId = () => {
 // ============================================================
 export default function App() {
   const { user } = useUser();
+  const navigate = useNavigate();
   const [step, setStep] = useState('setup'); // setup, analyzing, questions, processing, complete
   const [url, setUrl] = useState('');
   const [email, setEmail] = useState('');
@@ -295,16 +297,18 @@ export default function App() {
   const pollingRef = useRef(null);
   const [currentStatIndex, setCurrentStatIndex] = useState(0);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [pdfError, setPdfError] = useState(null);
   const [pollCount, setPollCount] = useState(0);
 
-  // Sign-up page URL for gated features
-  const SIGNUP_URL = 'https://futureproof.work/ai-optimizer-sign-up';
+  // Navigate to pricing page for upgrades
+  const goToPricing = () => navigate('/pricing');
 
   // Generate and download PDF report
   const handleDownloadPDF = async () => {
     if (!dashboardData) return;
 
     setIsGeneratingPDF(true);
+    setPdfError(null);
     try {
       const blob = await pdf(<BrandedPDFReport dashboardData={dashboardData} />).toBlob();
       const url = URL.createObjectURL(blob);
@@ -317,6 +321,7 @@ export default function App() {
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error('PDF generation error:', error);
+      setPdfError('Failed to generate PDF. Please try again.');
     }
     setIsGeneratingPDF(false);
   };
@@ -335,8 +340,8 @@ export default function App() {
       return;
     }
 
-    // Already viewed one platform, redirect to sign-up
-    window.location.href = SIGNUP_URL;
+    // Already viewed one platform, redirect to pricing
+    goToPricing();
   };
 
   const isPlatformLocked = (platform) => {
@@ -1348,6 +1353,17 @@ export default function App() {
               </button>
             </div>
 
+            {/* PDF Error Message */}
+            {pdfError && (
+              <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                {pdfError}
+                <button onClick={() => setPdfError(null)} className="ml-auto hover:text-red-300">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
             {/* SECTION 1: EXECUTIVE SUMMARY */}
             <div className="fp-card-strong rounded-2xl md:rounded-3xl p-4 md:p-8">
               <div className="flex items-start gap-3 md:gap-4 mb-4 md:mb-6">
@@ -1360,6 +1376,28 @@ export default function App() {
                 <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3 mt-4 md:mt-6">
                   {(dashboardData.executive_summary?.bullets || []).map((bullet, i) => (<li key={i} className="flex items-start gap-2 text-xs md:text-sm fp-text-muted"><ChevronRight className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--fp-accent-3)' }} /><span>{bullet}</span></li>))}
                 </ul>
+              </div>
+            </div>
+
+            {/* UPGRADE CTA BANNER 1 */}
+            <div className="relative overflow-hidden rounded-2xl md:rounded-3xl p-6 md:p-8 bg-gradient-to-r from-[#ff7a3d]/20 via-[#ff6b4a]/15 to-[#6366f1]/20 border border-[#ff7a3d]/30">
+              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0djItSDI0di0yaDEyek0zNiAyNHYySDI0di0yaDEyeiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
+              <div className="relative flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#ff7a3d] to-[#ff6b4a] flex items-center justify-center shrink-0">
+                    <Crown className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">This is just a preview</h3>
+                    <p className="text-sm text-white/70">Upgrade for continuous monitoring, competitor tracking, and weekly AI visibility reports</p>
+                  </div>
+                </div>
+                <button
+                  onClick={goToPricing}
+                  className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#ff7a3d] to-[#ff6b4a] text-white font-semibold hover:opacity-90 transition-all shrink-0"
+                >
+                  See Plans <ArrowRight className="w-4 h-4" />
+                </button>
               </div>
             </div>
 
@@ -1469,6 +1507,32 @@ export default function App() {
                 {(!dashboardData.recommendations || dashboardData.recommendations.length === 0) && (
                   <div className="text-center py-6 md:py-8 fp-text-muted text-sm">Content recommendations will be generated based on AI analysis</div>
                 )}
+              </div>
+            </div>
+
+            {/* UPGRADE CTA - WEEKLY MONITORING */}
+            <div className="fp-card rounded-2xl md:rounded-3xl p-6 md:p-8 border-2 border-dashed border-[#ff7a3d]/40">
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                <div className="flex-1 text-center md:text-left">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#ff7a3d]/20 text-[#ff7a3d] text-xs font-semibold mb-3">
+                    <TrendingUp className="w-3 h-3" /> Track Changes Over Time
+                  </div>
+                  <h3 className="text-xl md:text-2xl font-bold mb-2">Want to improve these scores?</h3>
+                  <p className="text-sm md:text-base text-white/60 leading-relaxed">
+                    Subscribe for weekly AI visibility tracking. See how your optimizations impact your rankings and get fresh recommendations each week.
+                  </p>
+                  <ul className="flex flex-wrap justify-center md:justify-start gap-4 mt-4 text-sm text-white/70">
+                    <li className="flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-green-400" /> Weekly reports</li>
+                    <li className="flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-green-400" /> Trend tracking</li>
+                    <li className="flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-green-400" /> Competitor alerts</li>
+                  </ul>
+                </div>
+                <button
+                  onClick={goToPricing}
+                  className="flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-[#ff7a3d] to-[#ff6b4a] text-white font-semibold hover:opacity-90 transition-all text-lg"
+                >
+                  Start Tracking <ArrowRight className="w-5 h-5" />
+                </button>
               </div>
             </div>
 
@@ -1614,12 +1678,35 @@ export default function App() {
         )}
       </main>
 
-      <footer className="relative border-t border-[rgba(255,107,74,0.15)] mt-8 md:mt-16">
+      <footer className="relative border-t border-[rgba(255,107,74,0.15)] mt-8 md:mt-16 pb-20 md:pb-24">
         <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-8 flex flex-col md:flex-row items-center justify-between gap-2">
           <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-5 md:h-6 opacity-40" />
           <div className="text-xs md:text-sm fp-text-subtle">AI Visibility Intelligence Platform</div>
         </div>
       </footer>
+
+      {/* STICKY BOTTOM UPGRADE BANNER - Shows on trial report */}
+      {dashboardData && !selectedPlatform && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-[#1a1a2e] via-[#1f1f35] to-[#1a1a2e] border-t border-[#ff7a3d]/30 shadow-2xl backdrop-blur-xl">
+          <div className="max-w-6xl mx-auto px-4 md:px-8 py-3 md:py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-3 text-center sm:text-left">
+              <div className="hidden sm:flex w-10 h-10 rounded-lg bg-gradient-to-br from-[#ff7a3d] to-[#ff6b4a] items-center justify-center shrink-0">
+                <Zap className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-sm md:text-base font-semibold text-white">Ready to dominate AI search results?</p>
+                <p className="text-xs md:text-sm text-white/60">Get weekly tracking, competitor monitoring, and actionable insights</p>
+              </div>
+            </div>
+            <button
+              onClick={goToPricing}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#ff7a3d] to-[#ff6b4a] text-white font-semibold hover:opacity-90 transition-all text-sm whitespace-nowrap"
+            >
+              <Crown className="w-4 h-4" /> Upgrade Now
+            </button>
+          </div>
+        </div>
+      )}
 
       <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } } .animate-fadeIn { animation: fadeIn 0.6s ease-out; }`}</style>
     </div>

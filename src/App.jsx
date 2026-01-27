@@ -988,16 +988,20 @@ export default function App() {
   // ============================================================
   if (step === 'setup') {
     return (
-      <div className="min-h-screen text-white fp-shell">
+      <div className="min-h-screen text-white fp-shell font-body">
+        {/* Decorative gradient spheres */}
+        <div className="fp-sphere fp-sphere-1" />
+        <div className="fp-sphere fp-sphere-2" />
+
         {/* Trial Status Banner */}
         {trialStatus && !hasActiveSubscription(user) && (
-          <TrialStatusBanner 
-            trialStatus={trialStatus} 
+          <TrialStatusBanner
+            trialStatus={trialStatus}
             onUpgrade={goToPricing}
             isSticky={true}
           />
         )}
-        
+
         <header className={`fp-header sticky ${trialStatus && !hasActiveSubscription(user) ? 'top-[73px]' : 'top-0'} backdrop-blur-xl z-50`}>
           <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -1128,16 +1132,20 @@ export default function App() {
   // ============================================================
   if (step === 'questions') {
     return (
-      <div className="min-h-screen text-white fp-shell">
+      <div className="min-h-screen text-white fp-shell font-body">
+        {/* Decorative gradient spheres */}
+        <div className="fp-sphere fp-sphere-1" />
+        <div className="fp-sphere fp-sphere-2" />
+
         {/* Trial Status Banner */}
         {trialStatus && !hasActiveSubscription(user) && (
-          <TrialStatusBanner 
-            trialStatus={trialStatus} 
+          <TrialStatusBanner
+            trialStatus={trialStatus}
             onUpgrade={goToPricing}
             isSticky={true}
           />
         )}
-        
+
         <header className={`fp-header sticky ${trialStatus && !hasActiveSubscription(user) ? 'top-[73px]' : 'top-0'} backdrop-blur-xl z-50`}>
           <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -1276,11 +1284,15 @@ export default function App() {
   // ============================================================
   if (step === 'processing') {
     return (
-      <div className="min-h-screen text-white fp-shell">
+      <div className="min-h-screen text-white fp-shell font-body">
+        {/* Decorative gradient spheres */}
+        <div className="fp-sphere fp-sphere-1" />
+        <div className="fp-sphere fp-sphere-2" />
+
         {/* Trial Status Banner */}
         {trialStatus && !hasActiveSubscription(user) && (
-          <TrialStatusBanner 
-            trialStatus={trialStatus} 
+          <TrialStatusBanner
+            trialStatus={trialStatus}
             onUpgrade={goToPricing}
             isSticky={true}
           />
@@ -1425,10 +1437,14 @@ export default function App() {
   if (step === 'ready') {
     const reportUrl = `https://ai.futureproof.work/?report=${sessionId}&utm_campaign=website&utm_medium=email&utm_source=sendgrid.com`;
     return (
-      <div className="min-h-screen text-white fp-shell">
+      <div className="min-h-screen text-white fp-shell font-body">
+        {/* Decorative gradient spheres */}
+        <div className="fp-sphere fp-sphere-1" />
+        <div className="fp-sphere fp-sphere-2" />
+
         {/* Trial Status Banner */}
         {trialStatus && !hasActiveSubscription(user) && (
-          <TrialStatusBanner 
+          <TrialStatusBanner
             trialStatus={trialStatus} 
             onUpgrade={goToPricing}
             isSticky={true}
@@ -1481,16 +1497,20 @@ export default function App() {
   // RENDER - COMPLETE/DASHBOARD STEP
   // ============================================================
   return (
-    <div className="min-h-screen text-white fp-shell">
+    <div className="min-h-screen text-white fp-shell font-body">
+      {/* Decorative gradient spheres */}
+      <div className="fp-sphere fp-sphere-1" />
+      <div className="fp-sphere fp-sphere-2" />
+
       {/* Trial Status Banner - Sticky at top */}
       {trialStatus && !hasActiveSubscription(user) && (
-        <TrialStatusBanner 
-          trialStatus={trialStatus} 
+        <TrialStatusBanner
+          trialStatus={trialStatus}
           onUpgrade={goToPricing}
           isSticky={true}
         />
       )}
-      
+
       <header className={`fp-header sticky ${trialStatus && !hasActiveSubscription(user) ? 'top-[73px]' : 'top-0'} backdrop-blur-xl z-50`}>
         <div className="max-w-6xl mx-auto px-4 md:px-8 py-3 md:py-4 flex items-center justify-between">
           <div className="flex items-center gap-2 md:gap-4">

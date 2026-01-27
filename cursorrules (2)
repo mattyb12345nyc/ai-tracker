@@ -1,0 +1,124 @@
+# AI Visibility Tracker - Cursor Rules
+
+You are working on the AI Visibility Tracker by FutureProof, a SaaS platform that analyzes how brands are mentioned across AI platforms (ChatGPT, Claude, Gemini, Perplexity).
+
+## Brand Identity - FutureProof
+
+### Colors (USE THESE, NOT GENERIC TAILWIND)
+```
+Primary Gradient: Orange (#F5A623) → Magenta (#D4145A)
+- fp-orange: #F5A623
+- fp-orange-deep: #E88D1F  
+- fp-pink: #D94A8C
+- fp-magenta: #D4145A
+- fp-pink-electric: #E91E8C
+
+Backgrounds:
+- Primary: #000000 (black)
+- Elevated: #1A1A2E (dark navy)
+
+Text:
+- Primary: #FFFFFF
+- Secondary: rgba(255,255,255,0.7)
+```
+
+### Typography
+- **Headlines**: Dela Gothic One (display font, uppercase, bold statements)
+- **Body/UI**: Poppins (all weights)
+
+```css
+@import url('https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Poppins:wght@300;400;500;600;700&display=swap');
+```
+
+### Design Patterns
+
+**Gradient backgrounds:**
+```css
+background: linear-gradient(135deg, #F5A623 0%, #D4145A 100%);
+```
+
+**Cards:**
+```jsx
+<div className="bg-gradient-to-br from-fp-orange to-fp-magenta rounded-xl p-6">
+```
+
+**Dark cards:**
+```jsx
+<div className="bg-[#1A1A2E] border border-white/10 rounded-xl p-6">
+```
+
+**Primary button:**
+```jsx
+<button className="bg-gradient-to-r from-fp-orange to-fp-magenta text-white font-semibold px-6 py-3 rounded-lg uppercase tracking-wide hover:shadow-lg hover:shadow-fp-magenta/40 transition-all">
+```
+
+**Section headers (like the mockup):**
+```jsx
+<div className="bg-gradient-to-r from-fp-magenta to-fp-orange rounded-lg px-6 py-4 flex items-center gap-3">
+  <Icon className="w-8 h-8 text-white" />
+  <h2 className="font-display text-2xl text-white uppercase tracking-wide">Your Industry</h2>
+  <span className="ml-auto font-display text-4xl text-white">20/25</span>
+</div>
+```
+
+**Score display:**
+```jsx
+<span className="font-display text-7xl bg-gradient-to-r from-fp-orange to-fp-magenta bg-clip-text text-transparent">88</span>
+```
+
+### Decorative Elements
+- Gradient spheres/circles in corners
+- Dot grid patterns (globe shape)
+- Gradient pill shapes
+- Small X patterns as subtle texture
+- Circuit-like white lines
+
+### DO's
+- Always use black (#000000) as primary background
+- Use the orange→magenta gradient for CTAs and highlights
+- Use Dela Gothic One ONLY for headlines and scores
+- Add subtle gradient spheres as decorative elements
+- Maintain high contrast for readability
+
+### DON'Ts
+- Don't use generic blue/slate Tailwind colors
+- Don't use Inter or system fonts
+- Don't use Dela Gothic One for body text
+- Don't use light/white backgrounds
+- Don't create flat, boring layouts - add visual interest
+
+---
+
+## Tech Stack
+- **Frontend**: React 18 + Vite, Tailwind CSS
+- **Backend**: Netlify Functions
+- **Database**: Airtable (Base ID: appgSZR92pGCMlUOc)
+- **Auth**: Clerk
+- **Billing**: Stripe
+
+## Project Structure
+```
+ai-tracker/
+├── src/
+│   ├── App.jsx
+│   ├── components/
+│   └── index.css
+├── netlify/functions/
+├── public/
+│   └── (brand assets)
+├── .env
+├── CLAUDE.md
+├── STYLE_GUIDE.md
+└── AIRTABLE_SCHEMA.md
+```
+
+## Environment Variables
+- Frontend: `import.meta.env.VITE_*`
+- Backend: `process.env.*`
+
+## Commands
+```bash
+npm run dev      # Dev server (5173)
+npm run build    # Production build
+netlify dev      # Dev with functions (8888)
+```

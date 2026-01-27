@@ -107,31 +107,35 @@ function PricingContent() {
   );
 
   return (
-    <div className="min-h-screen text-white fp-shell">
+    <div className="min-h-screen text-white fp-shell font-body">
+      {/* Decorative gradient spheres */}
+      <div className="fp-sphere fp-sphere-1" />
+      <div className="fp-sphere fp-sphere-2" />
+
       <header className="fp-header sticky top-0 backdrop-blur-xl z-50">
         <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
             <span className="text-white/20">|</span>
-            <span className="font-semibold">AI Visibility Tracker</span>
+            <span className="font-body font-semibold">AI Visibility Tracker</span>
           </div>
           <button
             onClick={() => navigate(reportId ? `/?report=${reportId}` : '/')}
-            className="text-white/60 hover:text-white transition-colors flex items-center gap-2"
+            className="text-white/60 hover:text-white transition-colors flex items-center gap-2 font-body"
           >
             ← {reportId ? 'Back to Report' : 'Back to App'}
           </button>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-8 py-16 animate-fadeIn">
+      <main className="max-w-6xl mx-auto px-8 py-16 animate-fadeIn relative z-10">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full fp-chip text-sm mb-6">
             <Sparkles className="w-4 h-4" /> Choose Your Plan
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent">
-            Track Your AI Visibility
+          <h1 className="font-display text-4xl md:text-5xl mb-4 fp-gradient-text">
+            TRACK YOUR AI VISIBILITY
           </h1>
           <p className="fp-text-muted text-lg max-w-2xl mx-auto">
             Monitor how AI platforms mention and recommend your brand. Choose the tracking frequency that fits your needs.

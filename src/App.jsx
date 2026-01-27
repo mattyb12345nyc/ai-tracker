@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Zap, Loader2, CheckCircle, ArrowRight, RefreshCw, TrendingUp, TrendingDown, AlertCircle, X, Pencil, Check, Plus, ChevronRight, Eye, FileText, BarChart3, Download, Calendar, ChevronDown, Sparkles, Target, Activity, ArrowUpRight, ArrowDownRight, Minus, Mail, ExternalLink, Award, Users, MessageSquare, Search, Lightbulb, Globe, Link, Crown, Lock, Clock } from 'lucide-react';
 import { UserButton, useUser } from '@clerk/clerk-react';
 import { pdf } from '@react-pdf/renderer';
@@ -270,6 +270,7 @@ const generateRunId = () => {
 export default function App() {
   const { user } = useUser();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [step, setStep] = useState('setup'); // setup, analyzing, questions, processing, complete
   const [url, setUrl] = useState('');
   const [email, setEmail] = useState('');
@@ -362,10 +363,14 @@ export default function App() {
     setIsGeneratingPDF(false);
   };
 
+  // Navigate to platform deep dive (updates URL for browser back support)
   const handlePlatformDiveDeeper = (platform) => {
     // If already viewed this platform, allow re-viewing
     if (viewedPlatforms.has(platform)) {
       setSelectedPlatform(platform);
+      if (sessionId) {
+        setSearchParams({ report: sessionId, platform });
+      }
       return;
     }
 
@@ -373,11 +378,22 @@ export default function App() {
     if (viewedPlatforms.size === 0) {
       setViewedPlatforms(new Set([platform]));
       setSelectedPlatform(platform);
+      if (sessionId) {
+        setSearchParams({ report: sessionId, platform });
+      }
       return;
     }
 
     // Already viewed one platform, redirect to pricing
     goToPricing();
+  };
+
+  // Go back to main report (clears platform from URL)
+  const goBackToReport = () => {
+    setSelectedPlatform(null);
+    if (sessionId) {
+      setSearchParams({ report: sessionId });
+    }
   };
 
   const isPlatformLocked = (platform) => {
@@ -799,14 +815,24 @@ export default function App() {
     } catch (e) { console.error('Error loading report by session:', e); }
   };
 
-  // Check for report parameter in URL on mount
+  // Check for report and platform parameters in URL on mount and when URL changes
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const reportSessionId = params.get('report');
+    const reportSessionId = searchParams.get('report');
+    const platformParam = searchParams.get('platform');
+
     if (reportSessionId) {
-      loadReportBySessionId(reportSessionId);
+      // Only reload if session changed
+      if (reportSessionId !== sessionId) {
+        loadReportBySessionId(reportSessionId);
+      }
+      // Set platform from URL (for browser back/forward)
+      if (platformParam && ['chatgpt', 'claude', 'gemini', 'perplexity'].includes(platformParam)) {
+        setSelectedPlatform(platformParam);
+      } else {
+        setSelectedPlatform(null);
+      }
     }
-  }, []);
+  }, [searchParams]);
 
   // Rotate loading messages while analyzing
   useEffect(() => {
@@ -1472,7 +1498,19 @@ export default function App() {
             <span className="text-white/20 hidden sm:inline">|</span>
             <span className="font-semibold text-sm md:text-base hidden sm:inline">AI Visibility Tracker</span>
           </div>
-          <UserButton afterSignOutUrl="/login" />
+          <div className="flex items-center gap-3">
+            {/* Persistent "My Report" button when user has a report */}
+            {sessionId && (
+              <button
+                onClick={goBackToReport}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white/70 text-sm font-medium hover:bg-white/10 hover:text-white transition-all"
+              >
+                <FileText className="w-4 h-4" />
+                <span className="hidden sm:inline">My Report</span>
+              </button>
+            )}
+            <UserButton afterSignOutUrl="/login" />
+          </div>
         </div>
       </header>
 
@@ -1791,7 +1829,7 @@ export default function App() {
         {/* PLATFORM DEEP DIVE PAGE */}
         {dashboardData && selectedPlatform && (
           <div className="animate-fadeIn space-y-8">
-            <button onClick={() => setSelectedPlatform(null)} className="flex items-center gap-2 text-[#d4a5a5]/80 hover:text-white">← Back to Dashboard</button>
+            <button onClick={goBackToReport} className="flex items-center gap-2 text-[#d4a5a5]/80 hover:text-white">← Back to Report</button>
             <div className="flex items-center gap-4 md:gap-6">
               <img src={platformLogos[selectedPlatform]} alt={selectedPlatform} className="w-12 h-12 md:w-16 md:h-16 object-contain" />
               <div><h1 className="text-2xl md:text-3xl font-bold">{platformNames[selectedPlatform]} Deep Dive</h1><p className="fp-text-muted text-sm md:text-base">Detailed analysis for {dashboardData.brand_name}</p></div>

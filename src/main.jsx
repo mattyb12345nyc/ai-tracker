@@ -7,6 +7,7 @@ import LoginPage from './components/LoginPage.jsx'
 import SignUpPage from './components/SignUpPage.jsx'
 import Dashboard from './components/Dashboard.jsx'
 import PricingPage from './components/PricingPage.jsx'
+import OnboardingFlow from './components/onboarding/OnboardingFlow.jsx'
 import './index.css'
 
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
@@ -73,6 +74,7 @@ if (!CLERK_PUBLISHABLE_KEY) {
             <Route path="/login/*" element={<LoginPage />} />
             <Route path="/sign-up/*" element={<SignUpPage />} />
             <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/onboarding" element={<OnboardingFlow onComplete={(d) => { console.log('Onboarding data:', d); alert(JSON.stringify(d, null, 2)); }} />} />
             <Route path="/dashboard" element={<ProtectedDashboard />} />
             <Route path="/vip/*" element={<ProtectedVipApp />} />
             <Route path="/*" element={<ProtectedApp />} />

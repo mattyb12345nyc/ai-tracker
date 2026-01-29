@@ -1,12 +1,11 @@
 import { SignIn } from '@clerk/clerk-react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 
-const FUTUREPROOF_LOGO = 'http://cdn.mcauto-images-production.sendgrid.net/d157e984273caff5/d19d829c-a9a9-4fad-b0e7-7938012be26c/800x200.png';
+const FUTUREPROOF_LOGO = 'https://cdn.mcauto-images-production.sendgrid.net/d157e984273caff5/d19d829c-a9a9-4fad-b0e7-7938012be26c/800x200.png';
 
 export default function LoginPage() {
   const [searchParams] = useSearchParams();
-  // Get redirect URL from query params, default to home
   const redirectUrl = searchParams.get('redirect_url') || '/';
 
   return (
@@ -63,6 +62,17 @@ export default function LoginPage() {
               }
             }}
           />
+        </div>
+        <div className="text-center mt-6">
+          <p className="text-white/60">
+            Don't have an account?{' '}
+            <Link 
+              to={`/sign-up${redirectUrl !== '/' ? `?redirect_url=${encodeURIComponent(redirectUrl)}` : ''}`}
+              className="text-[#ff7a3d] hover:text-[#ff8a80] font-medium"
+            >
+              Sign up free
+            </Link>
+          </p>
         </div>
       </main>
       <style>{`

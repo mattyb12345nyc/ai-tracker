@@ -192,8 +192,23 @@ async function queryPerplexity(question) {
   }
 }
 
+// True only if the string looks like a publisher/website name, not a product or feature phrase
+function isLikelyPublisherOrDomain(str) {
+  if (!str || typeof str !== "string") return false;
+  const s = str.trim();
+  if (s.length < 2 || s.length > 60) return false;
+  // Domain-like: contains a dot (e.g. nytimes.com, techcrunch.com)
+  if (/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(s) || (s.includes(".") && !s.includes(" "))) return true;
+  // Product/feature phrases: long, or contain em-dash/ " or " / " for " / " in " (descriptive)
+  if (s.includes(" – ") || s.includes(" or ") || s.includes(" for ") || s.includes(" in ")) return false;
+  if (s.split(/\s+/).length > 4) return false;
+  // Reject if it looks like a sentence fragment (ends with period mid-phrase, or has "ideal", "features", etc.)
+  if (/\b(ideal|features|functionality|minimalist|travel-ready|refined|premium|offers)\b/i.test(s)) return false;
+  return true;
+}
+
 // Extract reference list from response text (e.g. [1] url, [2] Source Name at end)
-// Returns map: { "1": "url or name", "2": "..." }
+// Returns map: { "1": "url or name", "2": "..." } — only publisher/domain-like values
 function extractReferenceMap(responseText) {
   if (!responseText || typeof responseText !== "string") return {};
   const map = {};
@@ -211,14 +226,14 @@ function extractReferenceMap(responseText) {
       let value = (bracketMatch[2] || "").trim();
       // Strip trailing markdown or parentheses
       value = value.replace(/\s*[\(\[].*$/, "").trim();
-      if (value.length > 1 && !/^[\s\[\]\d,.-]+$/.test(value)) {
+        if (value.length > 1 && !/^[\s\[\]\d,.-]+$/.test(value)) {
         if (value.startsWith("http")) {
           try {
             const u = new URL(value.split(/\s/)[0]);
             value = u.hostname.replace(/^www\./, "") + (u.pathname !== "/" && u.pathname.length < 40 ? u.pathname : "");
           } catch (_) {}
         }
-        if (!map[num]) map[num] = value;
+        if (!map[num] && isLikelyPublisherOrDomain(value)) map[num] = value;
       }
       continue;
     }
@@ -235,7 +250,7 @@ function extractReferenceMap(responseText) {
             value = u.hostname.replace(/^www\./, "") + (u.pathname !== "/" && u.pathname.length < 40 ? u.pathname : "");
           } catch (_) {}
         }
-        if (!map[num]) map[num] = value;
+        if (!map[num] && isLikelyPublisherOrDomain(value)) map[num] = value;
       }
     }
   }
@@ -319,7 +334,7 @@ Score each response (0-100) on:
 - message_alignment: Did it reflect key messages? (0-100)
 - overall: Weighted average
 - notes: Write a brief 2-3 sentence summary explaining how this AI answered the question and what it prioritized (e.g., which brands it featured, what criteria it emphasized, whether it gave a direct recommendation)
-- sources_cited: Extract actual sources: URLs or publication/site names. Many responses use inline citations [1], [2] and list real sources at the end (e.g. "[1] https://example.com" or "[1] TechCrunch"). You MUST resolve each citation number to the actual URL or source name from that reference list. Output only resolved URLs or names, comma-separated. Never output raw citation markers like [1] or [2]. If the response has no resolvable sources, return empty string.
+- sources_cited: List ONLY publication names, website names, or domains (e.g. TechCrunch, G2, Wikipedia, nytimes.com). Resolve [1], [2] from the reference list at the end of each response to the actual source. Never include product names, brand names, feature descriptions, or sentence fragments (e.g. "luxury handbag" or "Travel-ready functionality" are wrong; "Vogue", "nytimes.com" are correct). Output comma-separated. If no real publisher/website sources, return empty string.
 
 Return ONLY valid JSON:
 {
@@ -371,9 +386,19 @@ Return ONLY valid JSON:
         if (Object.keys(refMap).length > 0) {
           const ordered = Object.keys(refMap)
             .sort((a, b) => Number(a) - Number(b))
-            .map((k) => refMap[k]);
+            .map((k) => refMap[k])
+            .filter((v) => isLikelyPublisherOrDomain(v));
           parsed[p].sources_cited = ordered.join(", ");
         }
+      }
+      // Keep only publisher/website names — drop product phrases or feature text
+      const current = parsed[p]?.sources_cited || "";
+      if (current) {
+        const filtered = current
+          .split(",")
+          .map((s) => s.trim())
+          .filter((s) => s && isLikelyPublisherOrDomain(s));
+        parsed[p].sources_cited = filtered.join(", ");
       }
     }
     return parsed;
@@ -623,14 +648,14 @@ async function analyzeRunData(results, brandName, validCompetitors, industry, ca
       platformData[p].competitors_mentioned.push(pAnalysis.competitors_mentioned || "");
       platformData[p].sources_cited.push(pAnalysis.sources_cited || "");
 
-      // Aggregate sources for top sources tracking (exclude citation markers like [1], [2])
+      // Aggregate sources for top sources (only publisher/website names, not product phrases)
       const sourcesStr = pAnalysis.sources_cited || "";
       if (sourcesStr) {
         const citationMarker = /^\[\s*\d+\s*\]$/;
         const sources = sourcesStr
           .split(",")
           .map((s) => s.trim())
-          .filter((s) => s && s.length > 1 && !citationMarker.test(s));
+          .filter((s) => s && s.length > 1 && !citationMarker.test(s) && isLikelyPublisherOrDomain(s));
         for (const source of sources) {
           const normalizedSource = source.charAt(0).toUpperCase() + source.slice(1).toLowerCase();
           sourceCounts[normalizedSource] = (sourceCounts[normalizedSource] || 0) + 1;

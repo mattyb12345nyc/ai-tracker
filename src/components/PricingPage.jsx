@@ -55,6 +55,7 @@ function PricingContent() {
 
   const cancelled = searchParams.get('checkout') === 'cancelled';
   const reportId = searchParams.get('report');
+  const fromOnboarding = searchParams.get('from') === 'onboarding';
 
   const questionOptions = [10, 25, 50];
   const frequencyOptions = ['monthly', 'biweekly', 'weekly'];
@@ -120,10 +121,10 @@ function PricingContent() {
             <span className="font-body font-semibold">AI Visibility Tracker</span>
           </div>
           <button
-            onClick={() => navigate(reportId ? `/?report=${reportId}` : '/')}
+            onClick={() => navigate(fromOnboarding ? '/onboarding' : reportId ? `/?report=${reportId}` : '/')}
             className="text-white/60 hover:text-white transition-colors flex items-center gap-2 font-body"
           >
-            ← {reportId ? 'Back to Report' : 'Back to App'}
+            ← {fromOnboarding ? 'Back to setup' : reportId ? 'Back to Report' : 'Back to App'}
           </button>
         </div>
       </header>

@@ -394,10 +394,6 @@ const BrandedPDFReport = ({ dashboardData }) => {
             <Text style={styles.scoreUnit}>out of 100</Text>
           </View>
           <View style={styles.scoreCard}>
-            <Text style={styles.scoreLabel}>Grade</Text>
-            <Text style={styles.scoreValue}>{dashboardData.grade || 'C'}</Text>
-          </View>
-          <View style={styles.scoreCard}>
             <Text style={styles.scoreLabel}>Share of Voice</Text>
             <Text style={styles.scoreValue}>{dashboardData.brand_sov || 0}%</Text>
           </View>

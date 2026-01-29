@@ -6,13 +6,14 @@
 [functions]
   node_bundler = "esbuild"
 
-# Serve pricing page at /pricing
+# /pricing is handled by the SPA (React PricingPage with real Stripe checkout).
+# Static pricing.html is available at /pricing.html if needed (e.g. /plans).
 [[redirects]]
-  from = "/pricing"
+  from = "/plans"
   to = "/pricing.html"
   status = 200
 
-# SPA fallback - serve index.html for all other routes
+# SPA fallback - serve index.html for all other routes (includes /pricing)
 [[redirects]]
   from = "/*"
   to = "/index.html"

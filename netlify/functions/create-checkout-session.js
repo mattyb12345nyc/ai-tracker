@@ -1,6 +1,10 @@
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const secretKey = process.env.STRIPE_SECRET_KEY;
+if (!secretKey || secretKey.startsWith('pk_')) {
+  console.error('STRIPE_SECRET_KEY must be set to your Stripe SECRET key (sk_...), not the publishable key (pk_...). Get it at https://dashboard.stripe.com/account/apikeys');
+}
+const stripe = new Stripe(secretKey || 'sk_missing');
 
 // Pricing calculation
 function calculatePrice(questionLot, frequency) {
@@ -49,6 +53,16 @@ export const handler = async (event) => {
       statusCode: 405,
       headers: { 'Access-Control-Allow-Origin': '*' },
       body: JSON.stringify({ error: 'Method Not Allowed' })
+    };
+  }
+
+  if (!secretKey || secretKey.startsWith('pk_')) {
+    return {
+      statusCode: 500,
+      headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        error: 'Stripe is misconfigured: use your SECRET key (sk_...) for STRIPE_SECRET_KEY, not the publishable key. Get it at https://dashboard.stripe.com/account/apikeys'
+      })
     };
   }
 
@@ -104,11 +118,17 @@ export const handler = async (event) => {
       });
     }
 
+    // Optional: 100% off coupon for testing (set STRIPE_TEST_COUPON_ID in Netlify).
+    // When set, discount is pre-applied and Stripe hides the "Add promotion code" link (one discount per session).
+    const testCouponId = process.env.STRIPE_TEST_COUPON_ID?.trim() || null;
+
     // Create the checkout session with a dynamic price
-    const session = await stripe.checkout.sessions.create({
+    const sessionConfig = {
       customer: customer.id,
       mode: 'subscription',
       payment_method_types: ['card'],
+      // Show "Add promotion code" only when no discount is pre-applied (no STRIPE_TEST_COUPON_ID)
+      allow_promotion_codes: !testCouponId,
       line_items: [
         {
           price_data: {
@@ -141,7 +161,16 @@ export const handler = async (event) => {
         frequency,
         units: units.toString()
       }
-    });
+    };
+
+    if (testCouponId) {
+      // Stripe accepts either coupon ID or promotion code ID (promo_xxx)
+      sessionConfig.discounts = testCouponId.startsWith('promo_')
+        ? [{ promotion_code: testCouponId }]
+        : [{ coupon: testCouponId }];
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
 
     return {
       statusCode: 200,

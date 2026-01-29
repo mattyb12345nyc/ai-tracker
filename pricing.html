@@ -477,17 +477,8 @@
         const discountTag = document.getElementById('discountTag');
         const ctaButton = document.getElementById('ctaButton');
         
-        const purchaseLinks = {
-            '5-1': 'https://your-stripe-link.com/5q-monthly',
-            '5-2': 'https://your-stripe-link.com/5q-biweekly',
-            '5-4': 'https://your-stripe-link.com/5q-weekly',
-            '10-1': 'https://your-stripe-link.com/10q-monthly',
-            '10-2': 'https://your-stripe-link.com/10q-biweekly',
-            '10-4': 'https://your-stripe-link.com/10q-weekly',
-            '20-1': 'https://your-stripe-link.com/20q-monthly',
-            '20-2': 'https://your-stripe-link.com/20q-biweekly',
-            '20-4': 'https://your-stripe-link.com/20q-weekly'
-        };
+        // Send users to the app checkout at /pricing (React PricingPage with Stripe)
+        const checkoutUrl = '/pricing';
         
         function calculatePrice() {
             const questions = parseInt(questionsSelect.value) || 0;
@@ -522,8 +513,7 @@
                     discountTag.style.display = 'none';
                 }
                 
-                const linkKey = `${questions}-${frequency}`;
-                ctaButton.href = purchaseLinks[linkKey];
+                ctaButton.href = checkoutUrl;
                 ctaButton.textContent = 'Get Started →';
                 ctaButton.classList.remove('disabled');
             } else {

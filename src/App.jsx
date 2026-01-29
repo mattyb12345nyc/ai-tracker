@@ -804,7 +804,8 @@ export default function App({ vipMode = false }) {
       source_attribution: parse(fields.source_attribution_json, []),
       question_breakdown: questionBreakdown,
       brand_coverage: parseFloat(fields.brand_coverage) || 0,
-      recommendations: parse(fields.recommendations_json, [])
+      recommendations: parse(fields.recommendations_json, []),
+      top_sources: parse(fields.top_sources_json, [])
     };
 
     // Show conversion modal after first report view (for trial users, not VIP)
@@ -1726,15 +1727,18 @@ export default function App({ vipMode = false }) {
 
               {/* Top Sources List */}
               {(() => {
-                // Mock data - will be replaced with real source tracking data
-                const topSources = dashboardData.top_sources || [
-                  { name: 'Official Website', count: 12, percentage: 28 },
-                  { name: 'Reddit', count: 8, percentage: 19 },
-                  { name: 'Wikipedia', count: 6, percentage: 14 },
-                  { name: 'Industry Publications', count: 5, percentage: 12 },
-                  { name: 'News Outlets', count: 4, percentage: 9 },
-                ];
-                const maxPercentage = Math.max(...topSources.map(s => s.percentage));
+                const topSources = dashboardData.top_sources || [];
+
+                if (topSources.length === 0) {
+                  return (
+                    <div className="text-center py-6">
+                      <p className="fp-text-muted text-sm">No sources detected in AI responses yet.</p>
+                      <p className="text-xs fp-text-muted mt-1 opacity-60">Sources will appear when LLMs cite specific websites or publications.</p>
+                    </div>
+                  );
+                }
+
+                const maxPercentage = Math.max(...topSources.map(s => s.percentage), 1);
 
                 return (
                   <div className="space-y-3">
@@ -1764,10 +1768,6 @@ export default function App({ vipMode = false }) {
                   </div>
                 );
               })()}
-
-              <p className="text-xs fp-text-muted mt-4 text-center opacity-60">
-                Source tracking coming soon — data shown is illustrative
-              </p>
             </div>
 
             {/* SECTION 3: PLATFORM CARDS */}

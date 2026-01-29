@@ -213,13 +213,14 @@ Score each response (0-100) on:
 - message_alignment: Did it reflect key messages? (0-100)
 - overall: Weighted average
 - notes: Write a brief 2-3 sentence summary explaining how this AI answered the question and what it prioritized (e.g., which brands it featured, what criteria it emphasized, whether it gave a direct recommendation)
+- sources_cited: Extract any sources, websites, publications, or references mentioned in the response. Include URLs if present, or source names (e.g., "Reddit", "Wikipedia", "TechCrunch", "official website", "G2 Reviews"). Return as comma-separated string. If no sources mentioned, return empty string.
 
 Return ONLY valid JSON:
 {
-  "chatgpt": {"mention":0,"position":0,"sentiment":0,"recommendation":0,"message_alignment":0,"overall":0,"competitors_mentioned":"","notes":"Brief summary of how ChatGPT answered..."},
-  "claude": {"mention":0,"position":0,"sentiment":0,"recommendation":0,"message_alignment":0,"overall":0,"competitors_mentioned":"","notes":"Brief summary of how Claude answered..."},
-  "gemini": {"mention":0,"position":0,"sentiment":0,"recommendation":0,"message_alignment":0,"overall":0,"competitors_mentioned":"","notes":"Brief summary of how Gemini answered..."},
-  "perplexity": {"mention":0,"position":0,"sentiment":0,"recommendation":0,"message_alignment":0,"overall":0,"competitors_mentioned":"","notes":"Brief summary of how Perplexity answered..."}
+  "chatgpt": {"mention":0,"position":0,"sentiment":0,"recommendation":0,"message_alignment":0,"overall":0,"competitors_mentioned":"","notes":"Brief summary...","sources_cited":""},
+  "claude": {"mention":0,"position":0,"sentiment":0,"recommendation":0,"message_alignment":0,"overall":0,"competitors_mentioned":"","notes":"Brief summary...","sources_cited":""},
+  "gemini": {"mention":0,"position":0,"sentiment":0,"recommendation":0,"message_alignment":0,"overall":0,"competitors_mentioned":"","notes":"Brief summary...","sources_cited":""},
+  "perplexity": {"mention":0,"position":0,"sentiment":0,"recommendation":0,"message_alignment":0,"overall":0,"competitors_mentioned":"","notes":"Brief summary...","sources_cited":""}
 }`;
 
   try {
@@ -253,10 +254,10 @@ Return ONLY valid JSON:
   } catch (error) {
     console.error("Analysis error:", error);
     return {
-      chatgpt: { mention: 0, position: 0, sentiment: 0, recommendation: 0, message_alignment: 0, overall: 0, competitors_mentioned: "", notes: "" },
-      claude: { mention: 0, position: 0, sentiment: 0, recommendation: 0, message_alignment: 0, overall: 0, competitors_mentioned: "", notes: "" },
-      gemini: { mention: 0, position: 0, sentiment: 0, recommendation: 0, message_alignment: 0, overall: 0, competitors_mentioned: "", notes: "" },
-      perplexity: { mention: 0, position: 0, sentiment: 0, recommendation: 0, message_alignment: 0, overall: 0, competitors_mentioned: "", notes: "" },
+      chatgpt: { mention: 0, position: 0, sentiment: 0, recommendation: 0, message_alignment: 0, overall: 0, competitors_mentioned: "", notes: "", sources_cited: "" },
+      claude: { mention: 0, position: 0, sentiment: 0, recommendation: 0, message_alignment: 0, overall: 0, competitors_mentioned: "", notes: "", sources_cited: "" },
+      gemini: { mention: 0, position: 0, sentiment: 0, recommendation: 0, message_alignment: 0, overall: 0, competitors_mentioned: "", notes: "", sources_cited: "" },
+      perplexity: { mention: 0, position: 0, sentiment: 0, recommendation: 0, message_alignment: 0, overall: 0, competitors_mentioned: "", notes: "", sources_cited: "" },
     };
   }
 }
@@ -407,6 +408,7 @@ async function saveToAirtable(results, sessionId) {
           chatgpt_message_alignment: analysis.chatgpt?.message_alignment || 0,
           chatgpt_overall: analysis.chatgpt?.overall || 0,
           chatgpt_notes: analysis.chatgpt?.notes || "",
+          chatgpt_sources: analysis.chatgpt?.sources_cited || "",
           claude_mention: analysis.claude?.mention || 0,
           claude_position: analysis.claude?.position || 0,
           claude_sentiment: analysis.claude?.sentiment || 0,
@@ -414,6 +416,7 @@ async function saveToAirtable(results, sessionId) {
           claude_message_alignment: analysis.claude?.message_alignment || 0,
           claude_overall: analysis.claude?.overall || 0,
           claude_notes: analysis.claude?.notes || "",
+          claude_sources: analysis.claude?.sources_cited || "",
           gemini_mention: analysis.gemini?.mention || 0,
           gemini_position: analysis.gemini?.position || 0,
           gemini_sentiment: analysis.gemini?.sentiment || 0,
@@ -421,6 +424,7 @@ async function saveToAirtable(results, sessionId) {
           gemini_message_alignment: analysis.gemini?.message_alignment || 0,
           gemini_overall: analysis.gemini?.overall || 0,
           gemini_notes: analysis.gemini?.notes || "",
+          gemini_sources: analysis.gemini?.sources_cited || "",
           perplexity_mention: analysis.perplexity?.mention || 0,
           perplexity_position: analysis.perplexity?.position || 0,
           perplexity_sentiment: analysis.perplexity?.sentiment || 0,
@@ -428,6 +432,7 @@ async function saveToAirtable(results, sessionId) {
           perplexity_message_alignment: analysis.perplexity?.message_alignment || 0,
           perplexity_overall: analysis.perplexity?.overall || 0,
           perplexity_notes: analysis.perplexity?.notes || "",
+          perplexity_sources: analysis.perplexity?.sources_cited || "",
         },
       };
     });
@@ -473,8 +478,11 @@ async function analyzeRunData(results, brandName, validCompetitors, industry, ca
 
   const platformData = {};
   for (const p of platforms) {
-    platformData[p] = { mention: [], position: [], sentiment: [], recommendation: [], message_alignment: [], overall: [], competitors_mentioned: [] };
+    platformData[p] = { mention: [], position: [], sentiment: [], recommendation: [], message_alignment: [], overall: [], competitors_mentioned: [], sources_cited: [] };
   }
+
+  // Track all sources across all platforms
+  const sourceCounts = {};
 
   for (const r of results) {
     const analysis = r.analysis || {};
@@ -487,7 +495,31 @@ async function analyzeRunData(results, brandName, validCompetitors, industry, ca
       platformData[p].message_alignment.push(pAnalysis.message_alignment || 0);
       platformData[p].overall.push(pAnalysis.overall || 0);
       platformData[p].competitors_mentioned.push(pAnalysis.competitors_mentioned || "");
+      platformData[p].sources_cited.push(pAnalysis.sources_cited || "");
+
+      // Aggregate sources for top sources tracking
+      const sourcesStr = pAnalysis.sources_cited || "";
+      if (sourcesStr) {
+        const sources = sourcesStr.split(",").map(s => s.trim()).filter(s => s && s.length > 1);
+        for (const source of sources) {
+          // Normalize source names (capitalize first letter, trim)
+          const normalizedSource = source.charAt(0).toUpperCase() + source.slice(1).toLowerCase();
+          sourceCounts[normalizedSource] = (sourceCounts[normalizedSource] || 0) + 1;
+        }
+      }
     }
+  }
+
+  // Build top sources array sorted by frequency
+  const topSources = Object.entries(sourceCounts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);  // Keep top 10 sources
+
+  // Calculate percentages for top sources
+  const totalSourceRefs = topSources.reduce((sum, s) => sum + s.count, 0) || 1;
+  for (const source of topSources) {
+    source.percentage = Math.round((source.count / totalSourceRefs) * 100);
   }
 
   // Count brand mentions and competitor mentions (with normalization)
@@ -696,6 +728,7 @@ async function analyzeRunData(results, brandName, validCompetitors, industry, ca
     brand_coverage: brandCoverage,
     recommendations,
     num_questions_processed: numQuestions,
+    top_sources: topSources,
   };
 }
 
@@ -780,6 +813,7 @@ async function saveDashboardOutput(analysis, runId, sessionId, brandLogo, brandA
     brand_rankings_json: JSON.stringify(brandRankings),
     executive_summary_json: JSON.stringify(analysis.executive_summary || {}),
     history_json: JSON.stringify([{ date: "Current", score }]),
+    top_sources_json: JSON.stringify(analysis.top_sources || []),
   };
 
   // brand_coverage is singleLineText, others are multilineText - all need strings

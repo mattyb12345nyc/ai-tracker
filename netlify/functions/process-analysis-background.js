@@ -192,6 +192,89 @@ async function queryPerplexity(question) {
   }
 }
 
+// Extract reference list from response text (e.g. [1] url, [2] Source Name at end)
+// Returns map: { "1": "url or name", "2": "..." }
+function extractReferenceMap(responseText) {
+  if (!responseText || typeof responseText !== "string") return {};
+  const map = {};
+  const text = responseText.trim();
+  // Prefer the last 2000 chars (reference blocks are usually at the end)
+  const tail = text.length > 2500 ? text.slice(-2500) : text;
+  const lines = tail.split(/\r?\n/);
+  for (const line of lines) {
+    const trimmed = line.trim();
+    // [1] https://... or [1] Source Name
+    const bracketMatch = trimmed.match(/^\[\s*(\d+)\s*\]\s*(.+)$/);
+    if (bracketMatch) {
+      const num = String(bracketMatch[1]).trim();
+      let value = (bracketMatch[2] || "").trim();
+      if (value.length > 1 && !/^[\s\[\]\d,.-]+$/.test(value)) {
+        if (value.startsWith("http")) {
+          try {
+            const u = new URL(value.split(/\s/)[0]);
+            value = u.hostname.replace(/^www\./, "") + (u.pathname !== "/" && u.pathname.length < 40 ? u.pathname : "");
+          } catch (_) {}
+        }
+        if (!map[num]) map[num] = value;
+      }
+      continue;
+    }
+    // 1. https://... or 1) Source Name
+    const numDotMatch = trimmed.match(/^(\d+)[.)]\s*(.+)$/);
+    if (numDotMatch) {
+      const num = String(numDotMatch[1]).trim();
+      let value = (numDotMatch[2] || "").trim();
+      if (value.length > 1 && !/^[\s\[\]\d,.-]+$/.test(value)) {
+        if (value.startsWith("http")) {
+          try {
+            const u = new URL(value.split(/\s/)[0]);
+            value = u.hostname.replace(/^www\./, "") + (u.pathname !== "/" && u.pathname.length < 40 ? u.pathname : "");
+          } catch (_) {}
+        }
+        if (!map[num]) map[num] = value;
+      }
+    }
+  }
+  // Fallback: inline [1] url [2] url in same line
+  const inlineRe = /\[\s*(\d+)\s*\]\s*(https?:\/\/[^\s\[\]]+)/gi;
+  let m;
+  while ((m = inlineRe.exec(text)) !== null) {
+    const num = String(m[1]).trim();
+    if (!map[num]) {
+      try {
+        const u = new URL(m[2]);
+        map[num] = u.hostname.replace(/^www\./, "") + (u.pathname !== "/" && u.pathname.length < 40 ? u.pathname : "");
+      } catch (_) {
+        map[num] = m[2];
+      }
+    }
+  }
+  return map;
+}
+
+// If sources_cited contains citation markers [1], [2], resolve them using the response's reference list
+function resolveSourcesCited(sourcesCitedStr, responseText) {
+  if (!sourcesCitedStr || typeof sourcesCitedStr !== "string") return sourcesCitedStr || "";
+  const trimmed = sourcesCitedStr.trim();
+  if (!trimmed) return "";
+  const refMap = extractReferenceMap(responseText);
+  const hasMarkers = /\[\s*\d+\s*\]/.test(trimmed);
+  if (!hasMarkers) return sourcesCitedStr;
+  if (Object.keys(refMap).length === 0) return ""; // Don't persist raw [1], [2]
+  const parts = [];
+  const markerRe = /\[\s*(\d+)\s*\]/g;
+  let match;
+  const seen = new Set();
+  while ((match = markerRe.exec(trimmed)) !== null) {
+    const num = match[1];
+    if (refMap[num] && !seen.has(refMap[num])) {
+      seen.add(refMap[num]);
+      parts.push(refMap[num]);
+    }
+  }
+  return parts.length > 0 ? parts.join(", ") : ""; // Prefer empty over unresolved markers
+}
+
 // Analyze responses using Claude
 async function analyzeResponses(brandName, keyMessages, competitors, question, responses) {
   const prompt = `You are analyzing AI responses for brand visibility.
@@ -213,7 +296,7 @@ Score each response (0-100) on:
 - message_alignment: Did it reflect key messages? (0-100)
 - overall: Weighted average
 - notes: Write a brief 2-3 sentence summary explaining how this AI answered the question and what it prioritized (e.g., which brands it featured, what criteria it emphasized, whether it gave a direct recommendation)
-- sources_cited: Extract any sources, websites, publications, or references mentioned in the response. Include URLs if present, or source names (e.g., "Reddit", "Wikipedia", "TechCrunch", "official website", "G2 Reviews"). Return as comma-separated string. If no sources mentioned, return empty string.
+- sources_cited: Extract actual sources: URLs or publication/site names. Many responses use inline citations [1], [2] and list real sources at the end (e.g. "[1] https://example.com" or "[1] TechCrunch"). You MUST resolve each citation number to the actual URL or source name from that reference list. Output only resolved URLs or names, comma-separated. Never output raw citation markers like [1] or [2]. If the response has no resolvable sources, return empty string.
 
 Return ONLY valid JSON:
 {
@@ -250,7 +333,17 @@ Return ONLY valid JSON:
     if (firstBrace !== -1 && lastBrace !== -1) {
       raw = raw.substring(firstBrace, lastBrace + 1);
     }
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    const platforms = ["chatgpt", "claude", "gemini", "perplexity"];
+    for (const p of platforms) {
+      const cited = parsed[p]?.sources_cited || "";
+      const responseText = responses[p] || "";
+      if (cited && responseText) {
+        const resolved = resolveSourcesCited(cited, responseText);
+        if (resolved) parsed[p].sources_cited = resolved;
+      }
+    }
+    return parsed;
   } catch (error) {
     console.error("Analysis error:", error);
     return {
@@ -497,12 +590,15 @@ async function analyzeRunData(results, brandName, validCompetitors, industry, ca
       platformData[p].competitors_mentioned.push(pAnalysis.competitors_mentioned || "");
       platformData[p].sources_cited.push(pAnalysis.sources_cited || "");
 
-      // Aggregate sources for top sources tracking
+      // Aggregate sources for top sources tracking (exclude citation markers like [1], [2])
       const sourcesStr = pAnalysis.sources_cited || "";
       if (sourcesStr) {
-        const sources = sourcesStr.split(",").map(s => s.trim()).filter(s => s && s.length > 1);
+        const citationMarker = /^\[\s*\d+\s*\]$/;
+        const sources = sourcesStr
+          .split(",")
+          .map((s) => s.trim())
+          .filter((s) => s && s.length > 1 && !citationMarker.test(s));
         for (const source of sources) {
-          // Normalize source names (capitalize first letter, trim)
           const normalizedSource = source.charAt(0).toUpperCase() + source.slice(1).toLowerCase();
           sourceCounts[normalizedSource] = (sourceCounts[normalizedSource] || 0) + 1;
         }

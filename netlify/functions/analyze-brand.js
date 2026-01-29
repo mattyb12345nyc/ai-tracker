@@ -63,6 +63,17 @@ export const handler = async (event) => {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
+  if (!CLAUDE_API_KEY || CLAUDE_API_KEY.trim() === '') {
+    console.error('CLAUDE_API_KEY is missing. For local dev: run "netlify env:import .env" then restart netlify dev.');
+    return {
+      statusCode: 500,
+      headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        error: 'Server misconfiguration: CLAUDE_API_KEY is not set. For local dev run: netlify env:import .env then restart netlify dev.'
+      })
+    };
+  }
+
   try {
     const { url } = JSON.parse(event.body);
     

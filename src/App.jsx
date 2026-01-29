@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Zap, Loader2, CheckCircle, ArrowRight, RefreshCw, TrendingUp, TrendingDown, AlertCircle, X, Pencil, Check, Plus, ChevronRight, Eye, FileText, BarChart3, Download, Calendar, ChevronDown, Sparkles, Target, Activity, ArrowUpRight, ArrowDownRight, Minus, Mail, ExternalLink, Award, Users, MessageSquare, Search, Lightbulb, Globe, Link, Crown, Lock, Clock, Info, BookOpen } from 'lucide-react';
 import { UserButton, useUser } from '@clerk/clerk-react';
+// When running without Clerk, user is passed as prop (null) from main.jsx
 import { pdf } from '@react-pdf/renderer';
 import BrandedPDFReport from './components/BrandedPDFReport';
 import ConversionModal from './components/ConversionModal';
@@ -267,8 +268,8 @@ const generateRunId = () => {
 // ============================================================
 // MAIN APP COMPONENT
 // ============================================================
-export default function App({ vipMode = false }) {
-  const { user } = useUser();
+// user prop: when running without Clerk, main.jsx passes user={null}; with Clerk, AppWithClerk passes useUser().user
+function AppContent({ vipMode = false, user }) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [step, setStep] = useState('setup'); // setup, analyzing, questions, processing, complete
@@ -283,12 +284,12 @@ export default function App({ vipMode = false }) {
   // VIP mode: no restrictions, 15 questions default
   const isVip = vipMode;
 
-  // Auto-set email from Clerk user
+  // Auto-set email from Clerk user (when signed in)
   useEffect(() => {
     if (user?.primaryEmailAddress?.emailAddress && !email) {
       setEmail(user.primaryEmailAddress.emailAddress);
     }
-  }, [user]);
+  }, [user, email]);
 
   // Initialize trial tracking (skip for VIP mode)
   useEffect(() => {
@@ -300,8 +301,8 @@ export default function App({ vipMode = false }) {
     if (user?.id) {
       // Only initialize trial if user doesn't have active subscription
       if (!hasActiveSubscription(user)) {
-        initializeTrial(user.id);
-        const status = getTrialStatus(user.id);
+        initializeTrial(user?.id);
+        const status = getTrialStatus(user?.id);
         setTrialStatus(status);
       } else {
         // User has subscription, no trial needed
@@ -315,7 +316,7 @@ export default function App({ vipMode = false }) {
     if (isVip || !user?.id || hasActiveSubscription(user)) return;
     
     const interval = setInterval(() => {
-      const status = getTrialStatus(user.id);
+      const status = getTrialStatus(user?.id);
       setTrialStatus(status);
     }, 60000); // Update every minute
     
@@ -941,7 +942,7 @@ export default function App({ vipMode = false }) {
     
     // Check trial limits if user doesn't have subscription (skip for VIP)
     if (!isVip && user?.id && !hasActiveSubscription(user)) {
-      const status = getTrialStatus(user.id);
+      const status = getTrialStatus(user?.id);
       if (!status.canRunAnalysis) {
         setError('You\'ve used your free analysis. Upgrade to track unlimited brands and get weekly reports.');
         setConversionModalContext({
@@ -963,8 +964,8 @@ export default function App({ vipMode = false }) {
 
     // Increment analysis count for trial users (skip for VIP)
     if (!isVip && user?.id && !hasActiveSubscription(user)) {
-      incrementAnalysisCount(user.id);
-      const updatedStatus = getTrialStatus(user.id);
+      incrementAnalysisCount(user?.id);
+      const updatedStatus = getTrialStatus(user?.id);
       setTrialStatus(updatedStatus);
     }
     
@@ -1032,7 +1033,7 @@ export default function App({ vipMode = false }) {
               <span className="text-white/20">|</span>
               <span className="font-semibold">AI Visibility Tracker</span>
             </div>
-            <UserButton afterSignOutUrl="/login" />
+            {user && <UserButton afterSignOutUrl="/login" />}
           </div>
         </header>
         <main className="max-w-2xl mx-auto px-8 py-16 animate-fadeIn">
@@ -1194,7 +1195,7 @@ export default function App({ vipMode = false }) {
               <span className="text-white/20">|</span>
               <span className="font-semibold">AI Visibility Tracker</span>
             </div>
-            <UserButton afterSignOutUrl="/login" />
+            {user && <UserButton afterSignOutUrl="/login" />}
           </div>
         </header>
         <main className="max-w-3xl mx-auto px-8 py-12 animate-fadeIn">
@@ -1346,7 +1347,7 @@ export default function App({ vipMode = false }) {
               <span className="text-white/20">|</span>
               <span className="font-semibold">AI Visibility Tracker</span>
             </div>
-            <UserButton afterSignOutUrl="/login" />
+            {user && <UserButton afterSignOutUrl="/login" />}
           </div>
         </header>
         <main className="max-w-xl mx-auto px-8 py-12 text-center animate-fadeIn">
@@ -1499,7 +1500,7 @@ export default function App({ vipMode = false }) {
               <span className="text-white/20">|</span>
               <span className="font-semibold">AI Visibility Tracker</span>
             </div>
-            <UserButton afterSignOutUrl="/login" />
+            {user && <UserButton afterSignOutUrl="/login" />}
           </div>
         </header>
         <main className="max-w-xl mx-auto px-8 py-24 text-center animate-fadeIn">
@@ -1570,7 +1571,7 @@ export default function App({ vipMode = false }) {
                 <span>My Report</span>
               </button>
             )}
-            <UserButton afterSignOutUrl="/login" />
+            {user && <UserButton afterSignOutUrl="/login" />}
           </div>
         </div>
       </header>
@@ -2063,3 +2064,11 @@ export default function App({ vipMode = false }) {
     </div>
   );
 }
+
+// Wrapper that provides user from Clerk (only use inside ClerkProvider)
+export function AppWithClerk({ vipMode = false }) {
+  const { user } = useUser();
+  return <AppContent user={user} vipMode={vipMode} />;
+}
+
+export default AppContent;

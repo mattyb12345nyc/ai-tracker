@@ -192,19 +192,25 @@ async function queryPerplexity(question) {
   }
 }
 
-// True only if the string looks like a publisher/website name, not a product or feature phrase
+// True only if the string is a domain name (e.g. nytimes.com, techcrunch.com). No publication names or phrases.
 function isLikelyPublisherOrDomain(str) {
   if (!str || typeof str !== "string") return false;
   const s = str.trim();
-  if (s.length < 2 || s.length > 60) return false;
-  // Domain-like: contains a dot (e.g. nytimes.com, techcrunch.com)
-  if (/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(s) || (s.includes(".") && !s.includes(" "))) return true;
-  // Product/feature phrases: long, or contain em-dash/ " or " / " for " / " in " (descriptive)
-  if (s.includes(" – ") || s.includes(" or ") || s.includes(" for ") || s.includes(" in ")) return false;
-  if (s.split(/\s+/).length > 4) return false;
-  // Reject if it looks like a sentence fragment (ends with period mid-phrase, or has "ideal", "features", etc.)
-  if (/\b(ideal|features|functionality|minimalist|travel-ready|refined|premium|offers)\b/i.test(s)) return false;
+  if (s.length < 4 || s.length > 60) return false;
+  // Must be domain-shaped: at least one dot, no spaces, only letters/numbers/hyphens/dots
+  if (/\s/.test(s)) return false;
+  if (!/^[a-z0-9][a-z0-9.-]*\.[a-z0-9.-]+$/i.test(s)) return false;
   return true;
+}
+
+// First letter of each word capitalized for display (e.g. "techcrunch.com" -> "Techcrunch.com")
+function toTitleCase(str) {
+  if (!str || typeof str !== "string") return str;
+  return str
+    .trim()
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
 }
 
 // Extract reference list from response text (e.g. [1] url, [2] Source Name at end)
@@ -334,7 +340,7 @@ Score each response (0-100) on:
 - message_alignment: Did it reflect key messages? (0-100)
 - overall: Weighted average
 - notes: Write a brief 2-3 sentence summary explaining how this AI answered the question and what it prioritized (e.g., which brands it featured, what criteria it emphasized, whether it gave a direct recommendation)
-- sources_cited: List ONLY publication names, website names, or domains (e.g. TechCrunch, G2, Wikipedia, nytimes.com). Resolve [1], [2] from the reference list at the end of each response to the actual source. Never include product names, brand names, feature descriptions, or sentence fragments (e.g. "luxury handbag" or "Travel-ready functionality" are wrong; "Vogue", "nytimes.com" are correct). Output comma-separated. If no real publisher/website sources, return empty string.
+- sources_cited: List ONLY domain names (e.g. nytimes.com, techcrunch.com, wikipedia.org). Resolve [1], [2] from the reference list to the actual domain (hostname) when the reference is a URL. Never include publication names without a domain, product names, or sentence fragments. Output comma-separated domain names only. If no domain sources, return empty string.
 
 Return ONLY valid JSON:
 {
@@ -411,6 +417,42 @@ Return ONLY valid JSON:
       perplexity: { mention: 0, position: 0, sentiment: 0, recommendation: 0, message_alignment: 0, overall: 0, competitors_mentioned: "", notes: "", sources_cited: "" },
     };
   }
+}
+
+// Generate a 1–2 sentence executive summary of where AI answer information is largely coming from
+async function generateSourcesSummary(topSourcesList, brandName) {
+  const domainList = (topSourcesList || []).map((s) => s.name).filter(Boolean);
+  if (domainList.length === 0) {
+    return "AI responses in this run did not cite specific sources, or sources could not be summarized.";
+  }
+  const prompt = `You are writing one short paragraph for an executive dashboard. Based only on the following domain names that were cited in AI model responses (about "${brandName || "the brand"}" and related questions), write 1–2 sentences summarizing where the information in those AI answers is largely coming from. Be concise and high-level (e.g. "Information is drawn from..." or "Answers rely mainly on...").
+
+Cited domains: ${domainList.slice(0, 20).join(", ")}${domainList.length > 20 ? " (and others)" : ""}
+
+Reply with only the summary paragraph, no heading or bullet points.`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": CLAUDE_API_KEY,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 256,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+    if (!response.ok) throw new Error(`Claude API error: ${response.status}`);
+    const data = await response.json();
+    const summary = (data.content?.[0]?.text || "").trim();
+    if (summary) return summary;
+  } catch (err) {
+    console.error("Sources summary error:", err);
+  }
+  return `Information is drawn from ${domainList.slice(0, 5).join(", ")}${domainList.length > 5 ? " and other cited sites" : ""}.`;
 }
 
 // Generate content strategy recommendations based on AI responses
@@ -657,24 +699,28 @@ async function analyzeRunData(results, brandName, validCompetitors, industry, ca
           .map((s) => s.trim())
           .filter((s) => s && s.length > 1 && !citationMarker.test(s) && isLikelyPublisherOrDomain(s));
         for (const source of sources) {
-          const normalizedSource = source.charAt(0).toUpperCase() + source.slice(1).toLowerCase();
-          sourceCounts[normalizedSource] = (sourceCounts[normalizedSource] || 0) + 1;
+          const key = source.toLowerCase();
+          sourceCounts[key] = (sourceCounts[key] || 0) + 1;
         }
       }
     }
   }
 
-  // Build top sources array sorted by frequency
+  // Build top sources array sorted by frequency (display names in title case)
   const topSources = Object.entries(sourceCounts)
-    .map(([name, count]) => ({ name, count }))
+    .map(([name, count]) => ({ name: toTitleCase(name), count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 10);  // Keep top 10 sources
 
-  // Calculate percentages for top sources
+  // Calculate percentages for top sources (used as input to summary)
   const totalSourceRefs = topSources.reduce((sum, s) => sum + s.count, 0) || 1;
   for (const source of topSources) {
     source.percentage = Math.round((source.count / totalSourceRefs) * 100);
   }
+
+  // Executive summary of where answer information is largely coming from
+  const sourcesSummaryText = await generateSourcesSummary(topSources, brandName);
+  const topSourcesOutput = { summary: sourcesSummaryText };
 
   // Count brand mentions and competitor mentions (with normalization)
   const brandMentionCounts = {};
@@ -882,7 +928,7 @@ async function analyzeRunData(results, brandName, validCompetitors, industry, ca
     brand_coverage: brandCoverage,
     recommendations,
     num_questions_processed: numQuestions,
-    top_sources: topSources,
+    top_sources: topSourcesOutput,
   };
 }
 
@@ -967,7 +1013,7 @@ async function saveDashboardOutput(analysis, runId, sessionId, brandLogo, brandA
     brand_rankings_json: JSON.stringify(brandRankings),
     executive_summary_json: JSON.stringify(analysis.executive_summary || {}),
     history_json: JSON.stringify([{ date: "Current", score }]),
-    top_sources_json: JSON.stringify(analysis.top_sources || []),
+    top_sources_json: JSON.stringify(analysis.top_sources || {}),
   };
 
   // brand_coverage is singleLineText, others are multilineText - all need strings

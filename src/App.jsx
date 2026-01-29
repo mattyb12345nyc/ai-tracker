@@ -806,7 +806,7 @@ function AppContent({ vipMode = false, user }) {
       question_breakdown: questionBreakdown,
       brand_coverage: parseFloat(fields.brand_coverage) || 0,
       recommendations: parse(fields.recommendations_json, []),
-      top_sources: parse(fields.top_sources_json, [])
+      top_sources: parse(fields.top_sources_json, {})
     };
 
     // Show conversion modal after first report view (for trial users, not VIP)
@@ -1706,7 +1706,7 @@ function AppContent({ vipMode = false, user }) {
               </div>
             </div>
 
-            {/* SECTION 2B: TOP SOURCES */}
+            {/* SECTION 2B: SOURCES EXECUTIVE SUMMARY */}
             <div className="fp-card rounded-2xl md:rounded-3xl p-4 md:p-8">
               <div className="flex items-start gap-3 md:gap-4 mb-3 md:mb-4">
                 <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl fp-icon-gradient flex items-center justify-center shrink-0">
@@ -1718,54 +1718,63 @@ function AppContent({ vipMode = false, user }) {
                     <div className="group relative">
                       <Info className="w-4 h-4 fp-text-muted cursor-help" />
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-black/90 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
-                        Sources LLMs cite when generating responses about your brand
+                        Where the information in AI answers is largely coming from
                       </div>
                     </div>
                   </div>
-                  <p className="text-xs md:text-sm fp-text-muted">Websites and sources referenced in AI responses</p>
+                  <p className="text-xs md:text-sm fp-text-muted">Executive summary of cited sources across AI responses</p>
                 </div>
               </div>
 
-              {/* Top Sources List */}
+              {/* Sources executive summary (or legacy list) */}
               {(() => {
-                const topSources = dashboardData.top_sources || [];
+                const topSources = dashboardData.top_sources || {};
+                const summary = topSources?.summary;
+                const legacyList = Array.isArray(topSources) ? topSources : [];
 
-                if (topSources.length === 0) {
+                if (summary) {
                   return (
-                    <div className="text-center py-6">
-                      <p className="fp-text-muted text-sm">No sources detected in AI responses yet.</p>
-                      <p className="text-xs fp-text-muted mt-1 opacity-60">Sources will appear when LLMs cite specific websites or publications.</p>
+                    <div className="py-2">
+                      <p className="text-sm md:text-base text-white/90 leading-relaxed">{summary}</p>
                     </div>
                   );
                 }
 
-                const maxPercentage = Math.max(...topSources.map(s => s.percentage), 1);
+                if (legacyList.length > 0) {
+                  const maxPercentage = Math.max(...legacyList.map(s => s.percentage), 1);
+                  return (
+                    <div className="space-y-3">
+                      {legacyList.slice(0, 5).map((source, i) => (
+                        <div key={i} className="flex items-center gap-4 p-3 rounded-xl fp-card">
+                          <span className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold fp-rank-number-neutral">
+                            {i + 1}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="font-medium text-white/80 truncate">{source.name}</span>
+                              <span className="text-sm fp-text-muted ml-2">{source.count} refs</span>
+                            </div>
+                            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                              <div
+                                className="h-full rounded-full transition-all duration-500"
+                                style={{
+                                  width: `${(source.percentage / maxPercentage) * 100}%`,
+                                  background: 'linear-gradient(90deg, var(--fp-accent-1), var(--fp-accent-2))'
+                                }}
+                              />
+                            </div>
+                          </div>
+                          <span className="font-semibold text-white/80 w-12 text-right">{source.percentage}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
 
                 return (
-                  <div className="space-y-3">
-                    {topSources.slice(0, 5).map((source, i) => (
-                      <div key={i} className="flex items-center gap-4 p-3 rounded-xl fp-card">
-                        <span className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold fp-rank-number-neutral">
-                          {i + 1}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-medium text-white/80 truncate">{source.name}</span>
-                            <span className="text-sm fp-text-muted ml-2">{source.count} refs</span>
-                          </div>
-                          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                            <div
-                              className="h-full rounded-full transition-all duration-500"
-                              style={{
-                                width: `${(source.percentage / maxPercentage) * 100}%`,
-                                background: 'linear-gradient(90deg, var(--fp-accent-1), var(--fp-accent-2))'
-                              }}
-                            />
-                          </div>
-                        </div>
-                        <span className="font-semibold text-white/80 w-12 text-right">{source.percentage}%</span>
-                      </div>
-                    ))}
+                  <div className="text-center py-6">
+                    <p className="fp-text-muted text-sm">No sources summary for this run yet.</p>
+                    <p className="text-xs fp-text-muted mt-1 opacity-60">New reports include an executive summary of where AI answer information comes from.</p>
                   </div>
                 );
               })()}

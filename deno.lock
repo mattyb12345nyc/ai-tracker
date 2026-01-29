@@ -11,12 +11,18 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
+        "npm:@clerk/clerk-react@^5.59.6",
+        "npm:@react-pdf/renderer@^4.3.2",
+        "npm:@stripe/stripe-js@^8.6.4",
         "npm:@vitejs/plugin-react@4",
         "npm:autoprefixer@^10.4.14",
         "npm:lucide-react@~0.263.1",
         "npm:postcss@^8.4.24",
         "npm:react-dom@^18.2.0",
+        "npm:react-router-dom@^7.13.0",
         "npm:react@^18.2.0",
+        "npm:recharts@^3.7.0",
+        "npm:stripe@^20.2.0",
         "npm:tailwindcss@^3.3.2",
         "npm:vite@5"
       ]

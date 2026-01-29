@@ -198,16 +198,19 @@ function extractReferenceMap(responseText) {
   if (!responseText || typeof responseText !== "string") return {};
   const map = {};
   const text = responseText.trim();
-  // Prefer the last 2000 chars (reference blocks are usually at the end)
+  // Prefer the last 2500 chars (reference blocks are usually at the end)
   const tail = text.length > 2500 ? text.slice(-2500) : text;
   const lines = tail.split(/\r?\n/);
+
   for (const line of lines) {
     const trimmed = line.trim();
-    // [1] https://... or [1] Source Name
+    // [1] https://... or [1] Source Name (allow optional trailing content)
     const bracketMatch = trimmed.match(/^\[\s*(\d+)\s*\]\s*(.+)$/);
     if (bracketMatch) {
       const num = String(bracketMatch[1]).trim();
       let value = (bracketMatch[2] || "").trim();
+      // Strip trailing markdown or parentheses
+      value = value.replace(/\s*[\(\[].*$/, "").trim();
       if (value.length > 1 && !/^[\s\[\]\d,.-]+$/.test(value)) {
         if (value.startsWith("http")) {
           try {
@@ -224,6 +227,7 @@ function extractReferenceMap(responseText) {
     if (numDotMatch) {
       const num = String(numDotMatch[1]).trim();
       let value = (numDotMatch[2] || "").trim();
+      value = value.replace(/\s*[\(\[].*$/, "").trim();
       if (value.length > 1 && !/^[\s\[\]\d,.-]+$/.test(value)) {
         if (value.startsWith("http")) {
           try {
@@ -249,6 +253,25 @@ function extractReferenceMap(responseText) {
       }
     }
   }
+
+  // Fallback: response has [1] [2] but no explicit list — collect all URLs from tail by order
+  if (Object.keys(map).length === 0 && /\[\s*\d+\s*\]/.test(text)) {
+    const urlRe = /https?:\/\/[^\s)\]>\"]+/g;
+    const seen = new Set();
+    let idx = 1;
+    while ((m = urlRe.exec(tail)) !== null) {
+      try {
+        const u = new URL(m[0]);
+        const val = u.hostname.replace(/^www\./, "") + (u.pathname !== "/" && u.pathname.length < 30 ? u.pathname : "");
+        if (!seen.has(val)) {
+          seen.add(val);
+          map[String(idx)] = val;
+          idx++;
+        }
+      } catch (_) {}
+    }
+  }
+
   return map;
 }
 
@@ -341,6 +364,16 @@ Return ONLY valid JSON:
       if (cited && responseText) {
         const resolved = resolveSourcesCited(cited, responseText);
         if (resolved) parsed[p].sources_cited = resolved;
+      }
+      // When Claude left sources_cited empty but response has [1], [2] and URLs, fill from extraction
+      if ((!cited || !cited.trim()) && responseText && /\[\s*\d+\s*\]/.test(responseText)) {
+        const refMap = extractReferenceMap(responseText);
+        if (Object.keys(refMap).length > 0) {
+          const ordered = Object.keys(refMap)
+            .sort((a, b) => Number(a) - Number(b))
+            .map((k) => refMap[k]);
+          parsed[p].sources_cited = ordered.join(", ");
+        }
       }
     }
     return parsed;

@@ -127,8 +127,8 @@ export const handler = async (event) => {
       customer: customer.id,
       mode: 'subscription',
       payment_method_types: ['card'],
-      // Show "Add promotion code" only when no discount is pre-applied (no STRIPE_TEST_COUPON_ID)
-      allow_promotion_codes: !testCouponId,
+      // Always show "Add promotion code" so users can enter coupons like "free101"
+      allow_promotion_codes: true,
       line_items: [
         {
           price_data: {

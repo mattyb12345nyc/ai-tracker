@@ -12,7 +12,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
-        pricing: resolve(__dirname, 'pricing.html'),
+        plans: resolve(__dirname, 'plans.html'),
       },
     },
   },

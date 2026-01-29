@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Zap, Loader2, CheckCircle, ArrowRight, RefreshCw, TrendingUp, TrendingDown, AlertCircle, X, Pencil, Check, Plus, ChevronRight, Eye, FileText, BarChart3, Download, Calendar, ChevronDown, Sparkles, Target, Activity, ArrowUpRight, ArrowDownRight, Minus, Mail, ExternalLink, Award, Users, MessageSquare, Search, Lightbulb, Globe, Link, Crown, Lock, Clock } from 'lucide-react';
+import { Zap, Loader2, CheckCircle, ArrowRight, RefreshCw, TrendingUp, TrendingDown, AlertCircle, X, Pencil, Check, Plus, ChevronRight, Eye, FileText, BarChart3, Download, Calendar, ChevronDown, Sparkles, Target, Activity, ArrowUpRight, ArrowDownRight, Minus, Mail, ExternalLink, Award, Users, MessageSquare, Search, Lightbulb, Globe, Link, Crown, Lock, Clock, Info, BookOpen } from 'lucide-react';
 import { UserButton, useUser } from '@clerk/clerk-react';
 import { pdf } from '@react-pdf/renderer';
 import BrandedPDFReport from './components/BrandedPDFReport';
@@ -1702,6 +1702,72 @@ export default function App({ vipMode = false }) {
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* SECTION 2B: TOP SOURCES */}
+            <div className="fp-card rounded-2xl md:rounded-3xl p-4 md:p-8">
+              <div className="flex items-start gap-3 md:gap-4 mb-3 md:mb-4">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl fp-icon-gradient flex items-center justify-center shrink-0">
+                  <BookOpen className="w-5 h-5 md:w-6 md:h-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg md:text-xl font-bold font-display">Top Sources</h2>
+                    <div className="group relative">
+                      <Info className="w-4 h-4 fp-text-muted cursor-help" />
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-black/90 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                        Sources LLMs cite when generating responses about your brand
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs md:text-sm fp-text-muted">Websites and sources referenced in AI responses</p>
+                </div>
+              </div>
+
+              {/* Top Sources List */}
+              {(() => {
+                // Mock data - will be replaced with real source tracking data
+                const topSources = dashboardData.top_sources || [
+                  { name: 'Official Website', count: 12, percentage: 28 },
+                  { name: 'Reddit', count: 8, percentage: 19 },
+                  { name: 'Wikipedia', count: 6, percentage: 14 },
+                  { name: 'Industry Publications', count: 5, percentage: 12 },
+                  { name: 'News Outlets', count: 4, percentage: 9 },
+                ];
+                const maxPercentage = Math.max(...topSources.map(s => s.percentage));
+
+                return (
+                  <div className="space-y-3">
+                    {topSources.slice(0, 5).map((source, i) => (
+                      <div key={i} className="flex items-center gap-4 p-3 rounded-xl fp-card">
+                        <span className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold fp-rank-number-neutral">
+                          {i + 1}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-medium text-white/80 truncate">{source.name}</span>
+                            <span className="text-sm fp-text-muted ml-2">{source.count} refs</span>
+                          </div>
+                          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{
+                                width: `${(source.percentage / maxPercentage) * 100}%`,
+                                background: 'linear-gradient(90deg, var(--fp-accent-1), var(--fp-accent-2))'
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <span className="font-semibold text-white/80 w-12 text-right">{source.percentage}%</span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
+              <p className="text-xs fp-text-muted mt-4 text-center opacity-60">
+                Source tracking coming soon — data shown is illustrative
+              </p>
             </div>
 
             {/* SECTION 3: PLATFORM CARDS */}

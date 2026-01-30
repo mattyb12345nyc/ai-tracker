@@ -2,8 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import {
-  CheckCircle, Zap, Globe, Link, Loader2, ChevronRight, Pencil, Check, X,
-  Sparkles, Play
+  Zap, Globe, Loader2, ChevronRight, Check, Sparkles, Play
 } from 'lucide-react';
 import { hasActiveSubscription } from '../../utils/trialTracking';
 
@@ -34,13 +33,13 @@ export default function PaidOnboarding() {
   // Step 2: Business Goals
   const [businessGoals, setBusinessGoals] = useState('');
 
-  // Step 3 (questions) & Step 4 (launch)
+  // Step 3: Recommended questions (from new API)
+  const [selectedQuestions, setSelectedQuestions] = useState([]);
+  const [isGeneratingRecommended, setIsGeneratingRecommended] = useState(false);
+
+  // Step 4 (launch)
   const [brandData, setBrandData] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [questions, setQuestions] = useState([]);
-  const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [editText, setEditText] = useState('');
   const [error, setError] = useState('');
 
   // Step 4
@@ -111,38 +110,41 @@ export default function PaidOnboarding() {
     setIsAnalyzing(false);
   };
 
-  const generateQuestions = async (brand, userContext = null) => {
-    setIsGeneratingQuestions(true);
+  const fetchRecommendedQuestions = async () => {
+    setIsGeneratingRecommended(true);
+    setError('');
     try {
       const res = await fetch('/.netlify/functions/generate-questions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ brandData: brand, questionCount: questionLot, userContext: userContext || null })
+        body: JSON.stringify({
+          brandName: brandData?.brand_name || brandName,
+          brandUrl: normalizeUrl(brandUrl),
+          industry: brandData?.industry || '',
+          businessGoals: businessGoals.trim()
+        })
       });
       if (!res.ok) throw new Error('Failed to generate questions');
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      const list = (data.questions || []).map((q, i) => ({
-        id: i + 1,
-        text: q.text,
-        category: q.category || 'Consideration',
-        included: true
-      }));
-      setQuestions(list);
+      const list = (data.questions || []).map((text) => ({ text, included: true }));
+      setSelectedQuestions(list);
     } catch (e) {
-      setError(e.message || 'Failed to generate questions.');
-      setQuestions([
-        { id: 1, text: `What are the best ${brand?.category || 'solutions'}?`, category: 'Consideration', included: true },
-        { id: 2, text: `Top ${brand?.category || 'tools'} recommended by experts?`, category: 'Consideration', included: true },
-        { id: 3, text: `Which ${brand?.category || 'platforms'} should I use?`, category: 'Decision', included: true }
-      ]);
+      setError(e.message || 'Failed to generate recommended questions. Please try again.');
+      setSelectedQuestions([]);
     }
-    setIsGeneratingQuestions(false);
+    setIsGeneratingRecommended(false);
+  };
+
+  const toggleSelectedQuestion = (index) => {
+    setSelectedQuestions((prev) =>
+      prev.map((q, i) => (i === index ? { ...q, included: !q.included } : q))
+    );
   };
 
   const launchTracking = async () => {
     if (!brandData || !user?.id) return;
-    const activeQuestions = questions.filter(q => q.included);
+    const activeQuestions = selectedQuestions.filter((q) => q.included);
     if (activeQuestions.length === 0) {
       setError('Please include at least one question.');
       return;
@@ -170,7 +172,7 @@ export default function PaidOnboarding() {
           category: brandData.category,
           key_messages: brandData.key_benefits,
           competitors: brandData.competitors,
-          questions: activeQuestions.map(q => ({ text: q.text, category: q.category })),
+          questions: activeQuestions.map((q) => ({ text: q.text, category: 'Consideration' })),
           question_count: activeQuestions.length,
           business_goals: businessGoals.trim() || undefined,
           timestamp: new Date().toISOString()
@@ -182,15 +184,6 @@ export default function PaidOnboarding() {
       setError(e.message || 'Failed to launch tracking. Please try again.');
     }
     setIsLaunching(false);
-  };
-
-  const handleSaveEdit = (id) => {
-    setQuestions(qs => qs.map(q => (q.id === id ? { ...q, text: editText } : q)));
-    setEditingId(null);
-    setEditText('');
-  };
-  const handleToggle = (id) => {
-    setQuestions(qs => qs.map(q => (q.id === id ? { ...q, included: !q.included } : q)));
   };
 
   if (!isLoaded) {
@@ -335,73 +328,52 @@ export default function PaidOnboarding() {
                       setError('Please enter at least 20 characters so we can tailor your questions.');
                       return;
                     }
-                    await generateQuestions(brandData, businessGoals.trim());
                     setStep(3);
+                    await fetchRecommendedQuestions();
                   }}
                   disabled={businessGoals.trim().length < 20}
                   className="fp-button-primary flex-1 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isGeneratingQuestions ? <Loader2 className="w-5 h-5 animate-spin" /> : <ChevronRight className="w-4 h-4" />}
-                  {isGeneratingQuestions ? 'Generating…' : 'Continue'}
+                  <ChevronRight className="w-4 h-4" />
+                  Continue
                 </button>
               </div>
             </div>
           </>
         )}
 
-        {/* Step 3: Review/customize questions */}
+        {/* Step 3: Recommended Questions */}
         {step === 3 && (
           <>
             <div className="text-center mb-6">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 text-xs font-medium mb-4">
                 Step 3 of 4
               </div>
-              <h1 className="text-xl sm:text-2xl font-semibold mb-2">Review your tracking questions</h1>
-              <p className="text-white/70 text-sm">We generated these based on your brand. Edit or turn off any you don’t want.</p>
+              <h1 className="text-xl sm:text-2xl font-semibold mb-2">Recommended Questions</h1>
+              <p className="text-white/70 text-sm">We generated these based on your brand and goals. Select which to track.</p>
             </div>
 
             <div className="fp-card rounded-xl p-6 sm:p-8 border border-white/10 space-y-4">
-              {isGeneratingQuestions ? (
+              {isGeneratingRecommended && selectedQuestions.length === 0 ? (
                 <div className="flex items-center justify-center gap-2 py-8">
                   <Loader2 className="w-6 h-6 animate-spin" />
-                  <span>Generating questions…</span>
+                  <span>Generating recommended questions…</span>
                 </div>
               ) : (
                 <>
-                  {questions.map((q) => (
+                  {selectedQuestions.map((q, index) => (
                     <div
-                      key={q.id}
+                      key={index}
                       className="flex items-start gap-3 p-3 rounded-lg bg-white/5 border border-white/10"
                     >
                       <button
                         type="button"
-                        onClick={() => handleToggle(q.id)}
+                        onClick={() => toggleSelectedQuestion(index)}
                         className={`shrink-0 w-5 h-5 rounded border flex items-center justify-center mt-0.5 ${q.included ? 'bg-fp-orange border-fp-orange' : 'border-white/40'}`}
                       >
                         {q.included && <Check className="w-3 h-3 text-white" />}
                       </button>
-                      <div className="flex-1 min-w-0">
-                        {editingId === q.id ? (
-                          <div className="flex gap-2">
-                            <input
-                              value={editText}
-                              onChange={(e) => setEditText(e.target.value)}
-                              className="fp-input flex-1 px-3 py-2 rounded text-sm"
-                              autoFocus
-                            />
-                            <button type="button" onClick={() => handleSaveEdit(q.id)} className="fp-button-primary px-3 py-2 rounded text-sm">Save</button>
-                            <button type="button" onClick={() => { setEditingId(null); setEditText(''); }} className="fp-button-secondary px-3 py-2 rounded text-sm">Cancel</button>
-                          </div>
-                        ) : (
-                          <p className="text-sm text-white/90">{q.text}</p>
-                        )}
-                        <span className="text-xs text-white/50">{q.category}</span>
-                      </div>
-                      {editingId !== q.id && (
-                        <button type="button" onClick={() => { setEditingId(q.id); setEditText(q.text); }} className="shrink-0 p-1 text-white/50 hover:text-white">
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                      )}
+                      <p className="flex-1 min-w-0 text-sm text-white/90">{q.text}</p>
                     </div>
                   ))}
                   {error && <p className="text-red-400 text-sm">{error}</p>}
@@ -409,7 +381,12 @@ export default function PaidOnboarding() {
                     <button type="button" onClick={() => setStep(2)} className="fp-button-secondary flex-1 py-3 rounded-lg font-semibold">
                       Back
                     </button>
-                    <button type="button" onClick={() => setStep(4)} className="fp-button-primary flex-1 py-3 rounded-lg font-semibold flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setStep(4)}
+                      disabled={selectedQuestions.filter((q) => q.included).length === 0}
+                      className="fp-button-primary flex-1 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
                       Continue <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>
@@ -439,7 +416,7 @@ export default function PaidOnboarding() {
                 )}
                 <div>
                   <p className="font-semibold">{brandData?.brand_name}</p>
-                  <p className="text-sm text-white/60">{questions.filter(q => q.included).length} questions</p>
+                  <p className="text-sm text-white/60">{selectedQuestions.filter((q) => q.included).length} questions</p>
                 </div>
               </div>
               {error && <p className="text-red-400 text-sm">{error}</p>}

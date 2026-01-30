@@ -2116,10 +2116,20 @@ export function AppWithClerk({ vipMode = false }) {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Paid users on / (trial page) with no report: redirect to dashboard so trial page is never primary
-  // When ?report= is present, allow viewing the report at / with paid UI (no trial CTAs)
-  if (isLoaded && user && hasActiveSubscription(user) && location.pathname === '/' && !new URLSearchParams(location.search).get('report')) {
-    navigate('/dashboard', { replace: true });
+  const shouldRedirectPaidToDashboard =
+    isLoaded &&
+    user &&
+    hasActiveSubscription(user) &&
+    location.pathname === '/' &&
+    !new URLSearchParams(location.search).get('report');
+
+  useEffect(() => {
+    if (shouldRedirectPaidToDashboard) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [shouldRedirectPaidToDashboard, navigate]);
+
+  if (shouldRedirectPaidToDashboard) {
     return (
       <div className="min-h-screen fp-shell text-white flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-white/50" />

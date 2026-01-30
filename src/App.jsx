@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Zap, Loader2, CheckCircle, ArrowRight, RefreshCw, TrendingUp, TrendingDown, AlertCircle, X, Pencil, Check, Plus, ChevronRight, Eye, FileText, BarChart3, Download, Calendar, ChevronDown, Sparkles, Target, Activity, ArrowUpRight, ArrowDownRight, Minus, Mail, ExternalLink, Award, Users, MessageSquare, Search, Lightbulb, Globe, Link, Crown, Lock, Clock, Info, BookOpen } from 'lucide-react';
-import { UserButton, useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/clerk-react';
+import UserMenu from './components/UserMenu';
 // When running without Clerk, user is passed as prop (null) from main.jsx
 import { pdf } from '@react-pdf/renderer';
 import BrandedPDFReport from './components/BrandedPDFReport';
@@ -1056,7 +1057,7 @@ function AppContent({ vipMode = false, user }) {
               <span className="text-white/20">|</span>
               <span className="font-semibold">AI Visibility Tracker</span>
             </div>
-            {user && <UserButton afterSignOutUrl="/login" />}
+            {user && <UserMenu afterSignOutUrl="/login" />}
           </div>
         </header>
         <main className="max-w-2xl mx-auto px-8 py-16 animate-fadeIn">
@@ -1218,7 +1219,7 @@ function AppContent({ vipMode = false, user }) {
               <span className="text-white/20">|</span>
               <span className="font-semibold">AI Visibility Tracker</span>
             </div>
-            {user && <UserButton afterSignOutUrl="/login" />}
+            {user && <UserMenu afterSignOutUrl="/login" />}
           </div>
         </header>
         <main className="max-w-3xl mx-auto px-8 py-12 animate-fadeIn">
@@ -1370,7 +1371,7 @@ function AppContent({ vipMode = false, user }) {
               <span className="text-white/20">|</span>
               <span className="font-semibold">AI Visibility Tracker</span>
             </div>
-            {user && <UserButton afterSignOutUrl="/login" />}
+            {user && <UserMenu afterSignOutUrl="/login" />}
           </div>
         </header>
         <main className="max-w-xl mx-auto px-8 py-12 text-center animate-fadeIn">
@@ -1523,7 +1524,7 @@ function AppContent({ vipMode = false, user }) {
               <span className="text-white/20">|</span>
               <span className="font-semibold">AI Visibility Tracker</span>
             </div>
-            {user && <UserButton afterSignOutUrl="/login" />}
+            {user && <UserMenu afterSignOutUrl="/login" />}
           </div>
         </header>
         <main className="max-w-xl mx-auto px-8 py-24 text-center animate-fadeIn">
@@ -1594,7 +1595,7 @@ function AppContent({ vipMode = false, user }) {
                 <span>My Report</span>
               </button>
             )}
-            {user && <UserButton afterSignOutUrl="/login" />}
+            {user && <UserMenu afterSignOutUrl="/login" />}
           </div>
         </div>
       </header>

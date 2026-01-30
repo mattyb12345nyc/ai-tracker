@@ -46,13 +46,13 @@ export default function Dashboard() {
   const questionsUsed = reports.length * 5; // Assuming 5 questions per report
   const questionsRemaining = Math.max(0, questionAllotment - questionsUsed);
 
-  // Load user's reports from Airtable
+  // Load user's reports from Airtable (filtered by current user's Clerk ID)
   useEffect(() => {
-    if (user?.primaryEmailAddress?.emailAddress) {
+    if (user?.id) {
       loadUserReports();
       checkSetupStatus();
     }
-  }, [user]);
+  }, [user?.id]);
 
   const checkSetupStatus = () => {
     // Check localStorage for setup status
@@ -69,11 +69,12 @@ export default function Dashboard() {
   const loadUserReports = async () => {
     setIsLoadingReports(true);
     try {
-      const email = user?.primaryEmailAddress?.emailAddress;
-      if (!email) return;
+      const clerkUserId = user?.id;
+      if (!clerkUserId) return;
 
-      // For now, fetch all reports - in production, filter by user email
-      const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_DASHBOARD_TABLE_ID}?sort%5B0%5D%5Bfield%5D=report_date&sort%5B0%5D%5Bdirection%5D=desc&maxRecords=20`;
+      // Only fetch reports that belong to the current user (clerk_user_id)
+      const formula = `{clerk_user_id}="${String(clerkUserId).replace(/"/g, '\\"')}"`;
+      const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_DASHBOARD_TABLE_ID}?filterByFormula=${encodeURIComponent(formula)}&sort%5B0%5D%5Bfield%5D=report_date&sort%5B0%5D%5Bdirection%5D=desc&maxRecords=20`;
       const res = await fetch(url, {
         headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}` }
       });

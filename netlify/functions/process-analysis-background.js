@@ -933,7 +933,7 @@ async function analyzeRunData(results, brandName, validCompetitors, industry, ca
 }
 
 // Save dashboard output to Airtable
-async function saveDashboardOutput(analysis, runId, sessionId, brandLogo, brandAssets) {
+async function saveDashboardOutput(analysis, runId, sessionId, brandLogo, brandAssets, clerkUserId) {
   const tableId = "tblheMjYJzu1f88Ft";
   const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${tableId}`;
   const headers = {
@@ -996,6 +996,7 @@ async function saveDashboardOutput(analysis, runId, sessionId, brandLogo, brandA
   const fields = {
     run_id: runId,
     session_id: sessionId,
+    clerk_user_id: clerkUserId || "",
     brand_name: analysis.brand_name || "",
     brand_logo: brandLogo || "",
     report_date: new Date().toISOString().split("T")[0],
@@ -1176,6 +1177,7 @@ async function processAnalysis(data) {
     logo_url: logoUrl,
     brand_assets: brandAssets,
     email,
+    clerk_user_id: clerkUserId,
     industry,
     category,
     key_messages: keyMessages,
@@ -1239,8 +1241,8 @@ async function processAnalysis(data) {
   // Analyze aggregated data
   const aggregatedAnalysis = await analyzeRunData(results, brandName, competitorsList, industry || "", category || "");
 
-  // Save dashboard output
-  await saveDashboardOutput(aggregatedAnalysis, runId, sessionId, logoUrl || "", brandAssets || {});
+  // Save dashboard output (incl. clerk_user_id for trial report persistence)
+  await saveDashboardOutput(aggregatedAnalysis, runId, sessionId, logoUrl || "", brandAssets || {}, clerkUserId);
 
   // Send dashboard link via email
   await sendDashboardEmail(email, brandName, sessionId, aggregatedAnalysis);

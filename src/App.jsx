@@ -20,6 +20,7 @@ const AIRTABLE_RAW_TABLE_ID = 'tblusxWUrocGCwUHb';
 // ============================================================
 
 const STORAGE_KEY = 'ai-tracker-customer-v10';
+const TRIAL_REPORT_STORAGE_PREFIX = 'trial_report_';
 
 const platformLogos = {
   chatgpt: 'http://cdn.mcauto-images-production.sendgrid.net/d157e984273caff5/f7aa1278-3451-4421-8d3b-2de8511dd5ca/1500x469.png',
@@ -834,10 +835,22 @@ function AppContent({ vipMode = false, user }) {
         const record = json.records[0];
         const data = await parseReportData(record.fields);
         setDashboardData(data);
+        setSessionId(targetSessionId);
         setStep('complete');
       }
     } catch (e) { console.error('Error loading report by session:', e); }
   };
+
+  // Restore trial report from localStorage when user returns (no ?report= in URL)
+  useEffect(() => {
+    if (!user?.id || searchParams.get('report')) return;
+    const savedSessionId = localStorage.getItem(TRIAL_REPORT_STORAGE_PREFIX + user.id);
+    if (savedSessionId) {
+      setSessionId(savedSessionId);
+      loadReportBySessionId(savedSessionId);
+      setSearchParams({ report: savedSessionId });
+    }
+  }, [user?.id]);
 
   // Check for report and platform parameters in URL on mount and when URL changes
   useEffect(() => {
@@ -895,6 +908,10 @@ function AppContent({ vipMode = false, user }) {
         setDashboardData(data);
         clearInterval(pollingRef.current);
         setStep('ready');
+        // Persist trial report so it survives navigation (pricing → back to app)
+        if (user?.id && !hasActiveSubscription(user)) {
+          localStorage.setItem(TRIAL_REPORT_STORAGE_PREFIX + user.id, targetSessionId);
+        }
         console.log('Step set to ready');
         return true;
       }
@@ -955,6 +972,11 @@ function AppContent({ vipMode = false, user }) {
       }
     }
 
+    // Clear saved trial report when starting a new analysis (new report will be saved when complete)
+    if (user?.id) {
+      localStorage.removeItem(TRIAL_REPORT_STORAGE_PREFIX + user.id);
+    }
+
     const sid = `SES_${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)}_${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
     const runId = generateRunId();
     setSessionId(sid);
@@ -984,6 +1006,7 @@ function AppContent({ vipMode = false, user }) {
           logo_url: brandData.logo_url || '',
           brand_assets: brandData.brand_assets || {},
           email: email,
+          clerk_user_id: user?.id || '',
           industry: brandData.industry,
           category: brandData.category,
           key_messages: brandData.key_benefits,

@@ -18,6 +18,7 @@ Schema for Airtable base: appgSZR92pGCMlUOc
 | visibility_score | number | fldURLgIudO6JEPf4 |
 | grade | singleSelect | fldjtRRqZObGp2mNG |
 | session_id | singleLineText | fldWnXWFYj3hMGvUI |
+| clerk_user_id | singleLineText | (add in Airtable) — Clerk user ID for trial report persistence |
 | previous_score | singleSelect | fld5weLSt2EQ829lW |
 | best_model | singleSelect | fldbm29Y2xX1RCRGi |
 | worst_model | singleSelect | fldB8rQh2QxPcb5wm |

@@ -18,6 +18,8 @@ Schema for Airtable base: appgSZR92pGCMlUOc
 | visibility_score | number | fldURLgIudO6JEPf4 |
 | session_id | singleLineText | fldWnXWFYj3hMGvUI |
 | clerk_user_id | singleLineText | (add in Airtable) — Clerk user ID for trial report persistence |
+| is_trial | checkbox | (add in Airtable) — true = trial run (does not count against paid question allotment) |
+| question_count | number | (add in Airtable) — number of questions in this run (for allotment math) |
 | previous_score | singleSelect | fld5weLSt2EQ829lW |
 | best_model | singleSelect | fldbm29Y2xX1RCRGi |
 | worst_model | singleSelect | fldB8rQh2QxPcb5wm |

@@ -163,6 +163,7 @@ export default function PaidOnboarding() {
           brand_assets: brandData.brand_assets || {},
           email: user?.primaryEmailAddress?.emailAddress || '',
           clerk_user_id: user.id,
+          is_trial: false,
           industry: brandData.industry,
           category: brandData.category,
           key_messages: brandData.key_benefits,

@@ -933,7 +933,7 @@ async function analyzeRunData(results, brandName, validCompetitors, industry, ca
 }
 
 // Save dashboard output to Airtable
-async function saveDashboardOutput(analysis, runId, sessionId, brandLogo, brandAssets, clerkUserId) {
+async function saveDashboardOutput(analysis, runId, sessionId, brandLogo, brandAssets, clerkUserId, isTrial = false) {
   const tableId = "tblheMjYJzu1f88Ft";
   const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${tableId}`;
   const headers = {
@@ -987,10 +987,13 @@ async function saveDashboardOutput(analysis, runId, sessionId, brandLogo, brandA
     actions.push({ priority: "low", action: `Maintain ${best[0].charAt(0).toUpperCase() + best[0].slice(1)} performance`, impact: "Protect top performer", effort: "Low" });
   }
 
+  const numQuestions = analysis.num_questions_processed ?? 0;
   const fields = {
     run_id: runId,
     session_id: sessionId,
     clerk_user_id: clerkUserId || "",
+    is_trial: Boolean(isTrial),
+    question_count: String(numQuestions), // single line text in Airtable
     brand_name: analysis.brand_name || "",
     brand_logo: brandLogo || "",
     report_date: new Date().toISOString().split("T")[0],
@@ -1176,6 +1179,7 @@ async function processAnalysis(data) {
     key_messages: keyMessages,
     competitors,
     questions,
+    is_trial: isTrial = false,
   } = data;
 
   console.log(`Starting analysis for ${brandName} (${sessionId})`);
@@ -1234,8 +1238,8 @@ async function processAnalysis(data) {
   // Analyze aggregated data
   const aggregatedAnalysis = await analyzeRunData(results, brandName, competitorsList, industry || "", category || "");
 
-  // Save dashboard output (incl. clerk_user_id for trial report persistence)
-  await saveDashboardOutput(aggregatedAnalysis, runId, sessionId, logoUrl || "", brandAssets || {}, clerkUserId);
+  // Save dashboard output (incl. clerk_user_id, is_trial, question_count)
+  await saveDashboardOutput(aggregatedAnalysis, runId, sessionId, logoUrl || "", brandAssets || {}, clerkUserId, isTrial);
 
   // Send dashboard link via email
   await sendDashboardEmail(email, brandName, sessionId, aggregatedAnalysis);

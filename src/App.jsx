@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Zap, Loader2, CheckCircle, ArrowRight, RefreshCw, TrendingUp, TrendingDown, AlertCircle, X, Pencil, Check, Plus, ChevronRight, Eye, FileText, BarChart3, Download, Calendar, ChevronDown, Sparkles, Target, Activity, ArrowUpRight, ArrowDownRight, Minus, Mail, ExternalLink, Award, Users, MessageSquare, Search, Lightbulb, Globe, Link, Crown, Lock, Clock, Info, BookOpen } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import UserMenu from './components/UserMenu';
@@ -999,6 +999,7 @@ function AppContent({ vipMode = false, user }) {
           brand_assets: brandData.brand_assets || {},
           email: email,
           clerk_user_id: user?.id || '',
+          is_trial: !hasActiveSubscription(user),
           industry: brandData.industry,
           category: brandData.category,
           key_messages: brandData.key_benefits,
@@ -2090,8 +2091,21 @@ function AppContent({ vipMode = false, user }) {
 }
 
 // Wrapper that provides user from Clerk (only use inside ClerkProvider)
+// Paid users landing on "/" (trial page) are redirected to /dashboard so they never see trial as primary
 export function AppWithClerk({ vipMode = false }) {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  if (isLoaded && user && hasActiveSubscription(user) && location.pathname === '/' && !new URLSearchParams(location.search).get('report')) {
+    navigate('/dashboard', { replace: true });
+    return (
+      <div className="min-h-screen fp-shell text-white flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-white/50" />
+      </div>
+    );
+  }
+
   return <AppContent user={user} vipMode={vipMode} />;
 }
 

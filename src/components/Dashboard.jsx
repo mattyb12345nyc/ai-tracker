@@ -49,9 +49,11 @@ export default function Dashboard() {
     (subscription?.status === 'active' || subscription?.status === 'trialing') &&
     (subscription?.questionLot ?? 0) > 0;
 
-  // Question allotment from subscription or default free tier
+  // Question allotment from subscription or default free tier; only paid runs count against it
   const questionAllotment = hasActiveSubscription ? subscription.questionLot : 5; // Free tier: 5 questions
-  const questionsUsed = reports.length * 5; // Assuming 5 questions per report
+  const questionsUsed = reports
+    .filter((r) => r.is_trial !== true)
+    .reduce((sum, r) => sum + (r.question_count ?? 5), 0);
   const questionsRemaining = Math.max(0, questionAllotment - questionsUsed);
 
   // Load user's reports from Airtable (filtered by current user's Clerk ID)
@@ -110,6 +112,8 @@ export default function Dashboard() {
           report_date: record.fields.report_date,
           visibility_score: parseFloat(record.fields.visibility_score) || 0,
           brand_logo: record.fields.brand_logo || '',
+          is_trial: record.fields.is_trial === true,
+          question_count: record.fields.question_count != null ? Number(record.fields.question_count) : undefined,
         }));
         setReports(formattedReports);
 
@@ -202,6 +206,7 @@ export default function Dashboard() {
           brand_assets: brandData.brand_assets || {},
           email: user?.primaryEmailAddress?.emailAddress || '',
           clerk_user_id: user?.id || '',
+          is_trial: !hasActiveSubscription,
           industry: brandData.industry,
           category: brandData.category,
           key_messages: brandData.key_benefits,

@@ -101,7 +101,7 @@ export const handler = async (event) => {
           const clerkUserId = session.metadata?.clerkUserId || subscription.metadata?.clerkUserId;
 
           if (clerkUserId) {
-            await updateClerkUserMetadata(clerkUserId, {
+            const subscriptionData = {
               questionLot: parseInt(session.metadata?.questionLot || subscription.metadata?.questionLot),
               frequency: session.metadata?.frequency || subscription.metadata?.frequency,
               units: parseInt(session.metadata?.units || subscription.metadata?.units),
@@ -109,10 +109,12 @@ export const handler = async (event) => {
               stripeCustomerId: session.customer,
               stripeSubscriptionId: subscription.id,
               currentPeriodEnd: subscription.current_period_end
-            });
-            console.log('Updated Clerk user metadata for:', clerkUserId);
+            };
+            console.log('[stripe-webhook] checkout.session.completed – updating Clerk metadata', { clerkUserId, subscriptionData });
+            await updateClerkUserMetadata(clerkUserId, subscriptionData);
+            console.log('[stripe-webhook] Clerk user metadata updated successfully for', clerkUserId);
           } else {
-            console.error('No clerkUserId found in session or subscription metadata');
+            console.error('[stripe-webhook] No clerkUserId found in session or subscription metadata');
           }
         }
         break;
@@ -124,30 +126,22 @@ export const handler = async (event) => {
 
         const clerkUserId = subscription.metadata?.clerkUserId;
         if (clerkUserId) {
-          // Check if subscription is still active
+          const subscriptionData = {
+            questionLot: parseInt(subscription.metadata?.questionLot),
+            frequency: subscription.metadata?.frequency,
+            units: parseInt(subscription.metadata?.units),
+            status: subscription.status,
+            stripeCustomerId: subscription.customer,
+            stripeSubscriptionId: subscription.id,
+            currentPeriodEnd: subscription.current_period_end
+          };
+          console.log('[stripe-webhook] customer.subscription.updated – updating Clerk', { clerkUserId, status: subscription.status, subscriptionData });
           if (['active', 'trialing'].includes(subscription.status)) {
-            await updateClerkUserMetadata(clerkUserId, {
-              questionLot: parseInt(subscription.metadata?.questionLot),
-              frequency: subscription.metadata?.frequency,
-              units: parseInt(subscription.metadata?.units),
-              status: subscription.status,
-              stripeCustomerId: subscription.customer,
-              stripeSubscriptionId: subscription.id,
-              currentPeriodEnd: subscription.current_period_end
-            });
+            await updateClerkUserMetadata(clerkUserId, subscriptionData);
           } else if (['canceled', 'unpaid', 'past_due'].includes(subscription.status)) {
-            // Mark as inactive but keep the data
-            await updateClerkUserMetadata(clerkUserId, {
-              questionLot: parseInt(subscription.metadata?.questionLot),
-              frequency: subscription.metadata?.frequency,
-              units: parseInt(subscription.metadata?.units),
-              status: subscription.status,
-              stripeCustomerId: subscription.customer,
-              stripeSubscriptionId: subscription.id,
-              currentPeriodEnd: subscription.current_period_end
-            });
+            await updateClerkUserMetadata(clerkUserId, subscriptionData);
           }
-          console.log('Updated subscription status for:', clerkUserId);
+          console.log('[stripe-webhook] Clerk subscription metadata updated for', clerkUserId);
         }
         break;
       }
@@ -158,8 +152,9 @@ export const handler = async (event) => {
 
         const clerkUserId = subscription.metadata?.clerkUserId;
         if (clerkUserId) {
+          console.log('[stripe-webhook] customer.subscription.deleted – clearing Clerk subscription for', clerkUserId);
           await clearClerkUserSubscription(clerkUserId);
-          console.log('Cleared subscription for:', clerkUserId);
+          console.log('[stripe-webhook] Clerk subscription cleared for', clerkUserId);
         }
         break;
       }

@@ -8,6 +8,7 @@ import SignUpPage from './components/SignUpPage.jsx'
 import Dashboard from './components/Dashboard.jsx'
 import PricingPage from './components/PricingPage.jsx'
 import OnboardingFlow from './components/onboarding/OnboardingFlow.jsx'
+import PaidOnboarding from './components/onboarding/PaidOnboarding.jsx'
 import './index.css'
 
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
@@ -53,6 +54,14 @@ function ProtectedDashboard() {
   )
 }
 
+function ProtectedPaidOnboarding() {
+  return (
+    <ProtectedRoute>
+      <PaidOnboarding />
+    </ProtectedRoute>
+  )
+}
+
 // When Clerk is not configured: no auth, main app and dashboard are public
 function NoAuthRoutes() {
   return (
@@ -61,6 +70,7 @@ function NoAuthRoutes() {
       <Route path="/sign-up/*" element={<SignUpPage />} />
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/onboarding" element={<OnboardingFlow onComplete={(d) => { console.log('Onboarding data:', d); alert(JSON.stringify(d, null, 2)); }} />} />
+      <Route path="/onboarding/paid" element={<PaidOnboarding />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/vip/*" element={<AppContent user={null} vipMode={true} />} />
       <Route path="/*" element={<AppContent user={null} />} />
@@ -76,6 +86,7 @@ const AppRouter = () => (
         <Route path="/sign-up/*" element={<SignUpPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/onboarding" element={<OnboardingFlow onComplete={(d) => { console.log('Onboarding data:', d); alert(JSON.stringify(d, null, 2)); }} />} />
+        <Route path="/onboarding/paid" element={<ProtectedPaidOnboarding />} />
         <Route path="/dashboard" element={<ProtectedDashboard />} />
         <Route path="/vip/*" element={<ProtectedVipApp />} />
         <Route path="/*" element={<ProtectedApp />} />

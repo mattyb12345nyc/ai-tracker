@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useUser, UserButton } from '@clerk/clerk-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -28,8 +28,6 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const checkoutSuccess = searchParams.get('checkout') === 'success';
-  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-  const refetchCountRef = useRef(0);
 
   // Setup wizard state
   const [setupStep, setSetupStep] = useState('brand'); // brand, frequency, ready
@@ -64,32 +62,19 @@ export default function Dashboard() {
     }
   }, [user?.id]);
 
-  // Post-payment: refetch user when checkout=success so Clerk metadata (subscription) is up to date
+  // After checkout success: redirect to paid onboarding (don't show trial/dashboard)
   useEffect(() => {
-    if (!checkoutSuccess || !user?.reload || hasActiveSubscription) return;
-    const maxRefetches = 5;
-    const interval = setInterval(async () => {
-      if (refetchCountRef.current >= maxRefetches) {
-        clearInterval(interval);
-        return;
-      }
-      refetchCountRef.current += 1;
-      await user.reload();
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [checkoutSuccess, user?.id, hasActiveSubscription]);
-
-  // Show welcome modal when checkout=success and we have an active subscription (new subscriber)
-  useEffect(() => {
-    if (checkoutSuccess && hasActiveSubscription && !showWelcomeModal) {
-      setShowWelcomeModal(true);
-      setSearchParams(prev => {
-        const next = new URLSearchParams(prev);
-        next.delete('checkout');
-        return next;
-      }, { replace: true });
+    if (checkoutSuccess) {
+      navigate('/onboarding/paid?checkout=success', { replace: true });
     }
-  }, [checkoutSuccess, hasActiveSubscription, showWelcomeModal]);
+  }, [checkoutSuccess, navigate]);
+
+  // Paid user with no reports yet: redirect to paid onboarding (setup required)
+  useEffect(() => {
+    if (!isLoadingReports && hasActiveSubscription && reports.length === 0) {
+      navigate('/onboarding/paid', { replace: true });
+    }
+  }, [isLoadingReports, hasActiveSubscription, reports.length, navigate]);
 
   const checkSetupStatus = () => {
     // Check localStorage for setup status
@@ -216,6 +201,7 @@ export default function Dashboard() {
           logo_url: brandData.logo_url || '',
           brand_assets: brandData.brand_assets || {},
           email: user?.primaryEmailAddress?.emailAddress || '',
+          clerk_user_id: user?.id || '',
           industry: brandData.industry,
           category: brandData.category,
           key_messages: brandData.key_benefits,

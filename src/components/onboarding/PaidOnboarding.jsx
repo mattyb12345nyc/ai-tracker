@@ -31,7 +31,10 @@ export default function PaidOnboarding() {
   const [brandName, setBrandName] = useState('');
   const [brandUrl, setBrandUrl] = useState('');
 
-  // Step 2
+  // Step 2: Business Goals
+  const [businessGoals, setBusinessGoals] = useState('');
+
+  // Step 3 (questions) & Step 4 (launch)
   const [brandData, setBrandData] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [questions, setQuestions] = useState([]);
@@ -40,7 +43,7 @@ export default function PaidOnboarding() {
   const [editText, setEditText] = useState('');
   const [error, setError] = useState('');
 
-  // Step 3
+  // Step 4
   const [isLaunching, setIsLaunching] = useState(false);
 
   const subscription = user?.publicMetadata?.subscription;
@@ -101,7 +104,6 @@ export default function PaidOnboarding() {
       if (data.error) throw new Error(data.error);
       const dataWithName = { ...data.brandData, brand_name: brandName.trim() || data.brandData.brand_name };
       setBrandData(dataWithName);
-      await generateQuestions(dataWithName);
       setStep(2);
     } catch (e) {
       setError(e.message || 'Failed to analyze URL. Please try again.');
@@ -109,13 +111,13 @@ export default function PaidOnboarding() {
     setIsAnalyzing(false);
   };
 
-  const generateQuestions = async (brand) => {
+  const generateQuestions = async (brand, userContext = null) => {
     setIsGeneratingQuestions(true);
     try {
       const res = await fetch('/.netlify/functions/generate-questions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ brandData: brand, questionCount: questionLot, userContext: null })
+        body: JSON.stringify({ brandData: brand, questionCount: questionLot, userContext: userContext || null })
       });
       if (!res.ok) throw new Error('Failed to generate questions');
       const data = await res.json();
@@ -170,6 +172,7 @@ export default function PaidOnboarding() {
           competitors: brandData.competitors,
           questions: activeQuestions.map(q => ({ text: q.text, category: q.category })),
           question_count: activeQuestions.length,
+          business_goals: businessGoals.trim() || undefined,
           timestamp: new Date().toISOString()
         })
       });
@@ -254,7 +257,7 @@ export default function PaidOnboarding() {
 
             <div className="fp-card rounded-xl p-6 sm:p-8 border border-white/10">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 text-xs font-medium mb-6">
-                <span>Step 1 of 3</span>
+                <span>Step 1 of 4</span>
               </div>
               <h2 className="text-lg font-semibold mb-4">Enter your brand</h2>
               <div className="space-y-4">
@@ -293,12 +296,65 @@ export default function PaidOnboarding() {
           </>
         )}
 
-        {/* Step 2: Review/customize questions */}
+        {/* Step 2: Business Goals */}
         {step === 2 && (
           <>
             <div className="text-center mb-6">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 text-xs font-medium mb-4">
-                Step 2 of 3
+                Step 2 of 4
+              </div>
+              <h1 className="text-xl sm:text-2xl font-semibold mb-2">Business Goals</h1>
+              <p className="text-white/70 text-sm">This helps us personalize your tracking questions.</p>
+            </div>
+
+            <div className="fp-card rounded-xl p-6 sm:p-8 border border-white/10">
+              <label htmlFor="business-goals" className="block text-sm font-medium text-white/80 mb-2">
+                What are your main business goals for AI visibility tracking?
+              </label>
+              <textarea
+                id="business-goals"
+                value={businessGoals}
+                onChange={(e) => setBusinessGoals(e.target.value)}
+                placeholder="e.g., Increase brand awareness, track competitor mentions, monitor product recommendations, improve AI search rankings..."
+                rows={5}
+                className="fp-input w-full px-4 py-3 rounded-lg min-h-[120px] resize-y placeholder:text-white/40"
+              />
+              <p className="text-white/50 text-xs mt-2">
+                {businessGoals.trim().length} characters (minimum 20 required)
+              </p>
+              {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+              <div className="flex gap-3 pt-4">
+                <button type="button" onClick={() => setStep(1)} className="fp-button-secondary flex-1 py-3 rounded-lg font-semibold">
+                  Back
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setError('');
+                    if (businessGoals.trim().length < 20) {
+                      setError('Please enter at least 20 characters so we can tailor your questions.');
+                      return;
+                    }
+                    await generateQuestions(brandData, businessGoals.trim());
+                    setStep(3);
+                  }}
+                  disabled={businessGoals.trim().length < 20}
+                  className="fp-button-primary flex-1 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isGeneratingQuestions ? <Loader2 className="w-5 h-5 animate-spin" /> : <ChevronRight className="w-4 h-4" />}
+                  {isGeneratingQuestions ? 'Generating…' : 'Continue'}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Step 3: Review/customize questions */}
+        {step === 3 && (
+          <>
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 text-xs font-medium mb-4">
+                Step 3 of 4
               </div>
               <h1 className="text-xl sm:text-2xl font-semibold mb-2">Review your tracking questions</h1>
               <p className="text-white/70 text-sm">We generated these based on your brand. Edit or turn off any you don’t want.</p>
@@ -350,10 +406,10 @@ export default function PaidOnboarding() {
                   ))}
                   {error && <p className="text-red-400 text-sm">{error}</p>}
                   <div className="flex gap-3 pt-4">
-                    <button type="button" onClick={() => setStep(1)} className="fp-button-secondary flex-1 py-3 rounded-lg font-semibold">
+                    <button type="button" onClick={() => setStep(2)} className="fp-button-secondary flex-1 py-3 rounded-lg font-semibold">
                       Back
                     </button>
-                    <button type="button" onClick={() => setStep(3)} className="fp-button-primary flex-1 py-3 rounded-lg font-semibold flex items-center justify-center gap-2">
+                    <button type="button" onClick={() => setStep(4)} className="fp-button-primary flex-1 py-3 rounded-lg font-semibold flex items-center justify-center gap-2">
                       Continue <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>
@@ -363,12 +419,12 @@ export default function PaidOnboarding() {
           </>
         )}
 
-        {/* Step 3: Confirm and launch */}
-        {step === 3 && (
+        {/* Step 4: Confirm and launch */}
+        {step === 4 && (
           <>
             <div className="text-center mb-6">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 text-xs font-medium mb-4">
-                Step 3 of 3
+                Step 4 of 4
               </div>
               <h1 className="text-xl sm:text-2xl font-semibold mb-2">Ready to launch</h1>
               <p className="text-white/70 text-sm">We’ll run your first AI visibility track for <strong>{brandData?.brand_name}</strong>.</p>
@@ -388,7 +444,7 @@ export default function PaidOnboarding() {
               </div>
               {error && <p className="text-red-400 text-sm">{error}</p>}
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setStep(2)} className="fp-button-secondary flex-1 py-4 rounded-lg font-semibold">
+                <button type="button" onClick={() => setStep(3)} className="fp-button-secondary flex-1 py-4 rounded-lg font-semibold">
                   Back
                 </button>
                 <button

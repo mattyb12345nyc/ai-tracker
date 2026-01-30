@@ -369,8 +369,8 @@ function AppContent({ vipMode = false, user }) {
 
   // Navigate to platform deep dive (updates URL for browser back support)
   const handlePlatformDiveDeeper = (platform) => {
-    // VIP mode: no restrictions, allow all platforms
-    if (isVip) {
+    // VIP or paid: no restrictions, allow all platforms (dashboard view)
+    if (isVip || hasActiveSubscription(user)) {
       setSelectedPlatform(platform);
       if (sessionId) {
         setSearchParams({ report: sessionId, platform });
@@ -410,8 +410,8 @@ function AppContent({ vipMode = false, user }) {
   };
 
   const isPlatformLocked = (platform) => {
-    // VIP mode: nothing is locked
-    if (isVip) return false;
+    // VIP or paid: nothing is locked (dashboard view)
+    if (isVip || hasActiveSubscription(user)) return false;
     // Not locked if: no platforms viewed yet, or this platform was already viewed
     if (viewedPlatforms.size === 0 || viewedPlatforms.has(platform)) {
       return false;
@@ -1538,13 +1538,15 @@ function AppContent({ vipMode = false, user }) {
           </div>
         </main>
         
-        {/* Conversion Modal */}
-        <ConversionModal
-          isOpen={showConversionModal}
-          onClose={() => setShowConversionModal(false)}
-          onUpgrade={goToPricing}
-          context={conversionModalContext}
-        />
+        {/* Conversion Modal - trial only; paid users never see upgrade modal */}
+        {!hasActiveSubscription(user) && (
+          <ConversionModal
+            isOpen={showConversionModal}
+            onClose={() => setShowConversionModal(false)}
+            onUpgrade={goToPricing}
+            context={conversionModalContext}
+          />
+        )}
         
         <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } } .animate-fadeIn { animation: fadeIn 0.6s ease-out; }`}</style>
       </div>
@@ -1655,8 +1657,8 @@ function AppContent({ vipMode = false, user }) {
               </div>
             </div>
 
-            {/* UPGRADE CTA BANNER 1 - Hide for VIP */}
-            {!isVip && (
+            {/* UPGRADE CTA BANNER 1 - Trial only; paid users see dashboard view */}
+            {!isVip && !hasActiveSubscription(user) && (
               <div className="relative overflow-hidden rounded-2xl md:rounded-3xl p-6 md:p-8 bg-gradient-to-r from-[#ff7a3d]/20 via-[#ff6b4a]/15 to-[#6366f1]/20 border border-[#ff7a3d]/30">
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0djItSDI0di0yaDEyek0zNiAyNHYySDI0di0yaDEyeiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
                 <div className="relative flex flex-col md:flex-row items-center justify-between gap-4">
@@ -1851,7 +1853,7 @@ function AppContent({ vipMode = false, user }) {
                           </div>
                           <h3 className="font-semibold text-base md:text-lg text-white/90 mb-1 md:mb-2">{rec.title || rec.action}</h3>
                           <p className="text-xs md:text-sm fp-text-muted leading-relaxed mb-3">{rec.description || rec.detail || 'Implement this strategy to improve your AI visibility.'}</p>
-                          {!isVip && (
+                          {!isVip && !hasActiveSubscription(user) && (
                             <button
                               onClick={goToPricing}
                               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white/40 text-xs md:text-sm font-medium hover:bg-white/10 hover:text-white/60 hover:border-white/20 transition-all group"
@@ -1872,8 +1874,8 @@ function AppContent({ vipMode = false, user }) {
               </div>
             </div>
 
-            {/* UPGRADE CTA - WEEKLY MONITORING - Hide for VIP */}
-            {!isVip && (
+            {/* UPGRADE CTA - WEEKLY MONITORING - Trial only; paid users see dashboard view */}
+            {!isVip && !hasActiveSubscription(user) && (
               <div className="fp-card rounded-2xl md:rounded-3xl p-6 md:p-8 border-2 border-dashed border-[#ff7a3d]/40">
                 <div className="flex flex-col md:flex-row items-center gap-6">
                   <div className="flex-1 text-center md:text-left">
@@ -2054,8 +2056,8 @@ function AppContent({ vipMode = false, user }) {
         </div>
       </footer>
 
-      {/* STICKY BOTTOM UPGRADE BANNER - Shows on trial report, hide for VIP */}
-      {!isVip && dashboardData && !selectedPlatform && (
+      {/* STICKY BOTTOM UPGRADE BANNER - Trial only; paid users see dashboard view */}
+      {!isVip && !hasActiveSubscription(user) && dashboardData && !selectedPlatform && (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-[#1a1a2e] via-[#1f1f35] to-[#1a1a2e] border-t border-[#ff7a3d]/30 shadow-2xl backdrop-blur-xl">
           <div className="max-w-6xl mx-auto px-4 md:px-8 py-3 md:py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-3 text-center sm:text-left">
@@ -2077,13 +2079,15 @@ function AppContent({ vipMode = false, user }) {
         </div>
       )}
 
-      {/* Conversion Modal */}
-      <ConversionModal
-        isOpen={showConversionModal}
-        onClose={() => setShowConversionModal(false)}
-        onUpgrade={goToPricing}
-        context={conversionModalContext}
-      />
+      {/* Conversion Modal - trial only; paid users never see upgrade modal */}
+      {!hasActiveSubscription(user) && (
+        <ConversionModal
+          isOpen={showConversionModal}
+          onClose={() => setShowConversionModal(false)}
+          onUpgrade={goToPricing}
+          context={conversionModalContext}
+        />
+      )}
 
       <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } } .animate-fadeIn { animation: fadeIn 0.6s ease-out; }`}</style>
     </div>

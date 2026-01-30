@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import {
-  Zap, Globe, Loader2, ChevronRight, Check, Sparkles, Play
+  Zap, Globe, Loader2, ChevronRight, Check, Sparkles
 } from 'lucide-react';
 import { hasActiveSubscription } from '../../utils/trialTracking';
 
@@ -152,36 +152,23 @@ export default function PaidOnboarding() {
     setError('');
     setIsLaunching(true);
     try {
-      const sessionId = `SES_${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)}_${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
-      const runId = `RUN_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-
-      const res = await fetch('/.netlify/functions/process-analysis-background', {
+      const saveRes = await fetch('/.netlify/functions/save-onboarding', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          session_id: sessionId,
-          run_id: runId,
-          brand_name: brandData.brand_name,
-          brand_url: normalizeUrl(brandUrl),
-          logo_url: brandData.logo_url || '',
-          brand_assets: brandData.brand_assets || {},
-          email: user?.primaryEmailAddress?.emailAddress || '',
-          clerk_user_id: user.id,
-          is_trial: false,
-          industry: brandData.industry,
-          category: brandData.category,
-          key_messages: brandData.key_benefits,
-          competitors: brandData.competitors,
-          questions: activeQuestions.map((q) => ({ text: q.text, category: 'Consideration' })),
-          question_count: activeQuestions.length,
-          business_goals: businessGoals.trim() || undefined,
-          timestamp: new Date().toISOString()
+          clerkUserId: user.id,
+          brandName: brandData.brand_name,
+          brandUrl: normalizeUrl(brandUrl),
+          businessGoals: businessGoals.trim() || '',
+          selectedQuestions: activeQuestions.map((q) => q.text),
+          plan: { questionLot, frequency: subscription?.frequency || 'weekly' }
         })
       });
-      if (!res.ok) throw new Error('Failed to start tracking');
-      navigate(`/?report=${sessionId}`);
+      const saveData = await saveRes.json().catch(() => ({}));
+      if (!saveRes.ok) throw new Error(saveData.error || 'Failed to save onboarding');
+      navigate('/dashboard', { replace: true });
     } catch (e) {
-      setError(e.message || 'Failed to launch tracking. Please try again.');
+      setError(e.message || 'Failed to save. Please try again.');
     }
     setIsLaunching(false);
   };
@@ -403,8 +390,8 @@ export default function PaidOnboarding() {
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 text-xs font-medium mb-4">
                 Step 4 of 4
               </div>
-              <h1 className="text-xl sm:text-2xl font-semibold mb-2">Ready to launch</h1>
-              <p className="text-white/70 text-sm">We’ll run your first AI visibility track for <strong>{brandData?.brand_name}</strong>.</p>
+              <h1 className="text-xl sm:text-2xl font-semibold mb-2">Complete setup</h1>
+              <p className="text-white/70 text-sm">Save your brand and <strong>{selectedQuestions.filter((q) => q.included).length} questions</strong> for <strong>{brandData?.brand_name}</strong>, then go to your dashboard.</p>
             </div>
 
             <div className="fp-card rounded-xl p-6 sm:p-8 border border-white/10 space-y-4">
@@ -430,8 +417,8 @@ export default function PaidOnboarding() {
                   disabled={isLaunching}
                   className="fp-button-primary flex-1 py-4 rounded-lg font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
                 >
-                  {isLaunching ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
-                  {isLaunching ? 'Launching…' : 'Launch Tracking'}
+                  {isLaunching ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
+                  {isLaunching ? 'Saving…' : 'Complete Setup'}
                 </button>
               </div>
             </div>

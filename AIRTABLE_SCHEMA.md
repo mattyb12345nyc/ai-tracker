@@ -2,6 +2,30 @@
 
 Schema for Airtable base: appgSZR92pGCMlUOc
 
+## Table: Brands (paid onboarding)
+
+Create in Airtable and set `AIRTABLE_BRANDS_TABLE_ID` in Netlify env.
+
+| Field Name     | Type         | Notes                          |
+|----------------|--------------|--------------------------------|
+| clerk_user_id  | singleLineText | Clerk user ID                  |
+| brand_name     | singleLineText |                                |
+| brand_url      | singleLineText |                                |
+| business_goals | multilineText  |                                |
+| created_at     | singleLineText or date | ISO string recommended |
+
+## Table: Tracked Questions (paid onboarding)
+
+Create in Airtable and set `AIRTABLE_TRACKED_QUESTIONS_TABLE_ID` in Netlify env.
+
+| Field Name     | Type         | Notes                          |
+|----------------|--------------|--------------------------------|
+| clerk_user_id  | singleLineText | Clerk user ID                  |
+| brand_name     | singleLineText |                                |
+| question_text  | multilineText  |                                |
+| status         | singleLineText | e.g. "active"                  |
+| created_at     | singleLineText or date | ISO string recommended |
+
 ## Table: Dashboard Output
 - **ID:** tblheMjYJzu1f88Ft
 - **Primary Field ID:** fld1HasiDFOWfH9JT

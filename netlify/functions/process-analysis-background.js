@@ -942,12 +942,6 @@ async function saveDashboardOutput(analysis, runId, sessionId, brandLogo, brandA
   };
 
   const score = analysis.visibility_score || 0;
-  let grade;
-  if (score >= 90) grade = "A";
-  else if (score >= 80) grade = "B";
-  else if (score >= 70) grade = "C";
-  else if (score >= 60) grade = "D";
-  else grade = "F";
 
   const platformsSummary = analysis.platforms_summary || {};
   const platformsJson = {};
@@ -1001,7 +995,6 @@ async function saveDashboardOutput(analysis, runId, sessionId, brandLogo, brandA
     brand_logo: brandLogo || "",
     report_date: new Date().toISOString().split("T")[0],
     visibility_score: parseFloat(score),
-    grade,
     best_model: analysis.best_model || "",
     worst_model: analysis.worst_model || "",
     platforms_json: JSON.stringify(platformsJson),

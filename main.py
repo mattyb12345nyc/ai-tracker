@@ -333,14 +333,8 @@ def save_dashboard_output(analysis: dict, run_id: str, session_id: str, brand_lo
         "Content-Type": "application/json"
     }
     
-    # Calculate grade
     score = analysis.get('visibility_score', 0)
-    if score >= 90: grade = 'A'
-    elif score >= 80: grade = 'B'
-    elif score >= 70: grade = 'C'
-    elif score >= 60: grade = 'D'
-    else: grade = 'F'
-    
+
     # Build platforms_json
     platforms_summary = analysis.get('platforms_summary', {})
     platforms_json = {}
@@ -392,7 +386,6 @@ def save_dashboard_output(analysis: dict, run_id: str, session_id: str, brand_lo
         "brand_logo": brand_logo,
         "report_date": datetime.now().strftime('%Y-%m-%d'),
         "visibility_score": float(score),
-        "grade": grade,
         "best_model": analysis.get('best_model', ''),
         "worst_model": analysis.get('worst_model', ''),
         "platforms_json": json.dumps(platforms_json),

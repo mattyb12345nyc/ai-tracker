@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useUser, UserButton } from '@clerk/clerk-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Globe, Link, ArrowRight, Loader2, CheckCircle, Calendar,
   BarChart3, TrendingUp, FileText, Zap, Settings, CreditCard,
@@ -19,9 +19,17 @@ const frequencyOptions = [
   { value: 'monthly', label: 'Monthly', description: 'Track changes every 30 days' },
 ];
 
+function getFrequencyLabel(frequency) {
+  return frequencyOptions.find(o => o.value === frequency)?.label || (frequency ? String(frequency).charAt(0).toUpperCase() + String(frequency).slice(1) : '');
+}
+
 export default function Dashboard() {
   const { user, isLoaded } = useUser();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const checkoutSuccess = searchParams.get('checkout') === 'success';
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const refetchCountRef = useRef(0);
 
   // Setup wizard state
   const [setupStep, setSetupStep] = useState('brand'); // brand, frequency, ready
@@ -37,9 +45,11 @@ export default function Dashboard() {
   const [isRunningAnalysis, setIsRunningAnalysis] = useState(false);
   const [error, setError] = useState('');
 
-  // Get subscription from Clerk user metadata
+  // Get subscription from Clerk user metadata (must have status + questionLot for "active")
   const subscription = user?.publicMetadata?.subscription;
-  const hasActiveSubscription = subscription?.status === 'active' || subscription?.status === 'trialing';
+  const hasActiveSubscription =
+    (subscription?.status === 'active' || subscription?.status === 'trialing') &&
+    (subscription?.questionLot ?? 0) > 0;
 
   // Question allotment from subscription or default free tier
   const questionAllotment = hasActiveSubscription ? subscription.questionLot : 5; // Free tier: 5 questions
@@ -53,6 +63,33 @@ export default function Dashboard() {
       checkSetupStatus();
     }
   }, [user?.id]);
+
+  // Post-payment: refetch user when checkout=success so Clerk metadata (subscription) is up to date
+  useEffect(() => {
+    if (!checkoutSuccess || !user?.reload || hasActiveSubscription) return;
+    const maxRefetches = 5;
+    const interval = setInterval(async () => {
+      if (refetchCountRef.current >= maxRefetches) {
+        clearInterval(interval);
+        return;
+      }
+      refetchCountRef.current += 1;
+      await user.reload();
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [checkoutSuccess, user?.id, hasActiveSubscription]);
+
+  // Show welcome modal when checkout=success and we have an active subscription (new subscriber)
+  useEffect(() => {
+    if (checkoutSuccess && hasActiveSubscription && !showWelcomeModal) {
+      setShowWelcomeModal(true);
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev);
+        next.delete('checkout');
+        return next;
+      }, { replace: true });
+    }
+  }, [checkoutSuccess, hasActiveSubscription, showWelcomeModal]);
 
   const checkSetupStatus = () => {
     // Check localStorage for setup status
@@ -87,7 +124,6 @@ export default function Dashboard() {
           brand_name: record.fields.brand_name,
           report_date: record.fields.report_date,
           visibility_score: parseFloat(record.fields.visibility_score) || 0,
-          grade: record.fields.grade || 'C',
           brand_logo: record.fields.brand_logo || '',
         }));
         setReports(formattedReports);
@@ -210,14 +246,6 @@ export default function Dashboard() {
     date: new Date(report.report_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     score: report.visibility_score,
   }));
-
-  const gradeColors = {
-    'A': 'text-green-400',
-    'B': 'text-blue-400',
-    'C': 'text-yellow-400',
-    'D': 'text-orange-400',
-    'F': 'text-red-400'
-  };
 
   if (!isLoaded) {
     return (
@@ -504,11 +532,13 @@ export default function Dashboard() {
                   <Calendar className="w-4 h-4" style={{ color: 'var(--fp-accent-1)' }} />
                   <span className="text-xs fp-text-muted">Plan</span>
                 </div>
-                <p className="text-2xl font-bold capitalize">
-                  {hasActiveSubscription ? subscription.frequency : 'Free'}
+                <p className="text-2xl font-bold">
+                  {hasActiveSubscription
+                    ? `${subscription.questionLot || 0} Questions ${getFrequencyLabel(subscription.frequency) || subscription.frequency || ''}`
+                    : 'Free'}
                 </p>
                 <p className="text-xs fp-text-muted">
-                  {hasActiveSubscription ? `${subscription.questionLot} questions` : 'Limited tier'}
+                  {hasActiveSubscription ? 'Your plan' : 'Limited tier'}
                 </p>
               </div>
             </div>
@@ -672,9 +702,7 @@ export default function Dashboard() {
 
                       <div className="text-right">
                         <p className="text-xl font-bold">{report.visibility_score}</p>
-                        <p className={`text-sm font-semibold ${gradeColors[report.grade]}`}>
-                          Grade {report.grade}
-                        </p>
+                        <p className="text-sm fp-text-muted">Score</p>
                       </div>
 
                       <ChevronRight className="w-5 h-5 fp-text-muted" />

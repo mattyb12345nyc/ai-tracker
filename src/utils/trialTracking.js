@@ -142,5 +142,7 @@ export function getTrialStatus(userId) {
  */
 export function hasActiveSubscription(user) {
   const subscription = user?.publicMetadata?.subscription;
-  return subscription?.status === 'active' || subscription?.status === 'trialing';
+  const statusOk = subscription?.status === 'active' || subscription?.status === 'trialing';
+  const hasPlan = (subscription?.questionLot ?? 0) > 0;
+  return Boolean(statusOk && hasPlan);
 }

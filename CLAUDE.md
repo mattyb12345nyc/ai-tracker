@@ -82,7 +82,7 @@ Each AI response scored 0-100:
 - **recommendation**: Explicitly recommended?
 - **overall**: Weighted average
 
-Grades: A (90+), B (80-89), C (70-79), D (60-69), F (<60)
+Visibility is reported as a numeric score (0–100) only; letter grades have been removed.
 
 ## Current Pricing Model
 - Base: $50 per unit

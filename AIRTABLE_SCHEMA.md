@@ -16,7 +16,6 @@ Schema for Airtable base: appgSZR92pGCMlUOc
 | report_date | date | fldP12Ma2RtRxiOtj |
 | deck_url | multilineText | fldFXqSwO06oaQgO8 |
 | visibility_score | number | fldURLgIudO6JEPf4 |
-| grade | singleSelect | fldjtRRqZObGp2mNG |
 | session_id | singleLineText | fldWnXWFYj3hMGvUI |
 | clerk_user_id | singleLineText | (add in Airtable) — Clerk user ID for trial report persistence |
 | previous_score | singleSelect | fld5weLSt2EQ829lW |

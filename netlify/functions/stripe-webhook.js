@@ -80,6 +80,15 @@ export const handler = async (event) => {
 
   console.log('Received Stripe event:', stripeEvent.type);
 
+  const needsClerk = ['checkout.session.completed', 'customer.subscription.updated', 'customer.subscription.deleted'].includes(stripeEvent.type);
+  if (needsClerk && !clerkSecretKey) {
+    console.error('CLERK_SECRET_KEY is not set; cannot update user metadata');
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Server configuration error' })
+    };
+  }
+
   try {
     switch (stripeEvent.type) {
       case 'checkout.session.completed': {

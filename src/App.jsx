@@ -164,14 +164,6 @@ const FormattedResponse = ({ text }) => {
   );
 };
 
-const gradeColors = {
-  'A': { text: 'text-[#ff8a80]', bg: 'bg-[#ff8a80]/20', border: 'border-[#ff8a80]/30' },
-  'B': { text: 'text-[#ff6b4a]', bg: 'bg-[#ff6b4a]/20', border: 'border-[#ff6b4a]/30' },
-  'C': { text: 'text-[#f97316]', bg: 'bg-[#f97316]/20', border: 'border-[#f97316]/30' },
-  'D': { text: 'text-[#a855f7]', bg: 'bg-[#a855f7]/20', border: 'border-[#a855f7]/30' },
-  'F': { text: 'text-[#d4a5a5]', bg: 'bg-[#d4a5a5]/20', border: 'border-[#d4a5a5]/30' }
-};
-
 const PROGRESS_STAGES = [
   { id: 1, label: 'Querying ChatGPT', icon: 'chatgpt', duration: 35 },
   { id: 2, label: 'Querying Claude', icon: 'claude', duration: 35 },
@@ -793,7 +785,6 @@ function AppContent({ vipMode = false, user }) {
       run_id: fields.run_id,
       report_date: fields.report_date || new Date().toLocaleDateString(),
       visibility_score: parseFloat(fields.visibility_score) || 0,
-      grade: fields.grade || 'C',
       executive_summary: parse(fields.executive_summary_json, {}),
       brand_rankings: brandRankings,
       brand_rank: parseInt(fields.brand_rank) || null,

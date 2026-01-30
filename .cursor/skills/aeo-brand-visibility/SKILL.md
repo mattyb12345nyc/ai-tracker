@@ -46,7 +46,7 @@ When implementing AI visibility tracking:
 1. **Query design**: Use **buyer-intent questions** (best X, X vs Y, alternatives, comparisons) that mirror how people ask AI for recommendations.
 2. **Structured scoring**: Store per-platform, per-query scores for mention, position, sentiment, recommendation (e.g. 0–100) plus competitor lists. Persist raw responses for auditing.
 3. **Aggregations**: Compute mention rate, share of voice, and platform-level averages. Support time-series for trends.
-4. **Reporting**: Surface visibility score, grades (e.g. A–F), best/worst platforms, and actionable insights (e.g. “Improve sentiment on Claude for category X”).
+4. **Reporting**: Surface visibility score (numeric 0–100), best/worst platforms, and actionable insights (e.g. “Improve sentiment on Claude for category X”).
 
 ## Optimization Guidance
 

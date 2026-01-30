@@ -778,6 +778,8 @@ function AppContent({ vipMode = false, user }) {
       }
     }
 
+    // Report data for display. Do NOT add is_trial/created_during_trial—UI uses
+    // user's current subscription (hasActiveSubscription), not report origin.
     const reportData = {
       brand_name: fields.brand_name,
       brand_logo: fields.brand_logo || '',
@@ -1554,16 +1556,19 @@ function AppContent({ vipMode = false, user }) {
   }
 
   // ============================================================
-  // RENDER - COMPLETE/DASHBOARD STEP
+  // RENDER - COMPLETE/DASHBOARD STEP (Report view)
+  // UI uses user's CURRENT subscription (isPaidUser), not report origin.
+  // Legacy reports (created during trial, viewed after payment) get full paid UI.
   // ============================================================
+  const isPaidUser = hasActiveSubscription(user);
   return (
     <div className="min-h-screen text-white fp-shell font-body">
       {/* Decorative gradient spheres */}
       <div className="fp-sphere fp-sphere-1" />
       <div className="fp-sphere fp-sphere-2" />
 
-      {/* Trial Status Banner - Sticky at top */}
-      {!isVip && trialStatus && !hasActiveSubscription(user) && (
+      {/* Trial Status Banner - Sticky at top (trial only) */}
+      {!isVip && trialStatus && !isPaidUser && (
         <TrialStatusBanner
           trialStatus={trialStatus}
           onUpgrade={goToPricing}
@@ -1579,6 +1584,16 @@ function AppContent({ vipMode = false, user }) {
             <span className="font-semibold text-sm md:text-base hidden sm:inline">AI Visibility Tracker</span>
           </div>
           <div className="flex items-center gap-3">
+            {/* Paid users: "View in Dashboard" to see report in dashboard context */}
+            {sessionId && isPaidUser && (
+              <button
+                onClick={() => navigate(`/dashboard?report=${sessionId}`)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-[#ff7a3d] to-[#ff6b4a] text-white text-sm font-semibold hover:opacity-90 transition-all shadow-lg shadow-[#ff6b4a]/20"
+              >
+                <BarChart3 className="w-4 h-4" />
+                <span>View in Dashboard</span>
+              </button>
+            )}
             {/* Persistent "My Report" button when user has a report */}
             {sessionId && (
               <button
@@ -1658,7 +1673,7 @@ function AppContent({ vipMode = false, user }) {
             </div>
 
             {/* UPGRADE CTA BANNER 1 - Trial only; paid users see dashboard view */}
-            {!isVip && !hasActiveSubscription(user) && (
+            {!isVip && !isPaidUser && (
               <div className="relative overflow-hidden rounded-2xl md:rounded-3xl p-6 md:p-8 bg-gradient-to-r from-[#ff7a3d]/20 via-[#ff6b4a]/15 to-[#6366f1]/20 border border-[#ff7a3d]/30">
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0djItSDI0di0yaDEyek0zNiAyNHYySDI0di0yaDEyeiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
                 <div className="relative flex flex-col md:flex-row items-center justify-between gap-4">
@@ -1853,7 +1868,7 @@ function AppContent({ vipMode = false, user }) {
                           </div>
                           <h3 className="font-semibold text-base md:text-lg text-white/90 mb-1 md:mb-2">{rec.title || rec.action}</h3>
                           <p className="text-xs md:text-sm fp-text-muted leading-relaxed mb-3">{rec.description || rec.detail || 'Implement this strategy to improve your AI visibility.'}</p>
-                          {!isVip && !hasActiveSubscription(user) && (
+                          {!isVip && !isPaidUser && (
                             <button
                               onClick={goToPricing}
                               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white/40 text-xs md:text-sm font-medium hover:bg-white/10 hover:text-white/60 hover:border-white/20 transition-all group"
@@ -1875,7 +1890,7 @@ function AppContent({ vipMode = false, user }) {
             </div>
 
             {/* UPGRADE CTA - WEEKLY MONITORING - Trial only; paid users see dashboard view */}
-            {!isVip && !hasActiveSubscription(user) && (
+            {!isVip && !isPaidUser && (
               <div className="fp-card rounded-2xl md:rounded-3xl p-6 md:p-8 border-2 border-dashed border-[#ff7a3d]/40">
                 <div className="flex flex-col md:flex-row items-center gap-6">
                   <div className="flex-1 text-center md:text-left">
@@ -2057,7 +2072,7 @@ function AppContent({ vipMode = false, user }) {
       </footer>
 
       {/* STICKY BOTTOM UPGRADE BANNER - Trial only; paid users see dashboard view */}
-      {!isVip && !hasActiveSubscription(user) && dashboardData && !selectedPlatform && (
+      {!isVip && !isPaidUser && dashboardData && !selectedPlatform && (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-[#1a1a2e] via-[#1f1f35] to-[#1a1a2e] border-t border-[#ff7a3d]/30 shadow-2xl backdrop-blur-xl">
           <div className="max-w-6xl mx-auto px-4 md:px-8 py-3 md:py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-3 text-center sm:text-left">
@@ -2080,7 +2095,7 @@ function AppContent({ vipMode = false, user }) {
       )}
 
       {/* Conversion Modal - trial only; paid users never see upgrade modal */}
-      {!hasActiveSubscription(user) && (
+      {!isPaidUser && (
         <ConversionModal
           isOpen={showConversionModal}
           onClose={() => setShowConversionModal(false)}
@@ -2101,6 +2116,8 @@ export function AppWithClerk({ vipMode = false }) {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Paid users on / (trial page) with no report: redirect to dashboard so trial page is never primary
+  // When ?report= is present, allow viewing the report at / with paid UI (no trial CTAs)
   if (isLoaded && user && hasActiveSubscription(user) && location.pathname === '/' && !new URLSearchParams(location.search).get('report')) {
     navigate('/dashboard', { replace: true });
     return (

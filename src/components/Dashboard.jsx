@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useUser, UserButton } from '@clerk/clerk-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -28,6 +28,8 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const checkoutSuccess = searchParams.get('checkout') === 'success';
+  const reportParam = searchParams.get('report');
+  const reportCardRef = useRef(null);
 
   // Setup wizard state
   const [setupStep, setSetupStep] = useState('brand'); // brand, frequency, ready
@@ -49,7 +51,8 @@ export default function Dashboard() {
     (subscription?.status === 'active' || subscription?.status === 'trialing') &&
     (subscription?.questionLot ?? 0) > 0;
 
-  // Question allotment from subscription or default free tier; only paid runs count against it
+  // Question allotment from subscription or default free tier; only paid runs count against it.
+  // (report.is_trial is for allotment only—report DISPLAY UI uses current user subscription, not report origin.)
   const questionAllotment = hasActiveSubscription ? subscription.questionLot : 5; // Free tier: 5 questions
   const questionsUsed = reports
     .filter((r) => r.is_trial !== true)
@@ -72,11 +75,23 @@ export default function Dashboard() {
   }, [checkoutSuccess, navigate]);
 
   // Paid user with no reports yet: redirect to paid onboarding (setup required)
+  // Skip redirect if user just completed onboarding (so they land on dashboard, not loop back)
   useEffect(() => {
-    if (!isLoadingReports && hasActiveSubscription && reports.length === 0) {
+    const justCompleted = typeof sessionStorage !== 'undefined' && sessionStorage.getItem('onboarding_just_completed');
+    if (justCompleted) sessionStorage.removeItem('onboarding_just_completed');
+    if (!isLoadingReports && hasActiveSubscription && reports.length === 0 && !justCompleted) {
       navigate('/onboarding/paid', { replace: true });
     }
   }, [isLoadingReports, hasActiveSubscription, reports.length, navigate]);
+
+  // When ?report= is present, scroll to and highlight that report card
+  useEffect(() => {
+    if (!reportParam || reports.length === 0) return;
+    const timer = setTimeout(() => {
+      reportCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [reportParam, reports]);
 
   const checkSetupStatus = () => {
     // Check localStorage for setup status
@@ -664,7 +679,8 @@ export default function Dashboard() {
                   {reports.map((report, index) => (
                     <div
                       key={report.id}
-                      className="flex items-center gap-4 p-4 rounded-xl fp-card hover:bg-white/5 transition-all cursor-pointer"
+                      ref={reportParam === report.session_id ? reportCardRef : undefined}
+                      className={`flex items-center gap-4 p-4 rounded-xl fp-card hover:bg-white/5 transition-all cursor-pointer ${reportParam === report.session_id ? 'ring-2 ring-[#ff7a3d] ring-offset-2 ring-offset-[#0f0f14]' : ''}`}
                       onClick={() => viewReport(report.session_id)}
                     >
                       {report.brand_logo ? (

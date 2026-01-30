@@ -7,6 +7,7 @@ import {
 import { hasActiveSubscription } from '../../utils/trialTracking';
 
 const FREQUENCY_LABELS = { weekly: 'Weekly', biweekly: 'Bi-weekly', monthly: 'Monthly' };
+const TRIAL_REPORT_STORAGE_PREFIX = 'trial_report_';
 
 function normalizeUrl(input) {
   let normalized = (input || '').trim().toLowerCase();
@@ -143,7 +144,11 @@ export default function PaidOnboarding() {
   };
 
   const launchTracking = async () => {
-    if (!brandData || !user?.id) return;
+    console.log('[PaidOnboarding] Launch Tracking clicked');
+    if (!brandData || !user?.id) {
+      console.warn('[PaidOnboarding] launchTracking early return: missing brandData or user.id');
+      return;
+    }
     const activeQuestions = selectedQuestions.filter((q) => q.included);
     if (activeQuestions.length === 0) {
       setError('Please include at least one question.');
@@ -152,22 +157,44 @@ export default function PaidOnboarding() {
     setError('');
     setIsLaunching(true);
     try {
+      const payload = {
+        clerkUserId: user.id,
+        brandName: brandData.brand_name,
+        brandUrl: normalizeUrl(brandUrl),
+        businessGoals: businessGoals.trim() || '',
+        selectedQuestions: activeQuestions.map((q) => q.text),
+        plan: { questionLot, frequency: subscription?.frequency || 'weekly' }
+      };
+      console.log('[PaidOnboarding] Calling save-onboarding with payload (no questions list):', { ...payload, selectedQuestions: payload.selectedQuestions?.length });
       const saveRes = await fetch('/.netlify/functions/save-onboarding', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clerkUserId: user.id,
-          brandName: brandData.brand_name,
-          brandUrl: normalizeUrl(brandUrl),
-          businessGoals: businessGoals.trim() || '',
-          selectedQuestions: activeQuestions.map((q) => q.text),
-          plan: { questionLot, frequency: subscription?.frequency || 'weekly' }
-        })
+        body: JSON.stringify(payload)
       });
-      const saveData = await saveRes.json().catch(() => ({}));
-      if (!saveRes.ok) throw new Error(saveData.error || 'Failed to save onboarding');
+      const saveData = await saveRes.json().catch((parseErr) => {
+        console.error('[PaidOnboarding] save-onboarding response parse error:', parseErr);
+        return {};
+      });
+      console.log('[PaidOnboarding] save-onboarding response:', { status: saveRes.status, ok: saveRes.ok, saveData });
+      if (!saveRes.ok) {
+        throw new Error(saveData.error || `Failed to save onboarding (${saveRes.status})`);
+      }
+      // Clear any stored trial report so paid user never gets redirected to old trial report
+      if (user.id && typeof localStorage !== 'undefined') {
+        const trialKey = TRIAL_REPORT_STORAGE_PREFIX + user.id;
+        if (localStorage.getItem(trialKey)) {
+          localStorage.removeItem(trialKey);
+          console.log('[PaidOnboarding] Cleared trial report from localStorage:', trialKey);
+        }
+      }
+      // Tell Dashboard not to redirect back to onboarding (user just completed it; 0 reports is expected)
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem('onboarding_just_completed', '1');
+      }
+      console.log('[PaidOnboarding] Navigating to /dashboard (replace)');
       navigate('/dashboard', { replace: true });
     } catch (e) {
+      console.error('[PaidOnboarding] launchTracking error:', e);
       setError(e.message || 'Failed to save. Please try again.');
     }
     setIsLaunching(false);

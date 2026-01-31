@@ -272,7 +272,7 @@ export default function Dashboard() {
 
       if (!analysisRes.ok) throw new Error(responseText || 'Failed to start analysis');
 
-      navigate(`/?report=${sessionId}`);
+      navigate(`/dashboard?report=${sessionId}`);
     } catch (err) {
       console.error('[Dashboard] runAnalysisWithQuestions error:', err);
       setError(err.message || 'Failed to run analysis. Please try again.');
@@ -325,7 +325,7 @@ export default function Dashboard() {
       if (!analysisRes.ok) throw new Error('Failed to start analysis');
 
       // Redirect to the report page or show success
-      navigate(`/?report=${sessionId}`);
+      navigate(`/dashboard?report=${sessionId}`);
     } catch (err) {
       setError('Failed to run analysis. Please try again.');
       console.error('[Dashboard] runAnalysis error:', err);
@@ -334,7 +334,7 @@ export default function Dashboard() {
   };
 
   const viewReport = (sessionId) => {
-    navigate(`/?report=${sessionId}`);
+    navigate(`/dashboard?report=${sessionId}`);
   };
 
   const toggleTrackedQuestion = (index) => {

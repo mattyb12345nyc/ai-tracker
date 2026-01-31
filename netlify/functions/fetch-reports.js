@@ -51,6 +51,10 @@ export const handler = async (event) => {
 
     const escaped = String(clerkUserId).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
     const formula = `{clerk_user_id}="${escaped}"`;
+
+    console.log('fetch-reports: clerk_user_id =', clerkUserId);
+    console.log('fetch-reports: filterByFormula =', formula);
+
     const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${DASHBOARD_TABLE_ID}?filterByFormula=${encodeURIComponent(formula)}&sort%5B0%5D%5Bfield%5D=report_date&sort%5B0%5D%5Bdirection%5D=desc&maxRecords=20`;
 
     const res = await fetch(url, {
@@ -68,7 +72,11 @@ export const handler = async (event) => {
     }
 
     const json = await res.json();
-    const reports = (json.records || []).map(record => ({
+    const records = json.records || [];
+    console.log('fetch-reports: records found =', records.length);
+
+    // Return only matching reports; never fall back to all reports when none match.
+    const reports = records.map(record => ({
       id: record.id,
       session_id: record.fields.session_id,
       brand_name: record.fields.brand_name,

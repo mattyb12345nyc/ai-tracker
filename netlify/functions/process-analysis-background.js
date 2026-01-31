@@ -1241,8 +1241,34 @@ async function processAnalysis(data) {
   // Save dashboard output (incl. clerk_user_id, is_trial, question_count)
   await saveDashboardOutput(aggregatedAnalysis, runId, sessionId, logoUrl || "", brandAssets || {}, clerkUserId, isTrial);
 
-  // Send dashboard link via email
-  await sendDashboardEmail(email, brandName, sessionId, aggregatedAnalysis);
+  // Paid user: send report email via send-report-email (fetches email from Clerk, links to /dashboard?report=)
+  if (clerkUserId) {
+    try {
+      const reportEmailUrl = `${SITE_URL.replace(/\/$/, "")}/.netlify/functions/send-report-email`;
+      const reportRes = await fetch(reportEmailUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: sessionId,
+          clerk_user_id: clerkUserId,
+          brand_name: brandName,
+          visibility_score: aggregatedAnalysis.visibility_score ?? 0,
+        }),
+      });
+      if (!reportRes.ok) {
+        console.error("send-report-email failed:", reportRes.status, await reportRes.text());
+      } else {
+        console.log("Report email sent for paid user", clerkUserId);
+      }
+    } catch (e) {
+      console.error("send-report-email error:", e);
+    }
+  }
+
+  // Trial: send dashboard link via email (uses email from request body)
+  if (email) {
+    await sendDashboardEmail(email, brandName, sessionId, aggregatedAnalysis);
+  }
 
   console.log(`Analysis complete for ${brandName}`);
   return aggregatedAnalysis;

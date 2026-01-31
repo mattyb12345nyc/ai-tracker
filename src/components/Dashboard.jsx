@@ -4,14 +4,30 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Globe, Link, ArrowRight, Loader2, CheckCircle, Check, Calendar,
   BarChart3, TrendingUp, FileText, Zap, Settings, CreditCard,
-  ChevronRight, Play, Clock, Target, Sparkles, AlertCircle, X, Pencil
+  ChevronRight, Play, Clock, Target, Sparkles, AlertCircle, X, Pencil, Mail
 } from 'lucide-react';
+import { loadReportBySessionId, platformLogos, platformNames } from '../utils/reportData';
+import ReportView from './ReportView';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 
 const FUTUREPROOF_LOGO = 'http://cdn.mcauto-images-production.sendgrid.net/d157e984273caff5/d19d829c-a9a9-4fad-b0e7-7938012be26c/800x200.png';
 const AIRTABLE_TOKEN = import.meta.env.VITE_AIRTABLE_TOKEN || '';
 const AIRTABLE_BASE_ID = 'appgSZR92pGCMlUOc';
 const AIRTABLE_DASHBOARD_TABLE_ID = 'tblheMjYJzu1f88Ft';
+const AIRTABLE_RAW_TABLE_ID = 'tblusxWUrocGCwUHb';
+
+const PROGRESS_STAGES = [
+  { id: 1, label: 'Querying ChatGPT', icon: 'chatgpt', duration: 35 },
+  { id: 2, label: 'Querying Claude', icon: 'claude', duration: 35 },
+  { id: 3, label: 'Querying Gemini', icon: 'gemini', duration: 35 },
+  { id: 4, label: 'Querying Perplexity', icon: 'perplexity', duration: 35 },
+  { id: 5, label: 'Extracting brand mentions & rankings', icon: null, duration: 30 },
+  { id: 6, label: 'Analyzing sentiment across platforms', icon: null, duration: 30 },
+  { id: 7, label: 'Calculating share of voice', icon: null, duration: 25 },
+  { id: 8, label: 'Identifying brand keywords', icon: null, duration: 25 },
+  { id: 9, label: 'Generating executive insights', icon: null, duration: 30 },
+  { id: 10, label: 'Building your report', icon: null, duration: 20 }
+];
 
 const frequencyOptions = [
   { value: 'weekly', label: 'Weekly', description: 'Track changes every 7 days' },
@@ -29,7 +45,9 @@ export default function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const checkoutSuccess = searchParams.get('checkout') === 'success';
   const reportParam = searchParams.get('report');
+  const processingParam = searchParams.get('processing') === 'true';
   const reportCardRef = useRef(null);
+  const processingPollingRef = useRef(null);
 
   // Setup wizard state
   const [setupStep, setSetupStep] = useState('brand'); // brand, frequency, ready
@@ -51,6 +69,12 @@ export default function Dashboard() {
   const [isLoadingTrackedQuestions, setIsLoadingTrackedQuestions] = useState(false);
   const [editingQuestionId, setEditingQuestionId] = useState(null);
   const [editQuestionText, setEditQuestionText] = useState('');
+
+  // Report view (after Run Tracker Study completes): parsed report data when viewing /dashboard?report=SESSION_ID
+  const [reportDataForView, setReportDataForView] = useState(null);
+  const [processingStage, setProcessingStage] = useState(0);
+  const [processingStageProgress, setProcessingStageProgress] = useState(0);
+  const [pollCount, setPollCount] = useState(0);
 
   // Get subscription from Clerk user metadata (must have status + questionLot for "active")
   const subscription = user?.publicMetadata?.subscription;
@@ -93,14 +117,93 @@ export default function Dashboard() {
     }
   }, [isLoadingReports, hasActiveSubscription, reports.length, navigate]);
 
-  // When ?report= is present, scroll to and highlight that report card
+  // When ?report= is present, scroll to and highlight that report card (only when not in processing/report view)
   useEffect(() => {
-    if (!reportParam || reports.length === 0) return;
+    if (!reportParam || reports.length === 0 || processingParam || reportDataForView) return;
     const timer = setTimeout(() => {
       reportCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 300);
     return () => clearTimeout(timer);
-  }, [reportParam, reports]);
+  }, [reportParam, reports, processingParam, reportDataForView]);
+
+  const reportAirtableConfig = {
+    baseId: AIRTABLE_BASE_ID,
+    dashboardTableId: AIRTABLE_DASHBOARD_TABLE_ID,
+    rawTableId: AIRTABLE_RAW_TABLE_ID,
+    token: AIRTABLE_TOKEN
+  };
+
+  // Poll get-analysis-status every 5 seconds; when complete, load report and remove processing
+  const pollForReport = async (targetSessionId) => {
+    setPollCount((c) => c + 1);
+    try {
+      const res = await fetch(`/.netlify/functions/get-analysis-status?session_id=${encodeURIComponent(targetSessionId)}`);
+      const data = await res.json().catch(() => ({}));
+      if (data.status === 'complete') {
+        if (processingPollingRef.current) clearInterval(processingPollingRef.current);
+        const reportData = await loadReportBySessionId(targetSessionId, reportAirtableConfig);
+        if (reportData) {
+          setReportDataForView(reportData);
+          setSearchParams({ report: targetSessionId }, { replace: true });
+          loadUserReports();
+        }
+      }
+    } catch (err) {
+      console.error('[Dashboard] get-analysis-status poll error:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (!reportParam || !processingParam) return;
+    pollForReport(reportParam);
+    processingPollingRef.current = setInterval(() => pollForReport(reportParam), 5000);
+    return () => {
+      if (processingPollingRef.current) clearInterval(processingPollingRef.current);
+    };
+  }, [reportParam, processingParam]);
+
+  // Progress animation during processing
+  useEffect(() => {
+    if (!processingParam) return;
+    const totalDuration = PROGRESS_STAGES.reduce((sum, s) => sum + s.duration, 0);
+    let elapsed = 0;
+    const interval = setInterval(() => {
+      elapsed += 0.5;
+      let cumulative = 0;
+      for (let i = 0; i < PROGRESS_STAGES.length; i++) {
+        cumulative += PROGRESS_STAGES[i].duration;
+        if (elapsed < cumulative) {
+          setProcessingStage(i);
+          const stageStart = cumulative - PROGRESS_STAGES[i].duration;
+          const stageElapsed = elapsed - stageStart;
+          setProcessingStageProgress(Math.min(100, (stageElapsed / PROGRESS_STAGES[i].duration) * 100));
+          break;
+        }
+      }
+      if (elapsed >= totalDuration) {
+        setProcessingStage(PROGRESS_STAGES.length - 1);
+        setProcessingStageProgress(100);
+      }
+    }, 500);
+    return () => clearInterval(interval);
+  }, [processingParam]);
+
+  // When viewing report by URL (e.g. /dashboard?report=X without processing), load report if not in state
+  useEffect(() => {
+    if (!reportParam || processingParam) return;
+    if (reportDataForView?.session_id === reportParam) return;
+    let cancelled = false;
+    loadReportBySessionId(reportParam, reportAirtableConfig).then((data) => {
+      if (!cancelled && data) setReportDataForView(data);
+    });
+    return () => { cancelled = true; };
+  }, [reportParam, processingParam, reportDataForView?.session_id]);
+
+  // Clear report view data when leaving report URL (e.g. user clicks "Back to Dashboard")
+  const handleBackToDashboard = () => {
+    setReportDataForView(null);
+    navigate('/dashboard');
+  };
 
   const checkSetupStatus = () => {
     // Check localStorage for setup status
@@ -272,7 +375,8 @@ export default function Dashboard() {
 
       if (!analysisRes.ok) throw new Error(responseText || 'Failed to start analysis');
 
-      navigate(`/dashboard?report=${sessionId}`);
+      // Show processing view and poll until report is ready (same flow as trial)
+      navigate(`/dashboard?report=${sessionId}&processing=true`);
     } catch (err) {
       console.error('[Dashboard] runAnalysisWithQuestions error:', err);
       setError(err.message || 'Failed to run analysis. Please try again.');
@@ -368,6 +472,111 @@ export default function Dashboard() {
       <div className="min-h-screen fp-shell flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-white/50" />
       </div>
+    );
+  }
+
+  // Processing view: /dashboard?report=SESSION_ID&processing=true (same as trial in App.jsx)
+  if (reportParam && processingParam) {
+    return (
+      <div className="min-h-screen text-white fp-shell font-body">
+        <div className="fp-sphere fp-sphere-1" />
+        <div className="fp-sphere fp-sphere-2" />
+        <header className="fp-header sticky top-0 backdrop-blur-xl z-40">
+          <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <img src={FUTUREPROOF_LOGO} alt="FutureProof" className="h-8" />
+              <span className="text-white/20">|</span>
+              <span className="font-semibold">Dashboard</span>
+            </div>
+            <UserButton afterSignOutUrl="/login" />
+          </div>
+        </header>
+        <main className="max-w-xl mx-auto px-8 py-12 text-center animate-fadeIn">
+          <div className="mb-8">
+            {brandData?.logo_url && (
+              <img src={brandData.logo_url} alt={brandData.brand_name} className="h-16 mx-auto mb-4 object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
+            )}
+            {brandData?.brand_name && <p className="text-lg font-semibold text-white/90 mb-2">{brandData.brand_name}</p>}
+            <div className="relative w-28 h-28 mx-auto mb-6">
+              <div className="absolute inset-0 rounded-full animate-fp-pulse" style={{ background: 'linear-gradient(135deg, rgba(255, 122, 61, 0.3), rgba(139, 92, 246, 0.3))' }} />
+              <div className="absolute inset-2 rounded-full animate-fp-spin" style={{ background: 'conic-gradient(from 0deg, var(--fp-accent-1), var(--fp-accent-3), var(--fp-accent-1))', mask: 'radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 4px))', WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 4px), black calc(100% - 4px))' }} />
+              <div className="absolute inset-5 rounded-full" style={{ background: 'var(--fp-bg-1)' }} />
+              <div className="absolute inset-5 rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full animate-fp-glow fp-icon-gradient" style={{ boxShadow: '0 0 20px rgba(255, 122, 61, 0.5)' }} />
+              </div>
+              <div className="absolute inset-0 animate-fp-orbit">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full" style={{ background: 'var(--fp-accent-1)', boxShadow: '0 0 10px rgba(255, 122, 61, 0.8)' }} />
+              </div>
+              <div className="absolute inset-0 animate-fp-orbit-reverse">
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full" style={{ background: 'var(--fp-accent-3)', boxShadow: '0 0 10px rgba(139, 92, 246, 0.8)' }} />
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold mb-2">Analyzing your brand across AI platforms...</h2>
+            <p className="fp-text-muted">This takes about 5 minutes. You'll receive an email when ready.</p>
+            <p className="fp-text-subtle text-sm mt-2">Feel free to close this page.</p>
+          </div>
+          <div className="space-y-4">
+            {PROGRESS_STAGES.map((stage, i) => (
+              <div key={stage.id} className={`p-4 rounded-xl transition-all ${i < processingStage ? 'fp-stage-complete' : i === processingStage ? 'fp-stage-active' : 'fp-card'}`}>
+                <div className="flex items-center gap-4">
+                  {stage.icon ? (
+                    <img src={platformLogos[stage.icon]} alt={stage.icon} className="w-8 h-8 object-contain" />
+                  ) : (
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${i < processingStage ? 'fp-checkbox' : i === processingStage ? 'fp-checkbox' : 'bg-white/10'}`}>
+                      {i < processingStage ? <Check className="w-4 h-4" /> : <span className="text-sm">{stage.id}</span>}
+                    </div>
+                  )}
+                  <div className="flex-1 text-left">
+                    <p className={`font-medium ${i <= processingStage ? 'text-white' : 'fp-text-muted'}`}>{stage.label}</p>
+                    {i === processingStage && (
+                      <div className="h-1 fp-progress-bar rounded-full mt-2 overflow-hidden">
+                        <div className="h-full fp-progress-fill transition-all duration-500" style={{ width: `${processingStageProgress}%` }} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+            {processingStage === PROGRESS_STAGES.length - 1 && processingStageProgress >= 100 && (
+              <div className="mt-6 p-4 rounded-xl fp-card-strong text-center animate-fadeIn">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Loader2 className="w-5 h-5 animate-spin" style={{ color: 'var(--fp-accent-1)' }} />
+                  <span className="font-semibold">Finalizing your report...</span>
+                </div>
+                <p className="text-sm fp-text-muted">Almost done! We're compiling insights from all AI platforms.</p>
+              </div>
+            )}
+          </div>
+        </main>
+        <style>{`
+          @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+          .animate-fadeIn { animation: fadeIn 0.6s ease-out; }
+          @keyframes fp-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+          .animate-fp-spin { animation: fp-spin 1.5s linear infinite; }
+          @keyframes fp-pulse { 0%, 100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.1); opacity: 0.8; } }
+          .animate-fp-pulse { animation: fp-pulse 2s ease-in-out infinite; }
+          @keyframes fp-glow { 0%, 100% { transform: scale(0.9); opacity: 0.7; } 50% { transform: scale(1); opacity: 1; } }
+          .animate-fp-glow { animation: fp-glow 1.5s ease-in-out infinite; }
+          @keyframes fp-orbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+          .animate-fp-orbit { animation: fp-orbit 3s linear infinite; }
+          @keyframes fp-orbit-reverse { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+          .animate-fp-orbit-reverse { animation: fp-orbit-reverse 2s linear infinite; }
+        `}</style>
+      </div>
+    );
+  }
+
+  // Full report view: /dashboard?report=SESSION_ID (no upgrade CTAs, Back to Dashboard)
+  if (reportParam && reportDataForView) {
+    return (
+      <ReportView
+        dashboardData={reportDataForView}
+        sessionId={reportParam}
+        isPaidUser={true}
+        onBackToDashboard={handleBackToDashboard}
+        searchParams={searchParams}
+        setSearchParams={setSearchParams}
+      />
     );
   }
 

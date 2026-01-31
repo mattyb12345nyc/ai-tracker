@@ -2116,18 +2116,45 @@ export function AppWithClerk({ vipMode = false }) {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const reportParam = new URLSearchParams(location.search).get('report');
+  const hasSubscription = user && hasActiveSubscription(user);
   const shouldRedirectPaidToDashboard =
     isLoaded &&
     user &&
-    hasActiveSubscription(user) &&
+    hasSubscription &&
     location.pathname === '/' &&
-    !new URLSearchParams(location.search).get('report');
+    !reportParam;
+
+  if (typeof window !== 'undefined' && location.pathname === '/') {
+    console.log('[AppWithClerk] Render on /:', {
+      isLoaded,
+      hasUser: Boolean(user),
+      hasSubscription,
+      reportParam: reportParam || null,
+      shouldRedirectPaidToDashboard
+    });
+  }
 
   useEffect(() => {
-    if (shouldRedirectPaidToDashboard) {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [shouldRedirectPaidToDashboard, navigate]);
+    if (!shouldRedirectPaidToDashboard) return;
+    console.log('[AppWithClerk] Paid user on / (no report): redirecting to /dashboard', {
+      pathname: location.pathname,
+      search: location.search
+    });
+    navigate('/dashboard', { replace: true });
+  }, [shouldRedirectPaidToDashboard, navigate, location.pathname, location.search]);
+
+  // If redirect didn't complete (e.g. returning from Clerk "Back to app"), force full navigation after short delay
+  useEffect(() => {
+    if (!shouldRedirectPaidToDashboard) return;
+    const t = setTimeout(() => {
+      if (window.location.pathname === '/' && !window.location.search.includes('report=')) {
+        console.warn('[AppWithClerk] Still on / after redirect attempt; forcing window.location to /dashboard');
+        window.location.replace('/dashboard');
+      }
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [shouldRedirectPaidToDashboard]);
 
   if (shouldRedirectPaidToDashboard) {
     return (

@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useUser, UserButton } from '@clerk/clerk-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  Globe, Link, ArrowRight, Loader2, CheckCircle, Calendar,
+  Globe, Link, ArrowRight, Loader2, CheckCircle, Check, Calendar,
   BarChart3, TrendingUp, FileText, Zap, Settings, CreditCard,
-  ChevronRight, Play, Clock, Target, Sparkles, AlertCircle
+  ChevronRight, Play, Clock, Target, Sparkles, AlertCircle, X, Pencil
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 
@@ -45,6 +45,13 @@ export default function Dashboard() {
   const [isRunningAnalysis, setIsRunningAnalysis] = useState(false);
   const [error, setError] = useState('');
 
+  // Run Tracker Study modal: review tracked questions before running
+  const [showRunStudyModal, setShowRunStudyModal] = useState(false);
+  const [trackedQuestionsForRun, setTrackedQuestionsForRun] = useState([]);
+  const [isLoadingTrackedQuestions, setIsLoadingTrackedQuestions] = useState(false);
+  const [editingQuestionId, setEditingQuestionId] = useState(null);
+  const [editQuestionText, setEditQuestionText] = useState('');
+
   // Get subscription from Clerk user metadata (must have status + questionLot for "active")
   const subscription = user?.publicMetadata?.subscription;
   const hasActiveSubscription =
@@ -52,12 +59,14 @@ export default function Dashboard() {
     (subscription?.questionLot ?? 0) > 0;
 
   // Question allotment from subscription or default free tier; only paid runs count against it.
-  // (report.is_trial is for allotment only—report DISPLAY UI uses current user subscription, not report origin.)
   const questionAllotment = hasActiveSubscription ? subscription.questionLot : 5; // Free tier: 5 questions
   const questionsUsed = reports
     .filter((r) => r.is_trial !== true)
     .reduce((sum, r) => sum + (r.question_count ?? 5), 0);
   const questionsRemaining = Math.max(0, questionAllotment - questionsUsed);
+
+  // Only show paid reports (exclude trial) in list and chart — trial reports used different questions
+  const paidOnlyReports = reports.filter((r) => r.is_trial !== true);
 
   // Load user's reports from Airtable (filtered by current user's Clerk ID)
   useEffect(() => {
@@ -190,6 +199,87 @@ export default function Dashboard() {
     setIsSetupComplete(true);
   };
 
+  const openRunStudyModal = async () => {
+    console.log('[Dashboard] Run Tracker Study clicked');
+    setError('');
+    setShowRunStudyModal(true);
+    if (!user?.id) return;
+    setIsLoadingTrackedQuestions(true);
+    try {
+      const res = await fetch('/.netlify/functions/get-tracked-questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clerkUserId: user.id })
+      });
+      const data = await res.json().catch(() => ({}));
+      console.log('[Dashboard] get-tracked-questions response:', { status: res.status, ok: res.ok, data });
+      if (!res.ok) throw new Error(data.error || 'Failed to load tracked questions');
+      const list = (data.questions || []).map((q) => ({ ...q, included: true }));
+      setTrackedQuestionsForRun(list);
+    } catch (err) {
+      console.error('[Dashboard] get-tracked-questions error:', err);
+      setError(err.message || 'Failed to load tracked questions.');
+      setTrackedQuestionsForRun([]);
+    }
+    setIsLoadingTrackedQuestions(false);
+  };
+
+  const runAnalysisWithQuestions = async (questionItems) => {
+    const activeQuestions = questionItems.filter((q) => q.included);
+    const questionTexts = activeQuestions.map((q) => (q.editedText !== undefined ? q.editedText : q.question_text)).filter(Boolean);
+    if (!brandData || questionTexts.length === 0) {
+      console.warn('[Dashboard] runAnalysisWithQuestions: missing brandData or no questions', { hasBrandData: !!brandData, count: questionTexts.length });
+      setError('Select at least one question and ensure brand is set.');
+      return;
+    }
+    console.log('[Dashboard] runAnalysisWithQuestions: starting', { brandName: brandData.brand_name, questionCount: questionTexts.length });
+    setIsRunningAnalysis(true);
+    setError('');
+    setShowRunStudyModal(false);
+
+    try {
+      const sessionId = `SES_${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)}_${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+      const runId = `RUN_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+      const payload = {
+        session_id: sessionId,
+        run_id: runId,
+        brand_name: brandData.brand_name,
+        brand_url: normalizeUrl(brandUrl),
+        logo_url: brandData.logo_url || '',
+        brand_assets: brandData.brand_assets || {},
+        email: user?.primaryEmailAddress?.emailAddress || '',
+        clerk_user_id: user?.id || '',
+        is_trial: false,
+        industry: brandData.industry,
+        category: brandData.category,
+        key_messages: brandData.key_benefits,
+        competitors: brandData.competitors,
+        questions: questionTexts.map((text) => ({ text, category: 'Custom' })),
+        question_count: questionTexts.length,
+        timestamp: new Date().toISOString()
+      };
+      console.log('[Dashboard] process-analysis-background payload (no questions list):', { ...payload, questions: payload.questions?.length });
+
+      const analysisRes = await fetch('/.netlify/functions/process-analysis-background', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const responseText = await analysisRes.text();
+      console.log('[Dashboard] process-analysis-background response:', { status: analysisRes.status, body: responseText.slice(0, 200) });
+
+      if (!analysisRes.ok) throw new Error(responseText || 'Failed to start analysis');
+
+      navigate(`/?report=${sessionId}`);
+    } catch (err) {
+      console.error('[Dashboard] runAnalysisWithQuestions error:', err);
+      setError(err.message || 'Failed to run analysis. Please try again.');
+    }
+    setIsRunningAnalysis(false);
+  };
+
   const runAnalysis = async () => {
     if (!brandData) return;
     setIsRunningAnalysis(true);
@@ -238,7 +328,7 @@ export default function Dashboard() {
       navigate(`/?report=${sessionId}`);
     } catch (err) {
       setError('Failed to run analysis. Please try again.');
-      console.error(err);
+      console.error('[Dashboard] runAnalysis error:', err);
     }
     setIsRunningAnalysis(false);
   };
@@ -247,8 +337,28 @@ export default function Dashboard() {
     navigate(`/?report=${sessionId}`);
   };
 
-  // Chart data from reports
-  const chartData = [...reports].reverse().map(report => ({
+  const toggleTrackedQuestion = (index) => {
+    setTrackedQuestionsForRun((prev) =>
+      prev.map((q, i) => (i === index ? { ...q, included: !q.included } : q))
+    );
+  };
+
+  const startEditQuestion = (index) => {
+    const q = trackedQuestionsForRun[index];
+    setEditingQuestionId(q.id);
+    setEditQuestionText(q.editedText !== undefined ? q.editedText : q.question_text);
+  };
+
+  const saveEditQuestion = (index) => {
+    setTrackedQuestionsForRun((prev) =>
+      prev.map((q, i) => (i === index ? { ...q, editedText: editQuestionText } : q))
+    );
+    setEditingQuestionId(null);
+    setEditQuestionText('');
+  };
+
+  // Chart data from paid reports only (exclude trial)
+  const chartData = [...paidOnlyReports].reverse().map(report => ({
     date: new Date(report.report_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     score: report.visibility_score,
   }));
@@ -520,7 +630,7 @@ export default function Dashboard() {
                   <FileText className="w-4 h-4" style={{ color: 'var(--fp-accent-2)' }} />
                   <span className="text-xs fp-text-muted">Reports</span>
                 </div>
-                <p className="text-2xl font-bold">{reports.length}</p>
+                <p className="text-2xl font-bold">{paidOnlyReports.length}</p>
                 <p className="text-xs fp-text-muted">total generated</p>
               </div>
 
@@ -529,7 +639,7 @@ export default function Dashboard() {
                   <TrendingUp className="w-4 h-4" style={{ color: 'var(--fp-accent-3)' }} />
                   <span className="text-xs fp-text-muted">Latest Score</span>
                 </div>
-                <p className="text-2xl font-bold">{reports[0]?.visibility_score || '-'}</p>
+                <p className="text-2xl font-bold">{paidOnlyReports[0]?.visibility_score || '-'}</p>
                 <p className="text-xs fp-text-muted">visibility score</p>
               </div>
 
@@ -552,7 +662,7 @@ export default function Dashboard() {
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
               <button
-                onClick={runAnalysis}
+                onClick={openRunStudyModal}
                 disabled={isRunningAnalysis || questionsRemaining < 5}
                 className="flex-1 py-4 rounded-xl fp-button-primary disabled:opacity-50 disabled:cursor-not-allowed font-semibold flex items-center justify-center gap-3"
               >
@@ -564,7 +674,7 @@ export default function Dashboard() {
                 ) : (
                   <>
                     <Play className="w-5 h-5" />
-                    Run {reports.length === 0 ? 'First' : 'New'} Track
+                    Run {paidOnlyReports.length === 0 ? 'First' : 'New'} Tracker Study
                   </>
                 )}
               </button>
@@ -660,23 +770,23 @@ export default function Dashboard() {
                   <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 fp-text-muted" />
                   <p className="fp-text-muted">Loading reports...</p>
                 </div>
-              ) : reports.length === 0 ? (
+              ) : paidOnlyReports.length === 0 ? (
                 <div className="py-12 text-center">
                   <FileText className="w-12 h-12 mx-auto mb-4 fp-text-muted" />
                   <p className="text-lg font-semibold mb-2">No reports yet</p>
-                  <p className="fp-text-muted mb-6">Run your first track to generate a visibility report</p>
+                  <p className="fp-text-muted mb-6">Run your first tracker study to generate a visibility report</p>
                   <button
-                    onClick={runAnalysis}
+                    onClick={openRunStudyModal}
                     disabled={isRunningAnalysis}
                     className="px-6 py-3 rounded-xl fp-button-primary font-semibold inline-flex items-center gap-2"
                   >
                     <Play className="w-4 h-4" />
-                    Run First Track
+                    Run First Tracker Study
                   </button>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {reports.map((report, index) => (
+                  {paidOnlyReports.map((report, index) => (
                     <div
                       key={report.id}
                       ref={reportParam === report.session_id ? reportCardRef : undefined}
@@ -721,6 +831,106 @@ export default function Dashboard() {
           </>
         )}
       </main>
+
+      {/* Run Tracker Study modal: review tracked questions before running */}
+      {showRunStudyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="fp-card rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-4 md:p-6 border-b border-white/10">
+              <h2 className="text-lg font-bold">Run Tracker Study</h2>
+              <button
+                type="button"
+                onClick={() => { setShowRunStudyModal(false); setEditingQuestionId(null); setEditQuestionText(''); }}
+                className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 md:p-6 overflow-y-auto flex-1">
+              <p className="text-sm fp-text-muted mb-4">Review your tracked questions. Select which to include and edit if needed, then run the study.</p>
+              {isLoadingTrackedQuestions ? (
+                <div className="flex items-center justify-center gap-2 py-8">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                  <span>Loading tracked questions…</span>
+                </div>
+              ) : trackedQuestionsForRun.length === 0 ? (
+                <div className="py-8 text-center fp-text-muted">
+                  <p className="mb-2">No tracked questions found.</p>
+                  <p className="text-sm">Complete paid onboarding to save your questions, then run a tracker study from here.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {trackedQuestionsForRun.map((q, index) => (
+                    <div
+                      key={q.id || index}
+                      className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/10"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => toggleTrackedQuestion(index)}
+                        className={`shrink-0 w-5 h-5 rounded border flex items-center justify-center mt-0.5 ${q.included ? 'bg-fp-orange border-fp-orange' : 'border-white/40'}`}
+                      >
+                        {q.included && <Check className="w-3 h-3 text-white" />}
+                      </button>
+                      {editingQuestionId === q.id ? (
+                        <div className="flex-1 flex gap-2">
+                          <input
+                            type="text"
+                            value={editQuestionText}
+                            onChange={(e) => setEditQuestionText(e.target.value)}
+                            className="fp-input flex-1 px-3 py-2 rounded-lg text-sm"
+                            autoFocus
+                          />
+                          <button
+                            type="button"
+                            onClick={() => saveEditQuestion(index)}
+                            className="px-3 py-2 rounded-lg fp-button-primary text-sm"
+                          >
+                            Save
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="flex-1 min-w-0 text-sm text-white/90">{q.editedText !== undefined ? q.editedText : q.question_text}</p>
+                          <button
+                            type="button"
+                            onClick={() => startEditQuestion(index)}
+                            className="p-1.5 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+                            aria-label="Edit question"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            {trackedQuestionsForRun.length > 0 && (
+              <div className="p-4 md:p-6 border-t border-white/10 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => { setShowRunStudyModal(false); setEditingQuestionId(null); setEditQuestionText(''); }}
+                  className="flex-1 py-3 rounded-xl fp-card hover:bg-white/10 font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => runAnalysisWithQuestions(trackedQuestionsForRun)}
+                  disabled={trackedQuestionsForRun.filter((q) => q.included).length === 0}
+                  className="flex-1 py-3 rounded-xl fp-button-primary font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Play className="w-4 h-4" />
+                  Run Study
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Styles */}
       <style>{`

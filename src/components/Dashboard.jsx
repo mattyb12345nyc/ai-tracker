@@ -82,8 +82,10 @@ export default function Dashboard() {
     (subscription?.status === 'active' || subscription?.status === 'trialing') &&
     (subscription?.questionLot ?? 0) > 0;
 
-  // Question allotment from subscription or default free tier; only paid runs count against it.
-  const questionAllotment = hasActiveSubscription ? subscription.questionLot : 5; // Free tier: 5 questions
+  // Question allotment: subscription.questionLot (number) or free tier 5; only paid runs count against it.
+  const questionAllotment = hasActiveSubscription
+    ? Math.max(1, Number(subscription?.questionLot) || 10)
+    : 5;
   const questionsUsed = reports
     .filter((r) => r.is_trial !== true)
     .reduce((sum, r) => sum + (r.question_count ?? 5), 0);
@@ -223,33 +225,22 @@ export default function Dashboard() {
       const clerkUserId = user?.id;
       if (!clerkUserId) return;
 
-      // Only fetch reports that belong to the current user (clerk_user_id)
-      const formula = `{clerk_user_id}="${String(clerkUserId).replace(/"/g, '\\"')}"`;
-      const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_DASHBOARD_TABLE_ID}?filterByFormula=${encodeURIComponent(formula)}&sort%5B0%5D%5Bfield%5D=report_date&sort%5B0%5D%5Bdirection%5D=desc&maxRecords=20`;
-      const res = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}` }
-      });
-      const json = await res.json();
+      const res = await fetch(`/.netlify/functions/fetch-reports?clerk_user_id=${encodeURIComponent(clerkUserId)}`);
+      const data = await res.json().catch(() => ({}));
 
-      if (json.records) {
-        const formattedReports = json.records.map(record => ({
-          id: record.id,
-          session_id: record.fields.session_id,
-          brand_name: record.fields.brand_name,
-          report_date: record.fields.report_date,
-          visibility_score: parseFloat(record.fields.visibility_score) || 0,
-          brand_logo: record.fields.brand_logo || '',
-          is_trial: record.fields.is_trial === true,
-          question_count: record.fields.question_count != null ? Number(record.fields.question_count) : undefined,
-        }));
-        setReports(formattedReports);
+      if (!res.ok) {
+        console.error('fetch-reports error:', data.error || res.status);
+        setIsLoadingReports(false);
+        return;
+      }
 
-        // If user has reports, mark setup as complete
-        if (formattedReports.length > 0 && !isSetupComplete) {
-          const latestReport = formattedReports[0];
-          setBrandData({ brand_name: latestReport.brand_name });
-          setIsSetupComplete(true);
-        }
+      const formattedReports = data.reports || [];
+      setReports(formattedReports);
+
+      if (formattedReports.length > 0 && !isSetupComplete) {
+        const latestReport = formattedReports[0];
+        setBrandData((prev) => prev ? { ...prev, brand_name: latestReport.brand_name } : { brand_name: latestReport.brand_name });
+        setIsSetupComplete(true);
       }
     } catch (err) {
       console.error('Error loading reports:', err);
@@ -995,12 +986,15 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {paidOnlyReports.map((report, index) => (
+                  {paidOnlyReports.map((report) => (
                     <div
                       key={report.id}
                       ref={reportParam === report.session_id ? reportCardRef : undefined}
+                      role="button"
+                      tabIndex={0}
                       className={`flex items-center gap-4 p-4 rounded-xl fp-card hover:bg-white/5 transition-all cursor-pointer ${reportParam === report.session_id ? 'ring-2 ring-[#ff7a3d] ring-offset-2 ring-offset-[#0f0f14]' : ''}`}
                       onClick={() => viewReport(report.session_id)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); viewReport(report.session_id); } }}
                     >
                       {report.brand_logo ? (
                         <img
